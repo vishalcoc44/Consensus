@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import Teams from "./pages/Teams";
 import CreateProposal from "./pages/CreateProposal";
 import ProposalDetails from "./pages/ProposalDetails";
+import Analytics from "./pages/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,8 @@ const App = () => (
           <Route path="/dashboard/teams" element={<Teams />} />
           <Route path="/dashboard/proposals/create" element={<CreateProposal />} />
           <Route path="/dashboard/proposals/:proposalId" element={<ProposalDetails />} />
+          <Route path="/dashboard/analytics" element={<Analytics />} />
+          <Route path="/dashboard/analytics/:proposalId" element={<Analytics />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

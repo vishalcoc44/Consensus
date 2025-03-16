@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { MessageCircle, FileText, BarChart, ThumbsUp, ThumbsDown, Bot, FileUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import VisualizationDashboard from '@/components/analytics/VisualizationDashboard';
 
 // Mock data for visualization
 const mockContributions = [
@@ -128,6 +128,24 @@ interface Proposal {
 interface ContributionsOverviewProps {
   proposal: Proposal;
 }
+
+// Define Star component for ratings display
+const Star = ({ size, className }: { size: number, className: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    width={size}
+    height={size}
+  >
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
 
 const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
   const [activeTab, setActiveTab] = useState('summary');
@@ -485,122 +503,7 @@ const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
         </TabsContent>
         
         <TabsContent value="analysis">
-          <Card className="overflow-hidden">
-            <CardHeader className="bg-slate-50 pb-4">
-              <CardTitle className="text-xl">AI Analysis Results</CardTitle>
-              <p className="text-sm text-consensus-grey-600">
-                Comprehensive analysis of all inputs and uploaded documents
-              </p>
-            </CardHeader>
-            <CardContent className="p-5">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Option Support Scores</h3>
-                  <p className="text-sm text-consensus-grey-600 mb-4">
-                    Combined scores based on votes (60%) and sentiment analysis (40%)
-                  </p>
-                  
-                  <div className="space-y-4">
-                    {mockAnalysis.optionSupport.filter(o => o.option !== 'Abstained').map((optionData, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <div className="font-medium">
-                            {optionData.option}
-                            {optionData.option === mockAnalysis.recommendedOption && (
-                              <Badge className="ml-2 bg-green-100 text-green-800">Recommended</Badge>
-                            )}
-                          </div>
-                          <div className="font-bold">{optionData.score}/100</div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <Progress 
-                            value={optionData.score} 
-                            className="h-3" 
-                          />
-                        </div>
-                        <div className="flex justify-between text-xs text-consensus-grey-500">
-                          <div>Votes: {optionData.votes} ({optionData.percentage}%)</div>
-                          <div>Sentiment: {(optionData.sentiment * 100).toFixed(0)}%</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Recommendation Explanation</h3>
-                  
-                  <div className="bg-slate-50 p-4 rounded-lg space-y-4">
-                    <p className="text-consensus-grey-700">
-                      The <strong>{mockAnalysis.recommendedOption}</strong> is recommended with 
-                      {' '}{mockAnalysis.recommendationConfidence}% confidence based on:
-                    </p>
-                    
-                    <ul className="space-y-2">
-                      {mockAnalysis.insights.map((insight, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="inline-block h-4 w-4 rounded-full bg-consensus-blue/20 mr-2 mt-1"></span>
-                          <span className="text-sm text-consensus-grey-700">{insight}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Theme Analysis</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {mockAnalysis.keyThemes.map((theme, index) => (
-                      <div key={index} className="bg-slate-50 p-4 rounded-lg">
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="font-medium">{theme.theme}</h4>
-                          <Badge variant="outline">{theme.occurrences} mentions</Badge>
-                        </div>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {theme.keywords.map((keyword, kidx) => (
-                            <Badge 
-                              key={kidx}
-                              className="bg-white border-gray-200"
-                            >
-                              {keyword}
-                            </Badge>
-                          ))}
-                        </div>
-                        <p className="text-xs text-consensus-grey-600">
-                          This theme appears in {(theme.occurrences / mockContributions.length * 100).toFixed(0)}% of all contributions
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {mockAnalysis.fileInsights.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-medium mb-3">Document Analysis</h3>
-                    
-                    <Card className="border border-blue-200">
-                      <CardContent className="p-4">
-                        <div className="flex items-center mb-3">
-                          <FileUp size={18} className="mr-2 text-blue-600" />
-                          <h4 className="font-medium text-blue-800">Uploaded Document Insights</h4>
-                        </div>
-                        
-                        <ul className="space-y-2">
-                          {mockAnalysis.fileInsights.map((insight, index) => (
-                            <li key={index} className="text-sm text-gray-700 flex items-start">
-                              <span className="inline-block h-3 w-3 rounded-full bg-blue-200 mr-2 mt-1.5"></span>
-                              {insight}
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <VisualizationDashboard proposalId={proposal.id} />
         </TabsContent>
       </Tabs>
     </div>
