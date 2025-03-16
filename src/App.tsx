@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Teams from "./pages/Teams";
 import CreateProposal from "./pages/CreateProposal";
+import ProposalDetails from "./pages/ProposalDetails";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/teams" element={<Teams />} />
           <Route path="/dashboard/proposals/create" element={<CreateProposal />} />
+          <Route path="/dashboard/proposals/:proposalId" element={<ProposalDetails />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

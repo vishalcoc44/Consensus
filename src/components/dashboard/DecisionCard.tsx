@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Calendar, MoreVertical, MessageCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -12,6 +13,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 
 interface DecisionCardProps {
+  id?: string;
   title: string;
   description: string;
   dueDate: string;
@@ -23,6 +25,7 @@ interface DecisionCardProps {
 }
 
 const DecisionCard = ({
+  id = '1', // Default ID for demo purposes
   title,
   description,
   dueDate,
@@ -32,10 +35,15 @@ const DecisionCard = ({
   status,
   consensus
 }: DecisionCardProps) => {
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
+  };
+  
+  const handleCardClick = () => {
+    navigate(`/dashboard/proposals/${id}`);
   };
   
   const getStatusColor = (status: string) => {
@@ -58,22 +66,51 @@ const DecisionCard = ({
   };
   
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden group">
+    <div 
+      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden group cursor-pointer"
+      onClick={handleCardClick}
+    >
       <div className="p-5">
         <div className="flex justify-between items-start mb-3">
           <h3 className="font-medium text-lg line-clamp-1">{title}</h3>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-1 rounded-full hover:bg-consensus-grey-100 text-consensus-grey-500">
+              <button 
+                className="p-1 rounded-full hover:bg-consensus-grey-100 text-consensus-grey-500"
+                onClick={(e) => e.stopPropagation()} // Prevent card click when clicking dropdown
+              >
                 <MoreVertical size={18} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem className="cursor-pointer">View details</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">Edit decision</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">Share</DropdownMenuItem>
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/dashboard/proposals/${id}`);
+                }}
+              >
+                View details
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Edit decision
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Share
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-rose-600">Archive</DropdownMenuItem>
+              <DropdownMenuItem 
+                className="cursor-pointer text-rose-600"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Archive
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -84,7 +121,10 @@ const DecisionCard = ({
         
         {description.length > 120 && (
           <button
-            onClick={toggleExpand}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleExpand();
+            }}
             className="text-xs text-consensus-blue hover:underline mb-4 inline-block"
           >
             {isExpanded ? 'Show less' : 'Read more'}
@@ -143,6 +183,10 @@ const DecisionCard = ({
           <Button 
             size="sm" 
             className="opacity-0 group-hover:opacity-100 transition-opacity bg-consensus-blue hover:bg-consensus-blue/90"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/dashboard/proposals/${id}`);
+            }}
           >
             Contribute
           </Button>
