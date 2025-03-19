@@ -39,6 +39,32 @@ interface ParameterWeights {
   historicalWeight: number;
 }
 
+interface RankedOption {
+  id: string;
+  title: string;
+  supportScore: number;
+  sentimentScore: number;
+  criteriaScores: Record<string, number>;
+  weightedCriteriaScore: number;
+  totalScore: number;
+}
+
+interface Recommendation {
+  proposalId: string;
+  recommendedOptionId: string;
+  recommendedOptionTitle: string;
+  confidenceScore: number;
+  explanation: string;
+  rankedOptions: RankedOption[];
+  generatedAt: string;
+  parameters: ParameterWeights;
+}
+
+interface AnalysisData {
+  recommendation: Recommendation;
+  optionScores: RankedOption[];
+}
+
 const defaultWeights: ParameterWeights = {
   supportWeight: 0.4,
   sentimentWeight: 0.2,
@@ -135,7 +161,8 @@ const RecommendationEngine = ({
   });
   
   // Get the recommendation data
-  const recommendation = recommendationData?.analysis_data?.recommendation;
+  const analysisData = recommendationData?.analysis_data as AnalysisData | undefined;
+  const recommendation = analysisData?.recommendation;
   const lastUpdated = recommendationData?.updated_at 
     ? new Date(recommendationData.updated_at).toLocaleString() 
     : 'Never';
@@ -247,7 +274,7 @@ const RecommendationEngine = ({
             <div className="mb-6">
               <h4 className="font-medium mb-3">Ranked Options</h4>
               <div className="space-y-3">
-                {recommendation.rankedOptions.map((option: any, index: number) => (
+                {recommendation.rankedOptions.map((option, index) => (
                   <div key={option.id} className="space-y-1">
                     <div className="flex justify-between items-center">
                       <div className="font-medium">
