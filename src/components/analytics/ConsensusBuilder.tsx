@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 import { 
   Card, 
   CardContent, 
@@ -76,6 +77,11 @@ interface AnalysisData {
   recommendation?: any;
 }
 
+interface AnalysisResponse {
+  analysis_data: Json;
+  updated_at: string;
+}
+
 const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
   const params = useParams();
   const actualProposalId = proposalId || params.proposalId;
@@ -101,10 +107,29 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       if (error) throw error;
       
       // Return the consensus data if it exists, otherwise return null
-      return data?.analysis_data?.consensus ? data : null;
+      return data?.analysis_data ? data as AnalysisResponse : null;
     },
     enabled: !!actualProposalId,
   });
+  
+  // Safely access the consensus data with proper type assertions
+  const getAnalysisData = (): AnalysisData | undefined => {
+    if (!consensusData?.analysis_data) return undefined;
+    
+    // Handle different types the Json can be
+    const analysisData = consensusData.analysis_data;
+    if (typeof analysisData === 'object' && analysisData !== null) {
+      return analysisData as unknown as AnalysisData;
+    }
+    
+    return undefined;
+  };
+  
+  const analysisData = getAnalysisData();
+  const consensus = analysisData?.consensus || null;
+  const lastUpdated = consensusData?.updated_at 
+    ? new Date(consensusData.updated_at).toLocaleString() 
+    : 'Never';
   
   // Mutation to generate consensus analysis
   const generateMutation = useMutation({
@@ -161,13 +186,6 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       });
     }
   });
-  
-  // Extract the consensus data from the analysis
-  const analysisData = consensusData?.analysis_data as AnalysisData | undefined;
-  const consensus: ConsensusData | null = analysisData?.consensus || null;
-  const lastUpdated = consensusData?.updated_at 
-    ? new Date(consensusData.updated_at).toLocaleString() 
-    : 'Never';
   
   // Render loading state
   if (isLoading) {
@@ -266,7 +284,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
         <div className="flex justify-between items-center">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <PuzzlePiece className="h-5 w-5 text-consensus-blue" />
+              <Lightbulb className="h-5 w-5 text-consensus-blue" />
               AI Consensus Builder
             </CardTitle>
             <CardDescription>

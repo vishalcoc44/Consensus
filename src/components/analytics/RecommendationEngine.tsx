@@ -67,7 +67,7 @@ interface AnalysisData {
 }
 
 interface RecommendationResponse {
-  analysis_data: AnalysisData;
+  analysis_data: Json;
   updated_at: string;
 }
 
@@ -111,6 +111,19 @@ const RecommendationEngine = ({
     },
     enabled: !!actualProposalId,
   });
+  
+  // Safely access the recommendation data with proper type assertions
+  const getAnalysisData = (): AnalysisData | undefined => {
+    if (!recommendationData?.analysis_data) return undefined;
+    
+    // Handle different types the Json can be
+    const analysisData = recommendationData.analysis_data;
+    if (typeof analysisData === 'object' && analysisData !== null) {
+      return analysisData as unknown as AnalysisData;
+    }
+    
+    return undefined;
+  };
   
   // Mutation to generate a new recommendation
   const generateMutation = useMutation({
@@ -167,7 +180,7 @@ const RecommendationEngine = ({
   });
   
   // Get the recommendation data
-  const analysisData = recommendationData?.analysis_data as AnalysisData;
+  const analysisData = getAnalysisData();
   const recommendation = analysisData?.recommendation;
   const lastUpdated = recommendationData?.updated_at 
     ? new Date(recommendationData.updated_at).toLocaleString() 
