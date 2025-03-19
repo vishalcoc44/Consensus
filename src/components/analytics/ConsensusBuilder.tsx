@@ -119,14 +119,18 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
     // Handle different types the Json can be
     const analysisData = consensusData.analysis_data;
     if (typeof analysisData === 'object' && analysisData !== null) {
+      // Cast to AnalysisData to ensure TypeScript knows the structure
       return analysisData as unknown as AnalysisData;
     }
     
     return undefined;
   };
   
+  // Get analysis data and consensus data using the helper function
   const analysisData = getAnalysisData();
+  // Use optional chaining to safely access consensus, defaulting to null if not found
   const consensus = analysisData?.consensus || null;
+  
   const lastUpdated = consensusData?.updated_at 
     ? new Date(consensusData.updated_at).toLocaleString() 
     : 'Never';
