@@ -134,35 +134,26 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
         throw fetchError;
       }
 
-      // Merge with existing data or create new.  Start with an empty object.
-      let mergedData: Json = {};
+      // Prepare the merged data object
+      let mergedData: Record<string, unknown> = {};
 
-       // Handle existing data (if any)
-        if (existingAnalysis && existingAnalysis.analysis_data) {
-          if (typeof existingAnalysis.analysis_data === 'object' && existingAnalysis.analysis_data !== null && !Array.isArray(existingAnalysis.analysis_data)) {
-              // If it's a non-null object (and not an array), spread its properties.
-              mergedData = { ...(existingAnalysis.analysis_data as Record<string, unknown>) };
-          } else {
-              // Log a warning (or error) if analysis_data isn't the shape we expect.
-              console.warn("Existing analysis_data is not a plain object:", existingAnalysis.analysis_data);
-              // Fallback:  mergedData remains an empty object, and we'll add consensusResult below
-          }
+      // Handle existing data (if any)
+      if (existingAnalysis && existingAnalysis.analysis_data) {
+        if (typeof existingAnalysis.analysis_data === 'object' && existingAnalysis.analysis_data !== null && !Array.isArray(existingAnalysis.analysis_data)) {
+          // If it's a non-null object (and not an array), spread its properties
+          mergedData = { ...existingAnalysis.analysis_data as Record<string, unknown> };
         }
+      }
 
-        // Add the consensusResult. This approach handles ANY valid Json data.
-        mergedData = {
-          ...(mergedData as object), // Cast to object (safe after checks above)
-          consensus: consensusResult,
-        } as Json;
-
-
+      // Add the consensus result
+      mergedData.consensus = consensusResult;
 
       // Save to database
       const { error: saveError } = await supabase
         .from('proposal_analysis')
         .upsert({
           proposal_id: actualProposalId,
-          analysis_data: mergedData,
+          analysis_data: mergedData as unknown as Json,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'proposal_id' });
 
@@ -526,3 +517,4 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
 };
 
 export default ConsensusBuilder;
+

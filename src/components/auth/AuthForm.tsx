@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, MailIcon, LockIcon, User, ArrowLeft } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AuthFormProps {
   type: 'login' | 'register';
@@ -16,26 +18,77 @@ const AuthForm = ({ type }: AuthFormProps) => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    if (type === 'login') {
-      // In a real app, you would authenticate with a backend
-      console.log('Logging in with:', { email, password });
-      navigate('/dashboard');
-    } else {
-      // In a real app, you would register with a backend
-      console.log('Registering with:', { name, email, password });
-      navigate('/dashboard');
+    try {
+      if (type === 'login') {
+        // Log in with Supabase
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Successfully signed in",
+          description: "Welcome back!",
+        });
+        
+        navigate('/dashboard');
+      } else {
+        // Register with Supabase
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: name,
+            },
+          }
+        });
+        
+        if (error) throw error;
+        
+        // Create a profile entry
+        if (data.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              full_name: name,
+            });
+            
+          if (profileError) {
+            console.error("Error creating profile:", profileError);
+          }
+        }
+        
+        toast({
+          title: "Account created",
+          description: "Welcome to ConsensusAI!",
+        });
+        
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error("Authentication error:", err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      toast({
+        variant: "destructive",
+        title: "Authentication failed",
+        description: err instanceof Error ? err.message : "An unknown error occurred",
+      });
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const toggleShowPassword = () => {
@@ -60,6 +113,12 @@ const AuthForm = ({ type }: AuthFormProps) => {
       </div>
 
       <div className="bg-white p-8 rounded-2xl shadow-lg animate-scale-in">
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">
+            {error}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-5">
           {type === 'register' && (
             <div className="space-y-2">

@@ -106,7 +106,7 @@ const RecommendationEngine = ({
     return undefined;
   };
 
-   const generateMutation = useMutation({
+  const generateMutation = useMutation({
     mutationFn: async (customWeights?: ParameterWeights) => {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-recommendation`, {
         method: 'POST',
@@ -116,7 +116,7 @@ const RecommendationEngine = ({
         },
         body: JSON.stringify({
           proposalId: actualProposalId,
-          parameters: customWeights || weights, // Use customWeights if provided, otherwise use current weights
+          parameters: customWeights || weights,
         }),
       });
 
@@ -125,25 +125,23 @@ const RecommendationEngine = ({
         throw new Error(errorData.error || 'Failed to generate recommendation');
       }
 
-      // Assuming the response is directly the Recommendation object.
       const recommendationData = await response.json();
 
-      // Update Supabase with the new recommendation data.
-        const { error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from('proposal_analysis')
         .upsert({
             proposal_id: actualProposalId,
-            analysis_data: { recommendation: recommendationData }, // Storing ONLY the recommendation.
+            analysis_data: { recommendation: recommendationData },
             updated_at: new Date().toISOString(),
         }, { onConflict: 'proposal_id' });
 
         if (updateError) {
-          throw updateError; // Re-throw the error for the mutation to handle.
+          throw updateError;
         }
 
-        return recommendationData; // Return the fetched data for onSuccess.
+        return recommendationData;
     },
-    onSuccess: (data) => { // Add 'data' parameter
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['recommendation', actualProposalId] });
       toast({
         title: 'Recommendation Generated',
@@ -218,7 +216,7 @@ const RecommendationEngine = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => generateMutation.mutate(weights)} // Explicitly pass weights.
+              onClick={() => generateMutation.mutate(weights)}
               disabled={generateMutation.isPending || !actualProposalId}
             >
               <RefreshCw
