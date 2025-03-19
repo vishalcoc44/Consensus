@@ -4,12 +4,14 @@ import { useParams } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import VisualizationDashboard from '@/components/analytics/VisualizationDashboard';
 import { Button } from '@/components/ui/button';
-import { Bot, Download } from 'lucide-react';
+import { Bot, Download, PuzzlePiece } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Analytics = () => {
   const { proposalId } = useParams();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisData, setAnalysisData] = useState(null);
+  const [activeTab, setActiveTab] = useState('dashboard');
   
   useEffect(() => {
     // Set page title
@@ -68,7 +70,7 @@ const Analytics = () => {
         </div>
       </div>
       
-      <VisualizationDashboard proposalId={proposalId} analysisData={analysisData} />
+      <VisualizationDashboard proposalId={proposalId} analysisData={analysisData} isAdmin={true} />
     </DashboardLayout>
   );
 };
