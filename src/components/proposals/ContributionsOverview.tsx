@@ -6,6 +6,8 @@ import { Progress } from '@/components/ui/progress';
 import { MessageCircle, FileText, BarChart, ThumbsUp, ThumbsDown, Bot, FileUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import VisualizationDashboard from '@/components/analytics/VisualizationDashboard';
+import { useMutation } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
 
 // Mock data for visualization
 const mockContributions = [
@@ -151,15 +153,57 @@ const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
   const [activeTab, setActiveTab] = useState('summary');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(true); // For demo, set to true
+  const { toast } = useToast();
+
+  // Generate AI recommendation
+  const generateRecommendation = useMutation({
+    mutationFn: async () => {
+      setIsAnalyzing(true);
+      
+      try {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-recommendation`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            proposalId: proposal.id,
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to generate recommendation');
+        }
+        
+        return await response.json();
+      } finally {
+        // Simulate delay for UI feedback
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          setAnalysisComplete(true);
+        }, 1000);
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Analysis Complete',
+        description: 'AI recommendation has been generated based on all contributions.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Analysis Failed',
+        description: `Error: ${(error as Error).message}`,
+        variant: 'destructive',
+      });
+    },
+  });
 
   // For a real app, this would trigger the AI analysis
   const runAIAnalysis = () => {
-    setIsAnalyzing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setAnalysisComplete(true);
-    }, 3000);
+    generateRecommendation.mutate();
   };
 
   // Get option title from ID
@@ -503,7 +547,7 @@ const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
         </TabsContent>
         
         <TabsContent value="analysis">
-          <VisualizationDashboard proposalId={proposal.id} />
+          <VisualizationDashboard proposalId={proposal.id} isAdmin={true} />
         </TabsContent>
       </Tabs>
     </div>

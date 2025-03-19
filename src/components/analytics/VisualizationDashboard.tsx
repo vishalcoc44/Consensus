@@ -27,15 +27,18 @@ import OptionSupportChart from './charts/OptionSupportChart';
 import SentimentPieChart from './charts/SentimentPieChart';
 import ThemeWordCloud from './charts/ThemeWordCloud';
 import CriteriaRatingsChart from './charts/CriteriaRatingsChart';
+import RecommendationEngine from './RecommendationEngine';
 
 interface VisualizationDashboardProps {
   proposalId?: string;
   analysisData?: any;
+  isAdmin?: boolean;
 }
 
 const VisualizationDashboard = ({ 
   proposalId, 
-  analysisData = null
+  analysisData = null,
+  isAdmin = false
 }: VisualizationDashboardProps) => {
   const [timeFilter, setTimeFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -116,6 +119,8 @@ const VisualizationDashboard = ({
           </Select>
         </div>
       </div>
+      
+      <RecommendationEngine proposalId={proposalId} isAdmin={isAdmin} />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <Card>
