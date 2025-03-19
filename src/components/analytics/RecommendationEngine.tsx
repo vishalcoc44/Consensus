@@ -3,26 +3,11 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { 
-  Bot, 
-  Brain, 
-  RefreshCw, 
-  ThumbsUp, 
-  Sliders, 
-  ChevronDown, 
-  ChevronUp, 
-  Send
-} from 'lucide-react';
+import { Bot, Brain, RefreshCw, ThumbsUp, Sliders, ChevronDown, ChevronUp, Send } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
@@ -77,20 +62,20 @@ const defaultWeights: ParameterWeights = {
   historicalWeight: 0.1,
 };
 
-const RecommendationEngine = ({ 
-  proposalId, 
-  isAdmin = false 
+const RecommendationEngine = ({
+  proposalId,
+  isAdmin = false
 }: RecommendationEngineProps) => {
   const params = useParams();
   const actualProposalId = proposalId || params.proposalId;
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   const [showParameters, setShowParameters] = useState(false);
   const [weights, setWeights] = useState<ParameterWeights>(defaultWeights);
   const [emailRecipient, setEmailRecipient] = useState('');
-  
-  const { 
+
+  const {
     data: recommendationData,
     isLoading,
     isError,
@@ -103,25 +88,25 @@ const RecommendationEngine = ({
         .select('analysis_data, updated_at')
         .eq('proposal_id', actualProposalId)
         .single();
-      
+
       if (error) throw error;
       return data as RecommendationResponse;
     },
     enabled: !!actualProposalId,
   });
-  
+
   const getAnalysisData = (): AnalysisData | undefined => {
     if (!recommendationData?.analysis_data) return undefined;
-    
+
     const analysisData = recommendationData.analysis_data;
     if (typeof analysisData === 'object' && analysisData !== null) {
       return analysisData as unknown as AnalysisData;
     }
-    
+
     return undefined;
   };
-  
-  const generateMutation = useMutation({
+
+   const generateMutation = useMutation({
     mutationFn: async (customWeights?: ParameterWeights) => {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-recommendation`, {
         method: 'POST',
@@ -131,18 +116,34 @@ const RecommendationEngine = ({
         },
         body: JSON.stringify({
           proposalId: actualProposalId,
-          parameters: customWeights || weights,
+          parameters: customWeights || weights, // Use customWeights if provided, otherwise use current weights
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to generate recommendation');
       }
-      
-      return response.json();
+
+      // Assuming the response is directly the Recommendation object.
+      const recommendationData = await response.json();
+
+      // Update Supabase with the new recommendation data.
+        const { error: updateError } = await supabase
+        .from('proposal_analysis')
+        .upsert({
+            proposal_id: actualProposalId,
+            analysis_data: { recommendation: recommendationData }, // Storing ONLY the recommendation.
+            updated_at: new Date().toISOString(),
+        }, { onConflict: 'proposal_id' });
+
+        if (updateError) {
+          throw updateError; // Re-throw the error for the mutation to handle.
+        }
+
+        return recommendationData; // Return the fetched data for onSuccess.
     },
-    onSuccess: () => {
+    onSuccess: (data) => { // Add 'data' parameter
       queryClient.invalidateQueries({ queryKey: ['recommendation', actualProposalId] });
       toast({
         title: 'Recommendation Generated',
@@ -157,7 +158,7 @@ const RecommendationEngine = ({
       });
     },
   });
-  
+
   const emailMutation = useMutation({
     mutationFn: async () => {
       return new Promise((resolve) => setTimeout(resolve, 1000));
@@ -170,36 +171,36 @@ const RecommendationEngine = ({
       setEmailRecipient('');
     },
   });
-  
+
   const analysisData = getAnalysisData();
   const recommendation = analysisData?.recommendation;
-  const lastUpdated = recommendationData?.updated_at 
-    ? new Date(recommendationData.updated_at).toLocaleString() 
+  const lastUpdated = recommendationData?.updated_at
+    ? new Date(recommendationData.updated_at).toLocaleString()
     : 'Never';
-  
+
   const updateWeight = (key: keyof ParameterWeights, value: number) => {
     setWeights(prev => ({ ...prev, [key]: value }));
   };
-  
+
   const handleWeightChange = (key: keyof ParameterWeights) => (values: number[]) => {
     if (values.length > 0) {
       updateWeight(key, values[0]);
     }
   };
-  
+
   const formatWeight = (weight: number) => `${Math.round(weight * 100)}%`;
-  
+
   const resetWeights = () => {
     setWeights(defaultWeights);
   };
-  
+
   const getConfidenceColor = (score: number) => {
     if (score >= 80) return 'bg-green-100 text-green-800';
     if (score >= 60) return 'bg-blue-100 text-blue-800';
     if (score >= 40) return 'bg-yellow-100 text-yellow-800';
     return 'bg-red-100 text-red-800';
   };
-  
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -217,15 +218,15 @@ const RecommendationEngine = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => generateMutation.mutate()}
+              onClick={() => generateMutation.mutate(weights)} // Explicitly pass weights.
               disabled={generateMutation.isPending || !actualProposalId}
             >
-              <RefreshCw 
-                className={`h-4 w-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`} 
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`}
               />
               Regenerate
             </Button>
-            
+
             {isAdmin && (
               <Button
                 variant="ghost"
@@ -234,8 +235,8 @@ const RecommendationEngine = ({
               >
                 <Sliders className="h-4 w-4 mr-2" />
                 Parameters
-                {showParameters ? 
-                  <ChevronUp className="h-4 w-4 ml-2" /> : 
+                {showParameters ?
+                  <ChevronUp className="h-4 w-4 ml-2" /> :
                   <ChevronDown className="h-4 w-4 ml-2" />
                 }
               </Button>
@@ -243,7 +244,7 @@ const RecommendationEngine = ({
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
@@ -268,16 +269,16 @@ const RecommendationEngine = ({
                   {recommendation.confidenceScore}% Confidence
                 </Badge>
               </div>
-              
+
               <p className="text-consensus-grey-700 mb-4">
                 {recommendation.explanation}
               </p>
-              
+
               <div className="text-xs text-consensus-grey-500">
                 Last updated: {lastUpdated}
               </div>
             </div>
-            
+
             <div className="mb-6">
               <h4 className="font-medium mb-3">Ranked Options</h4>
               <div className="space-y-3">
@@ -294,15 +295,15 @@ const RecommendationEngine = ({
                         Score: {option.totalScore.toFixed(2)}
                       </div>
                     </div>
-                    <Progress 
-                      value={option.totalScore * 100} 
+                    <Progress
+                      value={option.totalScore * 100}
                       className="h-2"
                     />
                   </div>
                 ))}
               </div>
             </div>
-            
+
             {recommendation.rankedOptions.length > 0 && (
               <div className="flex items-center gap-3 mb-2">
                 <Input
@@ -321,7 +322,7 @@ const RecommendationEngine = ({
                 </Button>
               </div>
             )}
-            
+
             {isAdmin && showParameters && (
               <div className="mt-6 border-t pt-4">
                 <div className="flex justify-between items-center mb-4">
@@ -334,7 +335,7 @@ const RecommendationEngine = ({
                     Reset to Default
                   </Button>
                 </div>
-                
+
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
@@ -353,7 +354,7 @@ const RecommendationEngine = ({
                       How much importance to place on the number of votes for each option.
                     </p>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm font-medium">Sentiment Weight</label>
@@ -371,7 +372,7 @@ const RecommendationEngine = ({
                       How much importance to place on the sentiment of comments for each option.
                     </p>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm font-medium">Criteria Weight</label>
@@ -389,7 +390,7 @@ const RecommendationEngine = ({
                       How much importance to place on the criteria ratings for each option.
                     </p>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm font-medium">Historical Weight</label>
@@ -407,8 +408,8 @@ const RecommendationEngine = ({
                       How much importance to place on historical success of similar options.
                     </p>
                   </div>
-                  
-                  <Button 
+
+                  <Button
                     onClick={() => generateMutation.mutate(weights)}
                     disabled={generateMutation.isPending}
                   >
