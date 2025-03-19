@@ -136,41 +136,49 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
     : 'Never';
   
   // Mutation to generate consensus analysis
-  const generateMutation = useMutation({
+    const generateMutation = useMutation({
     mutationFn: async () => {
       // Generate consensus analysis
       const consensusResult = await generateConsensusAnalysis(actualProposalId as string);
-      
+
       if (!consensusResult) {
         throw new Error('Failed to generate consensus analysis');
       }
-      
+
       // Get existing analysis data
       const { data: existingAnalysis, error: fetchError } = await supabase
         .from('proposal_analysis')
         .select('analysis_data')
         .eq('proposal_id', actualProposalId)
         .single();
-      
+
       if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "row not found" error
         throw fetchError;
       }
-      
-      // Merge with existing data or create new
-      let mergedData: Json = existingAnalysis?.analysis_data || {};
-      
-      // Ensure mergedData is an object before trying to add the consensus property
-      if (typeof mergedData === 'object' && mergedData !== null) {
-        // We need to create a new object to avoid mutating the original
-        mergedData = { 
-          ...((mergedData as Record<string, unknown>)), 
-          consensus: consensusResult 
+
+      // Merge with existing data or create new.  Start with an empty object.
+      let mergedData: Json = {};
+
+       // Handle existing data (if any)
+        if (existingAnalysis && existingAnalysis.analysis_data) {
+          if (typeof existingAnalysis.analysis_data === 'object' && existingAnalysis.analysis_data !== null && !Array.isArray(existingAnalysis.analysis_data)) {
+              // If it's a non-null object (and not an array), spread its properties.
+              mergedData = { ...(existingAnalysis.analysis_data as Record<string, unknown>) };
+          } else {
+              // Log a warning (or error) if analysis_data isn't the shape we expect.
+              console.warn("Existing analysis_data is not a plain object:", existingAnalysis.analysis_data);
+              // Fallback:  mergedData remains an empty object, and we'll add consensusResult below
+          }
+        }
+        
+        // Add the consensusResult. This approach handles ANY valid Json data.
+        mergedData = {
+          ...(mergedData as object), // Cast to object (safe after checks above)
+          consensus: consensusResult,
         } as Json;
-      } else {
-        // If for some reason mergedData is not an object, create a new one
-        mergedData = { consensus: consensusResult } as Json;
-      }
-      
+
+
+
       // Save to database
       const { error: saveError } = await supabase
         .from('proposal_analysis')
@@ -179,11 +187,11 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
           analysis_data: mergedData,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'proposal_id' });
-      
+
       if (saveError) {
         throw saveError;
       }
-      
+
       return consensusResult;
     },
     onSuccess: () => {
@@ -201,7 +209,6 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       });
     }
   });
-
   // Render loading state
   if (isLoading) {
     return (
