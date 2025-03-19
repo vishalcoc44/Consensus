@@ -57,17 +57,23 @@ const AuthForm = ({ type }: AuthFormProps) => {
         
         if (error) throw error;
         
-        // Create a profile entry
+        // Create a profile entry in a separate call after successful signup
         if (data.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              full_name: name,
-            });
-            
-          if (profileError) {
-            console.error("Error creating profile:", profileError);
+          try {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .upsert({
+                id: data.user.id,
+                full_name: name,
+                created_at: new Date().toISOString()
+              });
+              
+            if (profileError) {
+              console.error("Error creating profile:", profileError);
+              // Don't throw here, we still want to show success for the auth part
+            }
+          } catch (profileError) {
+            console.error("Profile creation error:", profileError);
           }
         }
         

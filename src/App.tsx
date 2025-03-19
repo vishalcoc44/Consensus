@@ -16,6 +16,7 @@ import Teams from "./pages/Teams";
 import CreateProposal from "./pages/CreateProposal";
 import ProposalDetails from "./pages/ProposalDetails";
 import Analytics from "./pages/Analytics";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +103,11 @@ const App = () => {
             <Route path="/dashboard/analytics/:proposalId" element={
               <ProtectedRoute>
                 <Analytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/settings" element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
