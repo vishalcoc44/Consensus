@@ -12,12 +12,11 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
-  PuzzlePiece, 
+  Lightbulb, 
   Scale, 
   RefreshCw, 
   AlertTriangle,
   CheckCircle2,
-  Lightbulb,
   Sparkles,
   ChevronDown,
   ChevronUp,
@@ -70,6 +69,11 @@ interface ConsensusData {
     baseOptions: string[];
     estimatedApproval: number;
   }>;
+}
+
+interface AnalysisData {
+  consensus?: ConsensusData;
+  recommendation?: any;
 }
 
 const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
@@ -159,7 +163,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
   });
   
   // Extract the consensus data from the analysis
-  const analysisData = consensusData?.analysis_data as any;
+  const analysisData = consensusData?.analysis_data as AnalysisData | undefined;
   const consensus: ConsensusData | null = analysisData?.consensus || null;
   const lastUpdated = consensusData?.updated_at 
     ? new Date(consensusData.updated_at).toLocaleString() 
@@ -171,7 +175,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <PuzzlePiece className="h-5 w-5 text-consensus-blue" />
+            <Lightbulb className="h-5 w-5 text-consensus-blue" />
             AI Consensus Builder
           </CardTitle>
           <CardDescription>
@@ -193,7 +197,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <PuzzlePiece className="h-5 w-5 text-consensus-blue" />
+            <Lightbulb className="h-5 w-5 text-consensus-blue" />
             AI Consensus Builder
           </CardTitle>
           <CardDescription>
@@ -223,7 +227,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <PuzzlePiece className="h-5 w-5 text-consensus-blue" />
+            <Lightbulb className="h-5 w-5 text-consensus-blue" />
             AI Consensus Builder
           </CardTitle>
           <CardDescription>
@@ -246,7 +250,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
               </>
             ) : (
               <>
-                <PuzzlePiece className="h-4 w-4 mr-2" />
+                <Lightbulb className="h-4 w-4 mr-2" />
                 Generate Consensus Analysis
               </>
             )}

@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import VisualizationDashboard from '@/components/analytics/VisualizationDashboard';
 import { Button } from '@/components/ui/button';
-import { Bot, Download, PuzzlePiece } from 'lucide-react';
+import { Bot, Download, Lightbulb } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Analytics = () => {

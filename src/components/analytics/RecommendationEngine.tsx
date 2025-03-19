@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 import { 
   Card, 
   CardContent, 
@@ -61,8 +62,13 @@ interface Recommendation {
 }
 
 interface AnalysisData {
-  recommendation: Recommendation;
-  optionScores: RankedOption[];
+  recommendation?: Recommendation;
+  optionScores?: RankedOption[];
+}
+
+interface RecommendationResponse {
+  analysis_data: AnalysisData;
+  updated_at: string;
 }
 
 const defaultWeights: ParameterWeights = {
@@ -101,7 +107,7 @@ const RecommendationEngine = ({
         .single();
       
       if (error) throw error;
-      return data;
+      return data as RecommendationResponse;
     },
     enabled: !!actualProposalId,
   });
@@ -138,7 +144,7 @@ const RecommendationEngine = ({
     onError: (error) => {
       toast({
         title: 'Error',
-        description: `Failed to generate recommendation: ${error.message}`,
+        description: `Failed to generate recommendation: ${(error as Error).message}`,
         variant: 'destructive',
       });
     },
@@ -161,7 +167,7 @@ const RecommendationEngine = ({
   });
   
   // Get the recommendation data
-  const analysisData = recommendationData?.analysis_data as AnalysisData | undefined;
+  const analysisData = recommendationData?.analysis_data as AnalysisData;
   const recommendation = analysisData?.recommendation;
   const lastUpdated = recommendationData?.updated_at 
     ? new Date(recommendationData.updated_at).toLocaleString() 
