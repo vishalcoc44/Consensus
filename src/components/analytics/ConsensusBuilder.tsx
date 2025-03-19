@@ -1,39 +1,17 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Lightbulb, 
-  Scale, 
-  RefreshCw, 
-  AlertTriangle,
-  CheckCircle2,
-  Sparkles,
-  ChevronDown,
-  ChevronUp,
-  ArrowRight
-} from 'lucide-react';
+import { Lightbulb, Scale, RefreshCw, AlertTriangle, CheckCircle2, Sparkles, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { generateConsensusAnalysis } from '@/utils/consensusBuilder';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from "@/components/ui/accordion";
 
 interface ConsensusBuilderProps {
   proposalId?: string;
@@ -88,9 +66,9 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('consensus');
-  
+
   // Fetch the current consensus data from the database
-  const { 
+  const {
     data: consensusData,
     isLoading,
     isError,
@@ -103,40 +81,40 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
         .select('analysis_data, updated_at')
         .eq('proposal_id', actualProposalId)
         .single();
-      
+
       if (error) throw error;
-      
+
       // Return the consensus data if it exists, otherwise return null
       return data?.analysis_data ? data as AnalysisResponse : null;
     },
     enabled: !!actualProposalId,
   });
-  
+
   // Safely access the consensus data with proper type assertions
   const getAnalysisData = (): AnalysisData | undefined => {
     if (!consensusData?.analysis_data) return undefined;
-    
+
     // Handle different types the Json can be
     const analysisData = consensusData.analysis_data;
     if (typeof analysisData === 'object' && analysisData !== null) {
       // Cast to AnalysisData to ensure TypeScript knows the structure
       return analysisData as unknown as AnalysisData;
     }
-    
+
     return undefined;
   };
-  
+
   // Get analysis data and consensus data using the helper function
   const analysisData = getAnalysisData();
   // Use optional chaining to safely access consensus, defaulting to null if not found
   const consensus = analysisData?.consensus || null;
-  
-  const lastUpdated = consensusData?.updated_at 
-    ? new Date(consensusData.updated_at).toLocaleString() 
+
+  const lastUpdated = consensusData?.updated_at
+    ? new Date(consensusData.updated_at).toLocaleString()
     : 'Never';
-  
-  // Mutation to generate consensus analysis
-    const generateMutation = useMutation({
+
+ // Mutation to generate consensus analysis
+  const generateMutation = useMutation({
     mutationFn: async () => {
       // Generate consensus analysis
       const consensusResult = await generateConsensusAnalysis(actualProposalId as string);
@@ -170,7 +148,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
               // Fallback:  mergedData remains an empty object, and we'll add consensusResult below
           }
         }
-        
+
         // Add the consensusResult. This approach handles ANY valid Json data.
         mergedData = {
           ...(mergedData as object), // Cast to object (safe after checks above)
@@ -209,6 +187,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       });
     }
   });
+
   // Render loading state
   if (isLoading) {
     return (
@@ -230,7 +209,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       </Card>
     );
   }
-  
+
   // Render error state
   if (isError) {
     return (
@@ -248,8 +227,8 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
           <div className="bg-red-50 p-4 rounded-lg text-red-800">
             <p>Error loading consensus data: {(error as Error).message}</p>
           </div>
-          <Button 
-            onClick={() => generateMutation.mutate()} 
+          <Button
+            onClick={() => generateMutation.mutate()}
             className="mt-4"
             disabled={generateMutation.isPending}
           >
@@ -260,7 +239,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       </Card>
     );
   }
-  
+
   // If no consensus data exists yet, render a button to generate it
   if (!consensus) {
     return (
@@ -278,8 +257,8 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
           <div className="bg-blue-50 p-4 rounded-lg text-blue-800 mb-4">
             <p>No consensus analysis available yet. Generate one to see AI-powered suggestions for building consensus among stakeholders.</p>
           </div>
-          <Button 
-            onClick={() => generateMutation.mutate()} 
+          <Button
+            onClick={() => generateMutation.mutate()}
             disabled={generateMutation.isPending}
             className="bg-consensus-blue hover:bg-consensus-blue/90"
           >
@@ -299,7 +278,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       </Card>
     );
   }
-  
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -319,14 +298,14 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
             onClick={() => generateMutation.mutate()}
             disabled={generateMutation.isPending}
           >
-            <RefreshCw 
-              className={`h-4 w-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`} 
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`}
             />
             Regenerate
           </Button>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-3 mb-4">
@@ -334,7 +313,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
             <TabsTrigger value="compromises">Compromise Suggestions</TabsTrigger>
             <TabsTrigger value="new-options">Proposed Options</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="consensus">
             <div className="space-y-6">
               {/* Broad Support Options */}
@@ -343,7 +322,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                   <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
                   Options with Broad Support
                 </h3>
-                
+
                 {consensus.broadSupportOptions.length > 0 ? (
                   <div className="space-y-3">
                     {consensus.broadSupportOptions.map((option) => (
@@ -357,8 +336,8 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                         {option.description && (
                           <p className="text-sm text-consensus-grey-600 mb-2">{option.description}</p>
                         )}
-                        <Progress 
-                          value={option.supportPercentage} 
+                        <Progress
+                          value={option.supportPercentage}
                           className="h-2 bg-green-100"
                         />
                       </div>
@@ -370,14 +349,14 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                   </p>
                 )}
               </div>
-              
+
               {/* Contentious Options */}
               <div>
                 <h3 className="text-lg font-semibold text-consensus-blue mb-3 flex items-center">
                   <AlertTriangle className="h-5 w-5 mr-2 text-amber-600" />
                   Contentious Areas
                 </h3>
-                
+
                 {consensus.contentiousOptions.length > 0 ? (
                   <div className="space-y-3">
                     {consensus.contentiousOptions.map((option) => (
@@ -391,8 +370,8 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                         {option.description && (
                           <p className="text-sm text-consensus-grey-600 mb-2">{option.description}</p>
                         )}
-                        <Progress 
-                          value={option.supportPercentage} 
+                        <Progress
+                          value={option.supportPercentage}
                           className="h-2 bg-amber-100"
                         />
                         <div className="mt-2 text-sm text-amber-800">
@@ -407,25 +386,25 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                   </p>
                 )}
               </div>
-              
+
               <div className="text-xs text-consensus-grey-500 mt-4">
                 Last updated: {lastUpdated}
               </div>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="compromises">
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-consensus-blue mb-3 flex items-center">
                 <Lightbulb className="h-5 w-5 mr-2 text-amber-600" />
                 Suggested Compromises
               </h3>
-              
+
               {consensus.suggestedCompromises.length > 0 ? (
                 <Accordion type="single" collapsible className="space-y-3">
                   {consensus.suggestedCompromises.map((compromise, index) => (
-                    <AccordionItem 
-                      key={index} 
+                    <AccordionItem
+                      key={index}
                       value={`compromise-${index}`}
                       className="bg-blue-50 rounded-lg border border-blue-100 px-4"
                     >
@@ -441,7 +420,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                         <p className="text-sm text-consensus-grey-700 mb-3">
                           {compromise.description}
                         </p>
-                        
+
                         <div className="bg-white p-3 rounded-md mb-3">
                           <div className="flex items-center mb-2">
                             <div className="w-3 h-3 rounded-full bg-amber-500 mr-2"></div>
@@ -450,7 +429,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                               {compromise.targetIssue}
                             </Badge>
                           </div>
-                          
+
                           <div className="flex items-center">
                             <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
                             <span className="text-sm font-medium">Reduces Disagreement:</span>
@@ -459,7 +438,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                             </Badge>
                           </div>
                         </div>
-                        
+
                         <Button size="sm" variant="outline" className="w-full mt-2">
                           <Scale className="h-4 w-4 mr-2" />
                           Propose This Compromise
@@ -473,20 +452,20 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                   No compromise suggestions available. This may indicate strong consensus or insufficient data.
                 </p>
               )}
-              
+
               <div className="text-xs text-consensus-grey-500 mt-4">
                 Last updated: {lastUpdated}
               </div>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="new-options">
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-consensus-blue mb-3 flex items-center">
                 <Sparkles className="h-5 w-5 mr-2 text-purple-600" />
                 AI-Generated New Options
               </h3>
-              
+
               {consensus.proposedNewOptions.length > 0 ? (
                 <div className="space-y-4">
                   {consensus.proposedNewOptions.map((option, index) => (
@@ -497,11 +476,11 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                           {option.estimatedApproval.toFixed(0)}% Est. Approval
                         </Badge>
                       </div>
-                      
+
                       <p className="text-sm text-consensus-grey-700 mb-3">
                         {option.description}
                       </p>
-                      
+
                       <div className="bg-white p-3 rounded-md mb-3">
                         <div className="text-sm font-medium mb-1">Combines elements from:</div>
                         <div className="flex flex-wrap gap-2">
@@ -510,7 +489,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                               ...consensus.broadSupportOptions,
                               ...consensus.contentiousOptions
                             ].find(opt => opt.id === baseId);
-                            
+
                             return baseOption ? (
                               <Badge key={baseId} variant="outline">
                                 {baseOption.title}
@@ -519,7 +498,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                           })}
                         </div>
                       </div>
-                      
+
                       <div className="flex space-x-2 mt-3">
                         <Button size="sm" variant="outline" className="flex-1">
                           <ArrowRight className="h-4 w-4 mr-2" />
@@ -534,7 +513,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
                   No new options have been generated. This might be due to strong support for existing options or insufficient data.
                 </p>
               )}
-              
+
               <div className="text-xs text-consensus-grey-500 mt-4">
                 Last updated: {lastUpdated}
               </div>
