@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -91,7 +90,6 @@ const RecommendationEngine = ({
   const [weights, setWeights] = useState<ParameterWeights>(defaultWeights);
   const [emailRecipient, setEmailRecipient] = useState('');
   
-  // Fetch the current recommendation from the database
   const { 
     data: recommendationData,
     isLoading,
@@ -112,11 +110,9 @@ const RecommendationEngine = ({
     enabled: !!actualProposalId,
   });
   
-  // Safely access the recommendation data with proper type assertions
   const getAnalysisData = (): AnalysisData | undefined => {
     if (!recommendationData?.analysis_data) return undefined;
     
-    // Handle different types the Json can be
     const analysisData = recommendationData.analysis_data;
     if (typeof analysisData === 'object' && analysisData !== null) {
       return analysisData as unknown as AnalysisData;
@@ -125,7 +121,6 @@ const RecommendationEngine = ({
     return undefined;
   };
   
-  // Mutation to generate a new recommendation
   const generateMutation = useMutation({
     mutationFn: async (customWeights?: ParameterWeights) => {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-recommendation`, {
@@ -163,11 +158,8 @@ const RecommendationEngine = ({
     },
   });
   
-  // Mutation to send recommendation email
   const emailMutation = useMutation({
     mutationFn: async () => {
-      // This would call an edge function to send an email
-      // For now we're just showing a success message
       return new Promise((resolve) => setTimeout(resolve, 1000));
     },
     onSuccess: () => {
@@ -179,32 +171,28 @@ const RecommendationEngine = ({
     },
   });
   
-  // Get the recommendation data
   const analysisData = getAnalysisData();
   const recommendation = analysisData?.recommendation;
   const lastUpdated = recommendationData?.updated_at 
     ? new Date(recommendationData.updated_at).toLocaleString() 
     : 'Never';
   
-  // Update a specific weight
   const updateWeight = (key: keyof ParameterWeights, value: number) => {
     setWeights(prev => ({ ...prev, [key]: value }));
   };
   
-  // Handle weight slider changes
-  const handleWeightChange = (key: keyof ParameterWeights) => (value: number[]) => {
-    updateWeight(key, value[0]);
+  const handleWeightChange = (key: keyof ParameterWeights) => (values: number[]) => {
+    if (values.length > 0) {
+      updateWeight(key, values[0]);
+    }
   };
   
-  // Format a weight as a percentage
   const formatWeight = (weight: number) => `${Math.round(weight * 100)}%`;
   
-  // Reset weights to default
   const resetWeights = () => {
     setWeights(defaultWeights);
   };
   
-  // Determine the confidence color
   const getConfidenceColor = (score: number) => {
     if (score >= 80) return 'bg-green-100 text-green-800';
     if (score >= 60) return 'bg-blue-100 text-blue-800';

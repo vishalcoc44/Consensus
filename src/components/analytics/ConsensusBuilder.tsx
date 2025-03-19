@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -157,15 +156,16 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       }
       
       // Merge with existing data or create new
-      const analysisData = existingAnalysis?.analysis_data || {};
-      analysisData.consensus = consensusResult;
+      const mergedData = existingAnalysis?.analysis_data || {};
+      const typedMergedData = mergedData as Record<string, unknown>;
+      typedMergedData.consensus = consensusResult;
       
       // Save to database
       const { error: saveError } = await supabase
         .from('proposal_analysis')
         .upsert({
           proposal_id: actualProposalId,
-          analysis_data: analysisData,
+          analysis_data: typedMergedData,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'proposal_id' });
       
@@ -190,7 +190,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       });
     }
   });
-  
+
   // Render loading state
   if (isLoading) {
     return (
