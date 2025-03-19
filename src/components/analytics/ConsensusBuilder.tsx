@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -156,16 +157,26 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
       }
       
       // Merge with existing data or create new
-      const mergedData = existingAnalysis?.analysis_data || {};
-      const typedMergedData = mergedData as Record<string, unknown>;
-      typedMergedData.consensus = consensusResult;
+      let mergedData: Json = existingAnalysis?.analysis_data || {};
+      
+      // Ensure mergedData is an object before trying to add the consensus property
+      if (typeof mergedData === 'object' && mergedData !== null) {
+        // We need to create a new object to avoid mutating the original
+        mergedData = { 
+          ...((mergedData as Record<string, unknown>)), 
+          consensus: consensusResult 
+        } as Json;
+      } else {
+        // If for some reason mergedData is not an object, create a new one
+        mergedData = { consensus: consensusResult } as Json;
+      }
       
       // Save to database
       const { error: saveError } = await supabase
         .from('proposal_analysis')
         .upsert({
           proposal_id: actualProposalId,
-          analysis_data: typedMergedData,
+          analysis_data: mergedData,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'proposal_id' });
       
