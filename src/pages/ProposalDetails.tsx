@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import ProposalHeader from '@/components/proposals/ProposalHeader';
 import ContributionForm from '@/components/proposals/ContributionForm';
 import ContributionsOverview from '@/components/proposals/ContributionsOverview';
+import IntegrationManager from '@/components/integrations/IntegrationManager';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft } from 'lucide-react';
@@ -76,7 +77,7 @@ const ProposalDetails = () => {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 mb-8">
+        <TabsList className="grid grid-cols-3 mb-8">
           <TabsTrigger 
             value="contribute" 
             className="data-[state=active]:text-consensus-blue data-[state=active]:shadow"
@@ -89,6 +90,12 @@ const ProposalDetails = () => {
             className="data-[state=active]:text-consensus-blue data-[state=active]:shadow"
           >
             Overview
+          </TabsTrigger>
+          <TabsTrigger 
+            value="integrations" 
+            className="data-[state=active]:text-consensus-blue data-[state=active]:shadow"
+          >
+            External Data
           </TabsTrigger>
         </TabsList>
         
@@ -113,6 +120,10 @@ const ProposalDetails = () => {
         
         <TabsContent value="overview">
           <ContributionsOverview proposal={proposal} />
+        </TabsContent>
+        
+        <TabsContent value="integrations">
+          <IntegrationManager proposalId={proposalId || proposal.id} />
         </TabsContent>
       </Tabs>
     </DashboardLayout>

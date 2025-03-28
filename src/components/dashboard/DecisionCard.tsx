@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Calendar, MoreVertical, MessageCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Users, Calendar, MoreVertical, MessageCircle, ThumbsUp, ThumbsDown, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -22,6 +22,7 @@ interface DecisionCardProps {
   progress: number;
   status: 'active' | 'completed' | 'archived';
   consensus: number;
+  externalDataCount?: number;
 }
 
 const DecisionCard = ({
@@ -33,7 +34,8 @@ const DecisionCard = ({
   comments,
   progress,
   status,
-  consensus
+  consensus,
+  externalDataCount = 0
 }: DecisionCardProps) => {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -146,6 +148,13 @@ const DecisionCard = ({
             <MessageCircle size={14} className="mr-1" />
             <span>{comments} comments</span>
           </div>
+          
+          {externalDataCount > 0 && (
+            <div className="flex items-center text-xs text-consensus-grey-600">
+              <Link size={14} className="mr-1" />
+              <span>{externalDataCount} external sources</span>
+            </div>
+          )}
           
           <div className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(status)}`}>
             {status.charAt(0).toUpperCase() + status.slice(1)}
