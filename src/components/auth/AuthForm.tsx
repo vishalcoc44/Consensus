@@ -31,31 +31,74 @@ const AuthForm = ({ type }: AuthFormProps) => {
     
     try {
       if (type === 'login') {
-        await loginUser(email, password);
+        // Add more detailed logging for debugging
+        console.log(`Attempting login with email: ${email.substring(0, 3)}...`);
+        const authData = await loginUser(email, password);
         
-        toast({
-          title: "Successfully signed in",
-          description: "Welcome back!",
-        });
-        
-        navigate('/dashboard');
+        if (authData && authData.user) {
+          console.log("Login successful, user ID:", authData.user.id);
+          
+          toast({
+            title: "Successfully signed in",
+            description: "Welcome back!",
+          });
+          
+          navigate('/dashboard');
+        } else {
+          throw new Error("Login successful but no user data returned");
+        }
       } else {
-        await registerUser(email, password, name);
+        // Registration flow
+        console.log(`Attempting registration with email: ${email.substring(0, 3)}...`);
+        const authData = await registerUser(email, password, name);
         
-        toast({
-          title: "Account created",
-          description: "Welcome to ConsensusAI!",
-        });
-        
-        navigate('/dashboard');
+        if (authData && authData.user) {
+          console.log("Registration successful, user ID:", authData.user.id);
+          
+          toast({
+            title: "Account created",
+            description: "Welcome to ConsensusAI!",
+          });
+          
+          // For new accounts, check if email confirmation is required
+          if (authData.session) {
+            navigate('/dashboard');
+          } else {
+            toast({
+              title: "Email verification required",
+              description: "Please check your email to verify your account before logging in.",
+            });
+            navigate('/login');
+          }
+        } else {
+          throw new Error("Registration successful but no user data returned");
+        }
       }
     } catch (err) {
       console.error("Authentication error:", err);
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      
+      // Provide more user-friendly error messages
+      let errorMessage = "An unknown error occurred";
+      
+      if (err instanceof Error) {
+        // Handle specific error codes from Supabase
+        if (err.message.includes("invalid_credentials")) {
+          errorMessage = "Invalid email or password. Please check your credentials and try again.";
+        } else if (err.message.includes("email already exists")) {
+          errorMessage = "This email is already registered. Please use a different email or try logging in.";
+        } else if (err.message.includes("weak password")) {
+          errorMessage = "Password is too weak. Please use a stronger password.";
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
+      
       toast({
         variant: "destructive",
         title: "Authentication failed",
-        description: err instanceof Error ? err.message : "An unknown error occurred",
+        description: errorMessage,
       });
     } finally {
       setLoading(false);

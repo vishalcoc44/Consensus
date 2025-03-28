@@ -2,9 +2,13 @@
 import { supabase } from '@/integrations/supabase/client';
 
 export const loginUser = async (email: string, password: string) => {
+  // Trim whitespace from credentials to prevent common issues
+  const trimmedEmail = email.trim();
+  const trimmedPassword = password.trim();
+  
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+    email: trimmedEmail,
+    password: trimmedPassword,
   });
   
   if (error) throw error;
@@ -13,12 +17,17 @@ export const loginUser = async (email: string, password: string) => {
 };
 
 export const registerUser = async (email: string, password: string, name: string) => {
+  // Trim whitespace from credentials
+  const trimmedEmail = email.trim();
+  const trimmedPassword = password.trim();
+  const trimmedName = name.trim();
+  
   const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
+    email: trimmedEmail,
+    password: trimmedPassword,
     options: {
       data: {
-        full_name: name,
+        full_name: trimmedName,
       },
     }
   });
@@ -31,7 +40,7 @@ export const registerUser = async (email: string, password: string, name: string
         .from('profiles')
         .upsert({
           id: data.user.id,
-          full_name: name,
+          full_name: trimmedName,
           created_at: new Date().toISOString()
         });
         
