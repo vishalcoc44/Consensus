@@ -3,7 +3,7 @@ import { IntegrationSource } from '@/utils/integrationService';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Link, MessageSquare, Users, CheckSquare, Newspaper, BarChart } from 'lucide-react';
+import { Link, MessageSquare, Users, CheckSquare, Newspaper, BarChart, Trello } from 'lucide-react';
 
 interface IntegrationCardProps {
   integration: IntegrationSource;
@@ -11,7 +11,7 @@ interface IntegrationCardProps {
 }
 
 const IntegrationCard = ({ integration, onClick }: IntegrationCardProps) => {
-  // Map integration type to the appropriate Lucide icon component
+  // Return the appropriate Lucide icon component based on integration type
   const getIconForIntegrationType = () => {
     switch (integration.type) {
       case 'slack':
@@ -19,6 +19,7 @@ const IntegrationCard = ({ integration, onClick }: IntegrationCardProps) => {
       case 'teams':
         return <Users className="h-5 w-5 text-consensus-blue" />;
       case 'trello':
+        return <Trello className="h-5 w-5 text-consensus-blue" />;
       case 'asana':
         return <CheckSquare className="h-5 w-5 text-consensus-blue" />;
       case 'news':

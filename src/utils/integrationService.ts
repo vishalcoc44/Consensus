@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 // Define integration types
 export type IntegrationType = 'slack' | 'teams' | 'trello' | 'asana' | 'news' | 'market';
@@ -88,7 +89,7 @@ interface UserIntegration {
   type: string;
   is_connected: boolean;
   last_sync?: string;
-  auth_data?: Record<string, any>;
+  auth_data?: Json; // Changed from Record<string, any> to Json to match Supabase type
   created_at: string;
 }
 
@@ -135,7 +136,7 @@ export const getUserIntegrations = async (): Promise<IntegrationSource[]> => {
     // Update available integrations with connection status
     return availableIntegrations.map(integration => {
       const connectedIntegration = userIntegrations.find(
-        (ui: UserIntegration) => ui.type === integration.id
+        (ui: { type: string }) => ui.type === integration.id
       );
       
       return {
