@@ -81,16 +81,18 @@ export const availableIntegrations: IntegrationSource[] = [
   }
 ];
 
-// Type definition for user_integrations table data
+// Type for user_integrations table 
 interface UserIntegration {
   id: string;
+  user_id: string;
   type: string;
   is_connected: boolean;
   last_sync?: string;
-  auth_data?: Record<string, string>;
+  auth_data?: Record<string, any>;
+  created_at: string;
 }
 
-// Type definition for integration_data table
+// Type for integration_data table
 interface IntegrationDataRow {
   id: string;
   source_id: string;
@@ -109,36 +111,33 @@ interface IntegrationDataRow {
 // Get user's connected integrations
 export const getUserIntegrations = async (): Promise<IntegrationSource[]> => {
   try {
-    // For local testing, just return the mock data with some connected
-    // In a real app, uncomment and use the Supabase query below
+    const session = await supabase.auth.getSession();
+    if (!session.data.session) {
+      console.log("User not logged in, returning mock data");
+      return availableIntegrations;
+    }
     
-    /*
+    // Fetch user's connected integrations
     const { data: userIntegrations, error } = await supabase
       .from('user_integrations')
       .select('*');
 
-    if (error) throw error;
-    */
+    if (error) {
+      console.error('Error fetching user integrations:', error);
+      throw error;
+    }
     
-    // Simulate connected integrations for demo purposes
-    const mockConnectedIntegrations: UserIntegration[] = [
-      {
-        id: 'slack-1',
-        type: 'slack',
-        is_connected: true,
-        last_sync: new Date(Date.now() - 3600000).toISOString(),
-      },
-      {
-        id: 'market-1',
-        type: 'market',
-        is_connected: true,
-        last_sync: new Date(Date.now() - 86400000).toISOString(),
-      }
-    ];
-
+    // If no connected integrations found in database, return default list
+    if (!userIntegrations || userIntegrations.length === 0) {
+      return availableIntegrations;
+    }
+    
     // Update available integrations with connection status
     return availableIntegrations.map(integration => {
-      const connectedIntegration = mockConnectedIntegrations.find(ui => ui.type === integration.id);
+      const connectedIntegration = userIntegrations.find(
+        (ui: UserIntegration) => ui.type === integration.id
+      );
+      
       return {
         ...integration,
         isConnected: !!connectedIntegration,
@@ -154,68 +153,81 @@ export const getUserIntegrations = async (): Promise<IntegrationSource[]> => {
 // Get integration data for a specific proposal
 export const getProposalIntegrationData = async (proposalId: string): Promise<IntegrationData[]> => {
   try {
-    // For local testing, just return mock data
-    // In a real app, uncomment and use the Supabase query below
+    if (!proposalId) return [];
     
-    /*
+    // Fetch integration data for the proposal
     const { data, error } = await supabase
       .from('integration_data')
       .select('*')
       .eq('proposal_id', proposalId);
 
-    if (error) throw error;
-    */
+    if (error) {
+      console.error('Error fetching integration data:', error);
+      throw error;
+    }
     
-    // Mock data for development purposes
-    const mockIntegrationData: IntegrationDataRow[] = proposalId ? [
-      {
-        id: '1',
-        source_id: 'slack',
-        source_name: 'Slack',
-        source_type: 'slack',
-        proposal_id: proposalId,
-        title: 'Team Discussion on Office Location',
-        content: 'The team discussed the downtown location and most people mentioned concerns about the commute time, but appreciated the central location for client meetings.',
-        url: 'https://slack.com/archives/C01234ABCDE/p123456789',
-        sentiment: 0.6,
-        created_at: new Date(Date.now() - 172800000).toISOString(),
-        related_option_ids: ['1'],
-        insights: ['60% of team members prefer central location', 'Commute time is a major concern']
-      },
-      {
-        id: '2',
-        source_id: 'market',
-        source_name: 'Market Data',
-        source_type: 'market',
-        proposal_id: proposalId,
-        title: 'Office Rent Trends Q3 2023',
-        content: 'Commercial real estate in downtown areas has seen a 12% decrease in rent prices over the last quarter, while suburban areas have remained stable.',
-        sentiment: 0.8,
-        created_at: new Date(Date.now() - 259200000).toISOString(),
-        related_option_ids: ['1', '2'],
-        insights: ['Downtown rent prices decreased by 12%', 'Suburban rent prices remain stable']
+    if (!data || data.length === 0) {
+      // If no real data, use mock data for development
+      if (proposalId) {
+        const mockIntegrationData: IntegrationDataRow[] = [
+          {
+            id: '1',
+            source_id: 'slack',
+            source_name: 'Slack',
+            source_type: 'slack',
+            proposal_id: proposalId,
+            title: 'Team Discussion on Office Location',
+            content: 'The team discussed the downtown location and most people mentioned concerns about the commute time, but appreciated the central location for client meetings.',
+            url: 'https://slack.com/archives/C01234ABCDE/p123456789',
+            sentiment: 0.6,
+            created_at: new Date(Date.now() - 172800000).toISOString(),
+            related_option_ids: ['1'],
+            insights: ['60% of team members prefer central location', 'Commute time is a major concern']
+          },
+          {
+            id: '2',
+            source_id: 'market',
+            source_name: 'Market Data',
+            source_type: 'market',
+            proposal_id: proposalId,
+            title: 'Office Rent Trends Q3 2023',
+            content: 'Commercial real estate in downtown areas has seen a 12% decrease in rent prices over the last quarter, while suburban areas have remained stable.',
+            sentiment: 0.8,
+            created_at: new Date(Date.now() - 259200000).toISOString(),
+            related_option_ids: ['1', '2'],
+            insights: ['Downtown rent prices decreased by 12%', 'Suburban rent prices remain stable']
+          }
+        ];
+        
+        return mockIntegrationData.map(mapRowToIntegrationData);
       }
-    ] : [];
-
-    return mockIntegrationData.map(item => ({
-      id: item.id,
-      sourceId: item.source_id,
-      sourceName: item.source_name,
-      sourceType: item.source_type as IntegrationType,
-      proposalId: item.proposal_id,
-      title: item.title,
-      content: item.content,
-      url: item.url,
-      sentiment: item.sentiment,
-      createdAt: item.created_at,
-      relatedOptionIds: item.related_option_ids,
-      insights: item.insights
-    }));
+      
+      return [];
+    }
+    
+    // Map database rows to IntegrationData objects
+    return data.map(mapRowToIntegrationData);
   } catch (error) {
     console.error('Error fetching integration data:', error);
     return [];
   }
 };
+
+// Helper function to map database row to IntegrationData
+const mapRowToIntegrationData = (item: IntegrationDataRow): IntegrationData => ({
+  id: item.id,
+  sourceId: item.source_id,
+  sourceName: item.source_name,
+  sourceType: item.source_type as IntegrationType,
+  proposalId: item.proposal_id,
+  title: item.title,
+  content: item.content,
+  url: item.url,
+  sentiment: item.sentiment,
+  createdAt: item.created_at,
+  relatedOptionIds: item.related_option_ids,
+  insights: item.insights
+});
 
 // Connect to an integration
 export const connectIntegration = async (
@@ -223,22 +235,27 @@ export const connectIntegration = async (
   authData: Record<string, string>
 ): Promise<boolean> => {
   try {
-    // In a real application, this would handle OAuth flows
-    // For our demo, we'll just simulate a successful connection
+    const session = await supabase.auth.getSession();
+    if (!session.data.session) {
+      console.error('User not logged in');
+      return false;
+    }
     
-    // Uncomment when the table exists in Supabase
-    /*
+    // Store integration connection data
     const { error } = await supabase
       .from('user_integrations')
       .upsert({
+        user_id: session.data.session.user.id,
         type: integrationType,
         auth_data: authData,
         is_connected: true,
         last_sync: new Date().toISOString()
       });
 
-    if (error) throw error;
-    */
+    if (error) {
+      console.error(`Error connecting to ${integrationType}:`, error);
+      throw error;
+    }
     
     console.log(`Connected to ${integrationType} with auth data:`, authData);
     return true;
@@ -255,36 +272,14 @@ export const importDataFromIntegration = async (
   query: string
 ): Promise<IntegrationData[]> => {
   try {
-    // In a real app, this would make API calls to the external service
-    // For our demo, we'll call our edge function that simulates retrieving data
+    if (!proposalId || !query) {
+      console.error('Missing required parameters');
+      return [];
+    }
     
     console.log(`Importing data from ${integrationType} for proposal ${proposalId} with query: ${query}`);
     
-    // Simulate a delay for realism
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Mock data based on the query
-    const mockData: IntegrationData[] = [
-      {
-        id: Date.now().toString(),
-        sourceId: integrationType,
-        sourceName: integrationType === 'slack' ? 'Slack' : 
-                    integrationType === 'teams' ? 'Microsoft Teams' : 
-                    integrationType === 'trello' ? 'Trello' : 
-                    integrationType === 'asana' ? 'Asana' : 
-                    integrationType === 'news' ? 'News API' : 'Market Data',
-        sourceType: integrationType,
-        proposalId,
-        title: `${query} - Search Results`,
-        content: `This is simulated content related to "${query}" from ${integrationType}.`,
-        createdAt: new Date().toISOString(),
-        sentiment: 0.7,
-        insights: [`Found 3 items related to "${query}"`]
-      }
-    ];
-    
-    // Uncomment when the edge function is set up
-    /*
+    // Call our edge function to fetch integration data
     const { data, error } = await supabase.functions.invoke('fetch-integration-data', {
       body: { 
         integrationType,
@@ -293,12 +288,37 @@ export const importDataFromIntegration = async (
       }
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error(`Error invoking fetch-integration-data function:`, error);
+      throw error;
+    }
     
-    return data || [];
-    */
+    // If the edge function isn't ready yet, use mock data
+    if (!data) {
+      console.log('Using mock data since edge function data is not available');
+      const mockData: IntegrationData[] = [
+        {
+          id: Date.now().toString(),
+          sourceId: integrationType,
+          sourceName: integrationType === 'slack' ? 'Slack' : 
+                      integrationType === 'teams' ? 'Microsoft Teams' : 
+                      integrationType === 'trello' ? 'Trello' : 
+                      integrationType === 'asana' ? 'Asana' : 
+                      integrationType === 'news' ? 'News API' : 'Market Data',
+          sourceType: integrationType,
+          proposalId,
+          title: `${query} - Search Results`,
+          content: `This is simulated content related to "${query}" from ${integrationType}.`,
+          createdAt: new Date().toISOString(),
+          sentiment: 0.7,
+          insights: [`Found 3 items related to "${query}"`]
+        }
+      ];
+      
+      return mockData;
+    }
     
-    return mockData;
+    return data;
   } catch (error) {
     console.error(`Error importing data from ${integrationType}:`, error);
     return [];
@@ -311,27 +331,11 @@ export const analyzeIntegrationData = async (
   proposalId: string
 ): Promise<IntegrationData[]> => {
   try {
-    if (data.length === 0) return [];
+    if (data.length === 0 || !proposalId) return [];
     
-    // Simulate analyzing the data
     console.log(`Analyzing ${data.length} items for proposal ${proposalId}`);
     
-    // Simulate a delay for realism
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Just add some mock insights to the data
-    const analyzedData = data.map(item => ({
-      ...item,
-      insights: [
-        ...(item.insights || []),
-        'Auto-analysis complete',
-        'Sentiment analysis suggests positive reception',
-        'Consider linking to related proposal options'
-      ]
-    }));
-    
-    // Uncomment when the edge function is set up
-    /*
+    // Call our edge function to analyze the data
     const { data: analyzedData, error } = await supabase.functions.invoke('analyze-integration-data', {
       body: { 
         data,
@@ -339,8 +343,26 @@ export const analyzeIntegrationData = async (
       }
     });
 
-    if (error) throw error;
-    */
+    if (error) {
+      console.error('Error invoking analyze-integration-data function:', error);
+      throw error;
+    }
+    
+    // If the edge function isn't ready yet, add mock insights
+    if (!analyzedData) {
+      console.log('Using mock analysis since edge function data is not available');
+      const mockAnalyzedData = data.map(item => ({
+        ...item,
+        insights: [
+          ...(item.insights || []),
+          'Auto-analysis complete',
+          'Sentiment analysis suggests positive reception',
+          'Consider linking to related proposal options'
+        ]
+      }));
+      
+      return mockAnalyzedData;
+    }
     
     return analyzedData;
   } catch (error) {

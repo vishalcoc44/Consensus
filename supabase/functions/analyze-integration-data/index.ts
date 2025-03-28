@@ -22,6 +22,8 @@ serve(async (req) => {
   try {
     // Get the request parameters
     const { data, proposalId } = await req.json() as AnalyzeIntegrationRequest;
+    
+    console.log(`Processing analyze-integration-data request with ${data.length} items for proposal ${proposalId}`);
 
     // Create a Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
@@ -35,6 +37,7 @@ serve(async (req) => {
       .eq("proposal_id", proposalId);
 
     if (optionsError) {
+      console.error(`Error fetching options: ${optionsError.message}`);
       throw new Error(`Error fetching options: ${optionsError.message}`);
     }
 
@@ -63,6 +66,19 @@ serve(async (req) => {
           `Source: ${item.sourceName}`
         ];
       }
+
+      // Update the integration data record with the new insights
+      supabase.from("integration_data")
+        .update({
+          related_option_ids: relatedOptionIds,
+          insights: generatedInsights
+        })
+        .eq("id", item.id)
+        .then(({ error }) => {
+          if (error) {
+            console.error(`Error updating integration data: ${error.message}`);
+          }
+        });
 
       return {
         ...item,

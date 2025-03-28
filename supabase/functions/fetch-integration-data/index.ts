@@ -23,6 +23,8 @@ serve(async (req) => {
   try {
     // Get the request parameters
     const { integrationType, proposalId, query } = await req.json() as FetchIntegrationRequest;
+    
+    console.log(`Processing fetch-integration-data request: ${integrationType}, ${proposalId}, ${query}`);
 
     // Create a Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
@@ -37,6 +39,7 @@ serve(async (req) => {
       .single();
 
     if (proposalError) {
+      console.error(`Error fetching proposal: ${proposalError.message}`);
       throw new Error(`Error fetching proposal: ${proposalError.message}`);
     }
 
@@ -74,6 +77,7 @@ serve(async (req) => {
     }
 
     // Save the integration data to the database
+    console.log(`Saving ${integrationData.length} integration data items to database`);
     for (const item of integrationData) {
       const { error: saveError } = await supabase.from("integration_data").insert({
         proposal_id: proposalId,
@@ -89,7 +93,7 @@ serve(async (req) => {
       });
 
       if (saveError) {
-        console.error(`Error saving integration data: ${saveError.message}`);
+        console.error(`Error saving integration data: ${saveError.message}`, saveError);
       }
     }
 

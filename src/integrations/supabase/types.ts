@@ -131,6 +131,51 @@ export type Database = {
           },
         ]
       }
+      integration_data: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          insights: string[] | null
+          proposal_id: string
+          related_option_ids: string[] | null
+          sentiment: number | null
+          source_id: string
+          source_name: string
+          source_type: string
+          title: string
+          url: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          insights?: string[] | null
+          proposal_id: string
+          related_option_ids?: string[] | null
+          sentiment?: number | null
+          source_id: string
+          source_name: string
+          source_type: string
+          title: string
+          url?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          insights?: string[] | null
+          proposal_id?: string
+          related_option_ids?: string[] | null
+          sentiment?: number | null
+          source_id?: string
+          source_name?: string
+          source_type?: string
+          title?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -354,6 +399,36 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      user_integrations: {
+        Row: {
+          auth_data: Json | null
+          created_at: string
+          id: string
+          is_connected: boolean
+          last_sync: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          auth_data?: Json | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_sync?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          auth_data?: Json | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          last_sync?: string | null
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }
