@@ -1,34 +1,48 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { resetPassword } from '@/components/auth/services/authService';
 import { Eye, EyeOff, LockIcon } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const ResetPassword = () => {
-  const [searchParams] = useSearchParams();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Get token from URL
-  const token = searchParams.get('token');
 
   useEffect(() => {
     // Set page title
     document.title = 'Set New Password - ConsensusAI';
     
-    // Check if token exists
-    if (!token) {
-      setError('Invalid or missing reset token. Please request a new password reset link.');
-    }
-  }, [token]);
+    // Check if the user has a valid session after the password reset flow
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Session error:', error);
+        setError('Invalid or expired session. Please request a new password reset link.');
+        return;
+      }
+      
+      if (data.session) {
+        console.log('Valid session detected during password reset');
+        setIsAuthenticated(true);
+      } else {
+        console.log('No session found during password reset');
+        setError('Invalid or missing reset token. Please request a new password reset link.');
+      }
+    };
+    
+    checkSession();
+  }, []);
 
   const validatePassword = (password: string): boolean => {
     return password.length >= 6;
@@ -53,15 +67,15 @@ const ResetPassword = () => {
       return;
     }
     
-    if (!token) {
-      setError('Invalid reset token. Please request a new password reset link.');
+    if (!isAuthenticated) {
+      setError('You must have a valid password reset session to continue');
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      await resetPassword(token, password.trim());
+      await resetPassword(password.trim());
       
       toast({
         title: "Password reset successful",
@@ -103,6 +117,18 @@ const ResetPassword = () => {
           {error && (
             <div className="bg-red-50 text-red-800 p-4 rounded-lg mb-6">
               {error}
+              {!isAuthenticated && (
+                <div className="mt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2 text-sm"
+                    onClick={() => navigate('/forgot-password')}
+                  >
+                    Request a new reset link
+                  </Button>
+                </div>
+              )}
             </div>
           )}
           
@@ -160,11 +186,24 @@ const ResetPassword = () => {
             <Button
               type="submit"
               className="w-full bg-consensus-blue hover:bg-blue-700 py-5 rounded-xl"
-              disabled={isSubmitting || !token}
+              disabled={isSubmitting || !isAuthenticated}
             >
               {isSubmitting ? 'Updating Password...' : 'Update Password'}
             </Button>
           </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-sm text-consensus-grey-600">
+              Remember your password?{' '}
+              <Button 
+                variant="link" 
+                className="p-0 text-consensus-blue hover:underline"
+                onClick={() => navigate('/login')}
+              >
+                Sign in
+              </Button>
+            </p>
+          </div>
         </div>
       </div>
     </div>

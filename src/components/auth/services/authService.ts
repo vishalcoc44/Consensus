@@ -55,13 +55,13 @@ export const registerUser = async (email: string, password: string, name: string
   return data;
 };
 
-// Add password reset functionality
+// Fix password reset functionality
 export const requestPasswordReset = async (email: string) => {
   // Trim whitespace from email
   const trimmedEmail = email.trim();
   
   const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-    redirectTo: window.location.origin + '/reset-password',
+    redirectTo: `${window.location.origin}/reset-password`,
   });
   
   if (error) throw error;
@@ -69,16 +69,20 @@ export const requestPasswordReset = async (email: string) => {
   return true;
 };
 
-export const resetPassword = async (token: string, newPassword: string) => {
-  // First we need to exchange the token for a session
-  // This happens automatically if the user clicks the link in the email
-  // but we need to handle it manually to get the session
-
-  const { error: updateError } = await supabase.auth.updateUser({
-    password: newPassword.trim(),
-  });
+export const resetPassword = async (newPassword: string) => {
+  // The token is automatically handled by Supabase in the URL
+  // We don't need to extract it manually
   
-  if (updateError) throw updateError;
-  
-  return true;
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword.trim(),
+    });
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('Reset password error:', error);
+    throw error;
+  }
 };
