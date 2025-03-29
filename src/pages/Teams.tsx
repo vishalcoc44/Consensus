@@ -1,14 +1,24 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus, UserPlus, Users } from 'lucide-react';
+import { Users, UserPlus } from 'lucide-react';
 import TeamMemberCard from '@/components/teams/TeamMemberCard';
-import TeamRoleSelector from '@/components/teams/TeamRoleSelector';
+import AddTeamMemberDialog from '@/components/teams/AddTeamMemberDialog';
+import { useToast } from '@/components/ui/use-toast';
+
+// Type definition for team member
+interface TeamMember {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  avatar: string;
+  dateAdded: string;
+}
 
 // Mock data for team members
-const mockTeamMembers = [
+const initialTeamMembers = [
   {
     id: 1,
     name: 'Jessica Thompson',
@@ -60,10 +70,61 @@ const mockTeamMembers = [
 ];
 
 const Teams = () => {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
+  const { toast } = useToast();
+
   useEffect(() => {
     // Set page title
     document.title = 'Team Management - ConsensusAI';
   }, []);
+
+  // Function to calculate role statistics
+  const calculateRoleStats = () => {
+    const stats = {
+      admin: 0,
+      proposer: 0,
+      contributor: 0,
+    };
+    
+    teamMembers.forEach(member => {
+      if (member.role === 'Admin') stats.admin++;
+      if (member.role === 'Proposer') stats.proposer++;
+      if (member.role === 'Contributor') stats.contributor++;
+    });
+    
+    return stats;
+  };
+  
+  const roleStats = calculateRoleStats();
+  
+  // Function to add a new team member
+  const handleAddTeamMember = (email: string, name: string, role: string) => {
+    // In a real app, this would make an API call to add the user to Supabase
+    // For now, we're just updating the state
+    
+    // Generate a random avatar
+    const randomImg = Math.floor(Math.random() * 20) + 1;
+    const avatar = `https://i.pravatar.cc/150?img=${randomImg}`;
+    
+    // Create a new member object
+    const newMember: TeamMember = {
+      id: teamMembers.length + 1,
+      name,
+      email,
+      role,
+      avatar,
+      dateAdded: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    };
+    
+    // Add the new member to the list
+    setTeamMembers([...teamMembers, newMember]);
+    
+    // Show success toast
+    toast({
+      title: "Team member added",
+      description: `${name} has been added to your team as a ${role}`,
+    });
+  };
 
   return (
     <DashboardLayout>
@@ -80,7 +141,7 @@ const Teams = () => {
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold">{mockTeamMembers.length}</p>
+                <p className="text-3xl font-bold">{teamMembers.length}</p>
                 <p className="text-sm text-consensus-grey-600">Total members</p>
               </div>
               <div className="p-3 rounded-full bg-blue-100">
@@ -98,26 +159,35 @@ const Teams = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Admins</span>
-                <span className="text-sm font-medium">1</span>
+                <span className="text-sm font-medium">{roleStats.admin}</span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-purple-500" style={{ width: '16.6%' }}></div>
+                <div 
+                  className="h-full bg-purple-500" 
+                  style={{ width: `${(roleStats.admin / teamMembers.length) * 100}%` }}
+                ></div>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="text-sm">Proposers</span>
-                <span className="text-sm font-medium">2</span>
+                <span className="text-sm font-medium">{roleStats.proposer}</span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500" style={{ width: '33.3%' }}></div>
+                <div 
+                  className="h-full bg-blue-500" 
+                  style={{ width: `${(roleStats.proposer / teamMembers.length) * 100}%` }}
+                ></div>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="text-sm">Contributors</span>
-                <span className="text-sm font-medium">3</span>
+                <span className="text-sm font-medium">{roleStats.contributor}</span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-green-500" style={{ width: '50%' }}></div>
+                <div 
+                  className="h-full bg-green-500" 
+                  style={{ width: `${(roleStats.contributor / teamMembers.length) * 100}%` }}
+                ></div>
               </div>
             </div>
           </CardContent>
@@ -133,10 +203,7 @@ const Teams = () => {
                 <p className="text-3xl font-bold">0</p>
                 <p className="text-sm text-consensus-grey-600">No inactive members</p>
               </div>
-              <Button variant="outline" className="rounded-lg border-dashed">
-                <UserPlus size={18} className="mr-2" />
-                Invite Members
-              </Button>
+              <AddTeamMemberDialog onAddMember={handleAddTeamMember} />
             </div>
           </CardContent>
         </Card>
@@ -144,14 +211,11 @@ const Teams = () => {
 
       <div className="flex justify-between items-center mb-6 animate-fade-in animate-delay-3">
         <h2 className="text-xl font-sf font-bold">All Team Members</h2>
-        <Button className="bg-consensus-blue hover:bg-consensus-blue/90 rounded-lg">
-          <UserPlus size={18} className="mr-2" />
-          Add Team Member
-        </Button>
+        <AddTeamMemberDialog onAddMember={handleAddTeamMember} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 animate-fade-in animate-delay-3">
-        {mockTeamMembers.map((member) => (
+        {teamMembers.map((member) => (
           <TeamMemberCard
             key={member.id}
             name={member.name}

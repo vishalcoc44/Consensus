@@ -1,6 +1,6 @@
 
 import { useState, ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutGrid, 
   Users, 
@@ -15,6 +15,7 @@ import {
   LogOut
 } from 'lucide-react';
 
+// Define sidebar items with correct paths
 const sidebarItems = [
   { icon: LayoutGrid, label: 'Dashboard', path: '/dashboard' },
   { icon: Users, label: 'Teams', path: '/dashboard/teams' },
@@ -30,6 +31,7 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const location = useLocation();
   
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -37,6 +39,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   
   const toggleSearch = () => {
     setIsSearchOpen(!isSearchOpen);
+  };
+  
+  // Function to check if a path is active
+  const isPathActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
   
   return (
@@ -59,7 +66,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <Link
                   to={item.path}
                   className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-consensus-grey-600 hover:bg-consensus-grey-100 hover:text-consensus-blue transition-colors ${
-                    item.path === '/dashboard' ? 'bg-consensus-blue/10 text-consensus-blue font-medium' : ''
+                    isPathActive(item.path) ? 'bg-consensus-blue/10 text-consensus-blue font-medium' : ''
                   }`}
                 >
                   <item.icon size={20} />
@@ -113,7 +120,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                     <Link
                       to={item.path}
                       className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-consensus-grey-600 hover:bg-consensus-grey-100 hover:text-consensus-blue transition-colors ${
-                        item.path === '/dashboard' ? 'bg-consensus-blue/10 text-consensus-blue font-medium' : ''
+                        isPathActive(item.path) ? 'bg-consensus-blue/10 text-consensus-blue font-medium' : ''
                       }`}
                       onClick={toggleSidebar}
                     >

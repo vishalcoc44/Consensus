@@ -19,6 +19,7 @@ import CreateProposal from "./pages/CreateProposal";
 import ProposalDetails from "./pages/ProposalDetails";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import Decisions from "./pages/Decisions";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -107,6 +108,11 @@ const App = () => {
             <Route path="/dashboard/teams" element={
               <ProtectedRoute>
                 <Teams />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/decisions" element={
+              <ProtectedRoute>
+                <Decisions />
               </ProtectedRoute>
             } />
             <Route path="/dashboard/proposals/create" element={
