@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, User, Lock, Shield } from 'lucide-react';
 import { getUserProfile } from '@/components/auth/services/authService';
+import PrivacySettings from '@/components/settings/PrivacySettings';
 
 interface Profile {
   id: string;
@@ -217,77 +219,134 @@ const Settings = () => {
             <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
           </div>
         ) : (
-          <div className="grid gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>Update your account profile information</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col md:flex-row gap-8">
-                  <div className="flex flex-col items-center">
-                    <Avatar className="h-24 w-24 mb-4">
-                      <AvatarImage src={avatarUrl || undefined} alt={fullName || 'User'} />
-                      <AvatarFallback>{fullName ? fullName.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                  
-                  <div className="flex-1 space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name</Label>
-                      <Input 
-                        id="fullName" 
-                        value={fullName} 
-                        onChange={(e) => setFullName(e.target.value)} 
-                        placeholder="Enter your full name" 
-                      />
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="mb-8">
+              <TabsTrigger value="profile" className="flex items-center">
+                <User className="h-4 w-4 mr-2" />
+                Profile
+              </TabsTrigger>
+              <TabsTrigger value="privacy" className="flex items-center">
+                <Shield className="h-4 w-4 mr-2" />
+                Privacy & Data
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center">
+                <Lock className="h-4 w-4 mr-2" />
+                Security
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="profile">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profile Information</CardTitle>
+                  <CardDescription>Update your account profile information</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col md:flex-row gap-8">
+                    <div className="flex flex-col items-center">
+                      <Avatar className="h-24 w-24 mb-4">
+                        <AvatarImage src={avatarUrl || undefined} alt={fullName || 'User'} />
+                        <AvatarFallback>{fullName ? fullName.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
+                      </Avatar>
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="avatarUrl">Avatar URL</Label>
-                      <Input 
-                        id="avatarUrl" 
-                        value={avatarUrl || ''} 
-                        onChange={(e) => setAvatarUrl(e.target.value)} 
-                        placeholder="Enter avatar URL (optional)" 
-                      />
-                    </div>
-                    
-                    <div className="flex justify-end">
-                      <Button 
-                        onClick={updateProfile} 
-                        disabled={updating}
-                      >
-                        {updating ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Updating...
-                          </>
-                        ) : 'Save Changes'}
-                      </Button>
+                    <div className="flex-1 space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fullName">Full Name</Label>
+                        <Input 
+                          id="fullName" 
+                          value={fullName} 
+                          onChange={(e) => setFullName(e.target.value)} 
+                          placeholder="Enter your full name" 
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="avatarUrl">Avatar URL</Label>
+                        <Input 
+                          id="avatarUrl" 
+                          value={avatarUrl || ''} 
+                          onChange={(e) => setAvatarUrl(e.target.value)} 
+                          placeholder="Enter avatar URL (optional)" 
+                        />
+                      </div>
+                      
+                      <div className="flex justify-end">
+                        <Button 
+                          onClick={updateProfile} 
+                          disabled={updating}
+                        >
+                          {updating ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Updating...
+                            </>
+                          ) : 'Save Changes'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+              
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>Account Actions</CardTitle>
+                  <CardDescription>Manage your account</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={signOut}
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Actions</CardTitle>
-                <CardDescription>Manage your account</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={signOut}
-                  >
-                    Sign Out
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            <TabsContent value="privacy">
+              <PrivacySettings />
+            </TabsContent>
+            
+            <TabsContent value="security">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Security Settings</CardTitle>
+                  <CardDescription>Manage your account security settings</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Password</h3>
+                      <p className="text-sm text-gray-500 mb-4">
+                        Update your password to keep your account secure
+                      </p>
+                      <Button variant="outline">Change Password</Button>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Two-Factor Authentication</h3>
+                      <p className="text-sm text-gray-500 mb-4">
+                        Add an extra layer of security to your account
+                      </p>
+                      <Button variant="outline">Enable 2FA</Button>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Login Sessions</h3>
+                      <p className="text-sm text-gray-500 mb-4">
+                        View and manage your active login sessions
+                      </p>
+                      <Button variant="outline">Manage Sessions</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </DashboardLayout>
