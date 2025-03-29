@@ -1,7 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { typedSupabase } from '@/utils/supabaseClient';
 import { encrypt, decrypt } from '@/utils/encryption';
+import { logAuthEvent } from '@/utils/auditLogger';
 
 export const loginUser = async (email: string, password: string) => {
   const trimmedEmail = email.trim();
@@ -10,7 +10,7 @@ export const loginUser = async (email: string, password: string) => {
   try {
     console.log(`Authentication attempt for: ${trimmedEmail}`);
     
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await typedSupabase.auth.signInWithPassword({
       email: trimmedEmail,
       password: trimmedPassword,
     });

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
 import TeamRoleSelector from './TeamRoleSelector';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from "@/integrations/supabase/client";
+import { typedSupabase, extractProfileData } from "@/utils/supabaseClient";
 
 interface AddTeamMemberDialogProps {
   onAddMember: (email: string, name: string, role: string) => void;
@@ -58,11 +58,13 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
         return;
       }
       
-      // For demo purposes, create a dummy profile if needed
-      const { data: existingProfile, error: profileQueryError } = await supabase
+      console.log("Searching for profile with name:", name);
+      
+      // Check if the profile exists
+      const { data: profileData, error: profileQueryError } = await typedSupabase
         .from('profiles')
         .select('id')
-        .eq('full_name', name)
+        .ilike('full_name', name)
         .maybeSingle();
         
       if (profileQueryError) {
@@ -70,13 +72,14 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
         throw profileQueryError;
       }
 
-      let userId = existingProfile?.id;
+      let userId = profileData?.id;
+      console.log("Found profile:", profileData);
       
       if (!userId) {
+        console.log("Creating new profile for:", name);
         // Create a dummy profile for demonstration purposes
-        // In a real app, you would invite the user and they would create their own account
         const newUserId = crypto.randomUUID();
-        const { data: newProfile, error: profileError } = await supabase
+        const { data: newProfile, error: profileError } = await typedSupabase
           .from('profiles')
           .insert({
             id: newUserId,
@@ -96,10 +99,13 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
         }
         
         userId = newProfile.id;
+        console.log("Created new profile with ID:", userId);
       }
       
+      console.log("Adding team member with user ID:", userId, "to team:", teamId, "with role:", role);
+      
       // Add the team member to the team
-      const { error: teamMemberError } = await supabase
+      const { error: teamMemberError } = await typedSupabase
         .from('team_members')
         .insert({
           team_id: teamId,
@@ -111,6 +117,8 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
         console.error("Error adding team member:", teamMemberError);
         throw teamMemberError;
       }
+      
+      console.log("Team member added successfully");
       
       // Call the onAddMember callback (this will update the UI)
       onAddMember(email, name, role);

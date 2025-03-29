@@ -5,8 +5,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { typedSupabase } from "@/utils/supabaseClient";
 import { toast } from "@/components/ui/use-toast";
+import { logAuthEvent } from "@/utils/auditLogger";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -36,24 +37,26 @@ const App = () => {
 
   useEffect(() => {
     // First set up auth state listener to catch any auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = typedSupabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log("Auth state changed:", event);
         setSession(newSession);
         
         if (newSession) {
           console.log("User authenticated:", newSession.user.email);
+          logAuthEvent('auth_state_change', { event, user: newSession.user.id });
           
           // Refresh the query cache when auth state changes
           queryClient.invalidateQueries();
         } else {
           console.log("User signed out");
+          logAuthEvent('auth_state_change', { event, user: null });
         }
       }
     );
 
     // Then check for current session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    typedSupabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log("Initial session check:", currentSession ? "Logged in" : "Not logged in");
       setSession(currentSession);
       setLoading(false);
