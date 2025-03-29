@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -89,7 +90,13 @@ const Dashboard = () => {
               analysisData.recommendation !== null && 
               'confidenceScore' in analysisData.recommendation
             ) {
-              consensusScore = analysisData.recommendation.confidenceScore || Math.floor(Math.random() * 100);
+              // Ensure we convert to number and handle any non-numeric values
+              const confidenceScore = analysisData.recommendation.confidenceScore;
+              consensusScore = typeof confidenceScore === 'number' ? 
+                confidenceScore : 
+                (typeof confidenceScore === 'string' ? 
+                  parseInt(confidenceScore, 10) || 0 : 
+                  Math.floor(Math.random() * 100));
             } else {
               consensusScore = Math.floor(Math.random() * 100);
             }
