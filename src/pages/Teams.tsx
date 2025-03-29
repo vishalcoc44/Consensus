@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,7 +90,7 @@ const Teams = () => {
           role,
           joined_at,
           user_id,
-          profiles!inner (
+          profiles(
             id,
             full_name,
             avatar_url
@@ -103,8 +102,14 @@ const Teams = () => {
       
       if (data) {
         const formattedMembers: TeamMember[] = data.map(member => {
-          // Fix: Correctly access the profile properties
-          const profile = member.profiles;
+          // The issue is that profiles is returned as a single object, not an array
+          // We need to explicitly type and access it as a single object
+          const profile = member.profiles as {
+            id: string;
+            full_name: string | null;
+            avatar_url: string | null;
+          };
+          
           return {
             id: member.id,
             name: profile.full_name || 'Unknown',
