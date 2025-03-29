@@ -1,19 +1,8 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Users, Calendar, MoreVertical, MessageCircle, ThumbsUp, ThumbsDown, Link } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
+import { CalendarDays, Users, MessageSquare, CircleCheck, Clock } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 interface DecisionCardProps {
-  id?: string;
   title: string;
   description: string;
   dueDate: string;
@@ -22,11 +11,9 @@ interface DecisionCardProps {
   progress: number;
   status: 'active' | 'completed' | 'archived';
   consensus: number;
-  externalDataCount?: number;
 }
 
 const DecisionCard = ({
-  id = '1', // Default ID for demo purposes
   title,
   description,
   dueDate,
@@ -35,170 +22,96 @@ const DecisionCard = ({
   progress,
   status,
   consensus,
-  externalDataCount = 0
 }: DecisionCardProps) => {
-  const navigate = useNavigate();
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
+  // Calculate progress color based on progress value
+  const getProgressColor = () => {
+    if (progress < 30) return 'bg-amber-500';
+    if (progress < 70) return 'bg-blue-500';
+    return 'bg-emerald-500';
   };
-  
-  const handleCardClick = () => {
-    navigate(`/dashboard/proposals/${id}`);
+
+  // Calculate consensus indicator color
+  const getConsensusColor = () => {
+    if (consensus < 40) return 'bg-red-500';
+    if (consensus < 70) return 'bg-amber-500';
+    return 'bg-consensus-green';
   };
-  
-  const getStatusColor = (status: string) => {
+
+  // Get status badge color
+  const getStatusColor = () => {
     switch (status) {
       case 'active':
-        return 'bg-emerald-100 text-emerald-700';
+        return 'bg-blue-500/20 text-blue-500 border-blue-500/30';
       case 'completed':
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30';
       case 'archived':
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-gray-500/20 text-gray-500 border-gray-500/30';
       default:
-        return 'bg-gray-100 text-gray-700';
+        return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
   };
-  
-  const getConsensusColor = (consensus: number) => {
-    if (consensus >= 75) return 'text-emerald-600';
-    if (consensus >= 50) return 'text-amber-600';
-    return 'text-rose-600';
-  };
-  
+
   return (
-    <div 
-      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden group cursor-pointer"
-      onClick={handleCardClick}
-    >
+    <div className="relative bg-consensus-dark-300 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-consensus-dark-200 hover:border-consensus-green/30 hover-green-glow group">
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-consensus-green to-consensus-teal opacity-60"></div>
+      
       <div className="p-5">
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="font-medium text-lg line-clamp-1">{title}</h3>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button 
-                className="p-1 rounded-full hover:bg-consensus-grey-100 text-consensus-grey-500"
-                onClick={(e) => e.stopPropagation()} // Prevent card click when clicking dropdown
-              >
-                <MoreVertical size={18} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/dashboard/proposals/${id}`);
-                }}
-              >
-                View details
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Edit decision
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="cursor-pointer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Share
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="cursor-pointer text-rose-600"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Archive
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="text-lg font-medium text-white line-clamp-1 group-hover:text-consensus-green transition-colors duration-300">{title}</h3>
+          <span className={`text-xs px-2 py-0.5 rounded-full ml-2 border ${getStatusColor()} capitalize`}>
+            {status}
+          </span>
         </div>
         
-        <p className={`text-consensus-grey-600 text-sm mb-4 ${isExpanded ? '' : 'line-clamp-2'}`}>
-          {description}
-        </p>
+        <p className="text-sm text-consensus-grey-300 mb-4 line-clamp-2 min-h-[40px]">{description}</p>
         
-        {description.length > 120 && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleExpand();
-            }}
-            className="text-xs text-consensus-blue hover:underline mb-4 inline-block"
-          >
-            {isExpanded ? 'Show less' : 'Read more'}
-          </button>
-        )}
-        
-        <div className="flex flex-wrap gap-3 mb-4">
-          <div className="flex items-center text-xs text-consensus-grey-600">
-            <Calendar size={14} className="mr-1" />
-            <span>Due {dueDate}</span>
+        <div className="flex items-center justify-between text-sm mb-3">
+          <div className="flex items-center text-consensus-grey-400">
+            <CalendarDays size={14} className="mr-1" />
+            <span>{dueDate}</span>
           </div>
           
-          <div className="flex items-center text-xs text-consensus-grey-600">
-            <Users size={14} className="mr-1" />
-            <span>{participants} participants</span>
-          </div>
-          
-          <div className="flex items-center text-xs text-consensus-grey-600">
-            <MessageCircle size={14} className="mr-1" />
-            <span>{comments} comments</span>
-          </div>
-          
-          {externalDataCount > 0 && (
-            <div className="flex items-center text-xs text-consensus-grey-600">
-              <Link size={14} className="mr-1" />
-              <span>{externalDataCount} external sources</span>
+          <div className="flex space-x-3">
+            <div className="flex items-center text-consensus-grey-400">
+              <Users size={14} className="mr-1" />
+              <span>{participants}</span>
             </div>
-          )}
-          
-          <div className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(status)}`}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </div>
-        </div>
-        
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-consensus-grey-600">Progress</span>
-            <span className="text-xs font-medium">{progress}%</span>
-          </div>
-          <Progress value={progress} className="h-1.5" />
-        </div>
-        
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-consensus-grey-600">Consensus Level</span>
-              <span className={`text-xs font-medium ${getConsensusColor(consensus)}`}>
-                {consensus}%
-              </span>
+            <div className="flex items-center text-consensus-grey-400">
+              <MessageSquare size={14} className="mr-1" />
+              <span>{comments}</span>
             </div>
-            <div className="flex items-center space-x-1">
-              <ThumbsUp size={14} className="text-emerald-500" />
-              <div className="bg-consensus-grey-200 h-1.5 rounded-full w-20 overflow-hidden">
-                <div 
-                  className="bg-emerald-500 h-full rounded-full"
-                  style={{ width: `${consensus}%` }}
-                ></div>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs text-consensus-grey-400">Progress</span>
+          <span className="text-xs text-consensus-grey-300">{progress}%</span>
+        </div>
+        
+        <Progress value={progress} className="h-1.5 bg-consensus-dark-200">
+          <div className={`h-full ${getProgressColor()} rounded-full transition-all duration-500`} style={{ width: `${progress}%` }}></div>
+        </Progress>
+        
+        <div className="mt-4 pt-4 border-t border-consensus-dark-200 flex items-center justify-between">
+          <div className="flex items-center">
+            {status === 'completed' ? (
+              <CircleCheck size={16} className="text-emerald-500 mr-2" />
+            ) : (
+              <Clock size={16} className="text-blue-400 mr-2" />
+            )}
+            <span className="text-xs text-consensus-grey-400">
+              {status === 'completed' ? 'Completed' : 'In progress'}
+            </span>
+          </div>
+          
+          <div className="flex items-center">
+            <span className="text-xs mr-2 text-consensus-grey-400">Consensus</span>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center border border-consensus-dark-200 bg-consensus-dark-400 font-semibold text-sm">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${getConsensusColor()} text-consensus-dark-800`}>
+                {consensus}
               </div>
-              <ThumbsDown size={14} className="text-rose-500" />
             </div>
           </div>
-          
-          <Button 
-            size="sm" 
-            className="opacity-0 group-hover:opacity-100 transition-opacity bg-consensus-blue hover:bg-consensus-blue/90"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/dashboard/proposals/${id}`);
-            }}
-          >
-            Contribute
-          </Button>
         </div>
       </div>
     </div>

@@ -189,74 +189,74 @@ const Dashboard = () => {
   return (
     <DashboardLayout>
       <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-sf font-bold mb-2">Welcome back</h1>
-        <p className="text-consensus-grey-600">Here's an overview of your organization's decision-making activities</p>
+        <h1 className="text-3xl font-sf font-bold mb-2 text-white">Welcome back</h1>
+        <p className="text-consensus-grey-400">Here's an overview of your organization's decision-making activities</p>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        <Card className="animate-fade-in animate-delay-1">
+        <Card className="animate-fade-in animate-delay-1 bg-consensus-dark-300 border-consensus-dark-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:shadow-consensus-green/5 hover:border-consensus-green/20">
           <CardHeader className="pb-2">
-            <CardDescription>Active Decisions</CardDescription>
-            <CardTitle className="text-2xl">{stats.activeDecisions}</CardTitle>
+            <CardDescription className="text-consensus-grey-400">Active Decisions</CardDescription>
+            <CardTitle className="text-2xl text-white">{stats.activeDecisions}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
-              <div className="text-sm text-consensus-grey-600">
+              <div className="text-sm text-consensus-grey-400">
                 <span className="text-emerald-500">+{Math.floor(stats.activeDecisions * 0.2)}</span> from last month
               </div>
-              <div className="p-2 rounded-full bg-blue-100">
-                <Brain size={18} className="text-blue-600" />
+              <div className="p-2 rounded-full bg-blue-500/10">
+                <Brain size={18} className="text-blue-400" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="animate-fade-in animate-delay-2">
+        <Card className="animate-fade-in animate-delay-2 bg-consensus-dark-300 border-consensus-dark-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:shadow-consensus-green/5 hover:border-consensus-green/20">
           <CardHeader className="pb-2">
-            <CardDescription>Team Members</CardDescription>
-            <CardTitle className="text-2xl">{stats.teamMembers}</CardTitle>
+            <CardDescription className="text-consensus-grey-400">Team Members</CardDescription>
+            <CardTitle className="text-2xl text-white">{stats.teamMembers}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
-              <div className="text-sm text-consensus-grey-600">
+              <div className="text-sm text-consensus-grey-400">
                 <span className="text-emerald-500">+{Math.floor(stats.teamMembers * 0.15)}</span> new this month
               </div>
-              <div className="p-2 rounded-full bg-purple-100">
-                <Users size={18} className="text-purple-600" />
+              <div className="p-2 rounded-full bg-purple-500/10">
+                <Users size={18} className="text-purple-400" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="animate-fade-in animate-delay-3">
+        <Card className="animate-fade-in animate-delay-3 bg-consensus-dark-300 border-consensus-dark-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:shadow-consensus-green/5 hover:border-consensus-green/20">
           <CardHeader className="pb-2">
-            <CardDescription>Avg. Consensus</CardDescription>
-            <CardTitle className="text-2xl">{stats.avgConsensus}%</CardTitle>
+            <CardDescription className="text-consensus-grey-400">Avg. Consensus</CardDescription>
+            <CardTitle className="text-2xl text-white">{stats.avgConsensus}%</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
-              <div className="text-sm text-consensus-grey-600">
+              <div className="text-sm text-consensus-grey-400">
                 <span className="text-emerald-500">+5%</span> improvement
               </div>
-              <div className="p-2 rounded-full bg-emerald-100">
-                <LineChart size={18} className="text-emerald-600" />
+              <div className="p-2 rounded-full bg-emerald-500/10">
+                <LineChart size={18} className="text-emerald-400" />
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="animate-fade-in animate-delay-4">
+        <Card className="animate-fade-in animate-delay-4 bg-consensus-dark-300 border-consensus-dark-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:shadow-consensus-green/5 hover:border-consensus-green/20">
           <CardHeader className="pb-2">
-            <CardDescription>Decision Velocity</CardDescription>
-            <CardTitle className="text-2xl">{stats.decisionVelocity} days</CardTitle>
+            <CardDescription className="text-consensus-grey-400">Decision Velocity</CardDescription>
+            <CardTitle className="text-2xl text-white">{stats.decisionVelocity} days</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
-              <div className="text-sm text-consensus-grey-600">
+              <div className="text-sm text-consensus-grey-400">
                 <span className="text-emerald-500">-1.3 days</span> faster
               </div>
-              <div className="p-2 rounded-full bg-amber-100">
-                <BarChart size={18} className="text-amber-600" />
+              <div className="p-2 rounded-full bg-amber-500/10">
+                <BarChart size={18} className="text-amber-400" />
               </div>
             </div>
           </CardContent>
@@ -264,16 +264,16 @@ const Dashboard = () => {
       </div>
       
       <div className="flex justify-between items-center mb-6 animate-fade-in animate-delay-5">
-        <h2 className="text-xl font-sf font-bold">Active Decisions</h2>
+        <h2 className="text-xl font-sf font-bold text-white">Active Decisions</h2>
         <CreateDecisionButton />
       </div>
       
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-blue"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-green"></div>
         </div>
       ) : decisions.length === 0 ? (
-        <div className="p-8 text-center text-consensus-grey-500 border border-dashed border-consensus-grey-300 rounded-lg animate-fade-in">
+        <div className="p-8 text-center text-consensus-grey-400 border border-dashed border-consensus-dark-200 rounded-lg animate-fade-in bg-consensus-dark-300/50">
           No active decisions yet. Use the "New Decision" button to create one.
         </div>
       ) : (
@@ -282,7 +282,7 @@ const Dashboard = () => {
             <div 
               key={decision.id} 
               onClick={() => handleDecisionClick(decision.id)}
-              className="cursor-pointer transition-transform hover:scale-[1.02]"
+              className="cursor-pointer transition-transform hover:scale-[1.02] transform-gpu"
             >
               <DecisionCard
                 title={decision.title}
