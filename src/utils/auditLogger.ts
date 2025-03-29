@@ -1,5 +1,5 @@
 
-import { typedSupabase } from './supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 
 export const logAuthEvent = async (
   action: string, 
@@ -7,10 +7,11 @@ export const logAuthEvent = async (
 ) => {
   try {
     const timestamp = new Date().toISOString();
-    const { data: { session } } = await typedSupabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     const userId = session?.user?.id || null;
     
-    const { error } = await typedSupabase
+    // Check if the audit_logs table exists before attempting to insert
+    const { error } = await supabase
       .from('audit_logs')
       .insert({
         user_id: userId,
@@ -18,7 +19,7 @@ export const logAuthEvent = async (
         details,
         timestamp,
         ip_address: 'client-side',
-        user_agent: navigator.userAgent
+        user_agent: navigator.userAgent || 'unknown'
       });
       
     if (error) {
@@ -26,16 +27,6 @@ export const logAuthEvent = async (
     }
   } catch (err) {
     console.error('Audit logging error:', err);
-  }
-};
-
-export const logAppEvent = async (
-  action: string,
-  details: Record<string, any>
-) => {
-  try {
-    await logAuthEvent(`app_${action}`, details);
-  } catch (err) {
-    console.error('App event logging error:', err);
+    // Don't throw the error to prevent breaking the auth flow
   }
 };

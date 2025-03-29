@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
 import TeamRoleSelector from './TeamRoleSelector';
 import { useToast } from '@/components/ui/use-toast';
-import { typedSupabase, extractProfileData } from "@/utils/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddTeamMemberDialogProps {
   onAddMember: (email: string, name: string, role: string) => void;
@@ -61,7 +60,7 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
       console.log("Searching for profile with name:", name);
       
       // Check if the profile exists
-      const { data: profileData, error: profileQueryError } = await typedSupabase
+      const { data: profileData, error: profileQueryError } = await supabase
         .from('profiles')
         .select('id')
         .ilike('full_name', name)
@@ -77,9 +76,9 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
       
       if (!userId) {
         console.log("Creating new profile for:", name);
-        // Create a dummy profile for demonstration purposes
+        // Create a new profile
         const newUserId = crypto.randomUUID();
-        const { data: newProfile, error: profileError } = await typedSupabase
+        const { data: newProfile, error: profileError } = await supabase
           .from('profiles')
           .insert({
             id: newUserId,
@@ -105,12 +104,13 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
       console.log("Adding team member with user ID:", userId, "to team:", teamId, "with role:", role);
       
       // Add the team member to the team
-      const { error: teamMemberError } = await typedSupabase
+      const { error: teamMemberError } = await supabase
         .from('team_members')
         .insert({
           team_id: teamId,
           user_id: userId,
-          role: role
+          role: role,
+          joined_at: new Date().toISOString()
         });
           
       if (teamMemberError) {

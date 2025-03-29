@@ -51,32 +51,14 @@ export function useTeams() {
         return;
       }
       
-      // Fetch teams the user is a member of
-      const { data: teamMemberships, error: teamMembershipsError } = await typedSupabase
-        .from('team_members')
-        .select('team_id, role')
-        .eq('user_id', session.user.id);
-        
-      if (teamMembershipsError) {
-        console.error("Error fetching team memberships:", teamMembershipsError);
-        throw teamMembershipsError;
-      }
-      
-      if (!teamMemberships || teamMemberships.length === 0) {
-        console.log("User is not a member of any teams");
-        setTeams([]);
-        setLoading(false);
-        return;
-      }
-      
-      const teamIds = teamMemberships.map(membership => membership.team_id);
-      console.log("Found team IDs:", teamIds);
-      
-      // Fetch team details
+      // Fetch teams directly with all related data in one query
       const { data: teamsData, error: teamsError } = await typedSupabase
         .from('teams')
-        .select('*')
-        .in('id', teamIds);
+        .select(`
+          *,
+          team_members!inner(*)
+        `)
+        .eq('team_members.user_id', session.user.id);
         
       if (teamsError) {
         console.error("Error fetching teams:", teamsError);
@@ -84,48 +66,57 @@ export function useTeams() {
       }
       
       if (!teamsData || teamsData.length === 0) {
-        console.log("No teams found");
+        console.log("User is not a member of any teams");
         setTeams([]);
         setLoading(false);
         return;
       }
       
-      // Fetch team members for each team
-      const teamsWithMembers = await Promise.all(teamsData.map(async (team) => {
-        const { data: members, error: membersError } = await typedSupabase
-          .from('team_members')
-          .select(`
-            id, user_id, team_id, role,
-            profiles:user_id(id, full_name, avatar_url)
-          `)
-          .eq('team_id', team.id);
-          
-        if (membersError) {
-          console.error(`Error fetching members for team ${team.id}:`, membersError);
-          throw membersError;
+      console.log("Found teams:", teamsData);
+      
+      // Now fetch all members for these teams with their profiles
+      const teamIds = teamsData.map(team => team.id);
+      
+      const { data: allMembers, error: membersError } = await typedSupabase
+        .from('team_members')
+        .select(`
+          id, user_id, team_id, role,
+          profiles:user_id(id, full_name, avatar_url)
+        `)
+        .in('team_id', teamIds);
+        
+      if (membersError) {
+        console.error(`Error fetching team members:`, membersError);
+        throw membersError;
+      }
+      
+      // Group members by team
+      const membersByTeam: Record<string, TeamMember[]> = {};
+      
+      allMembers.forEach(member => {
+        if (!membersByTeam[member.team_id]) {
+          membersByTeam[member.team_id] = [];
         }
         
-        // Transform members data to include profile information
-        const formattedMembers = members.map(member => {
-          const profileData = extractProfileData(member.profiles);
-          
-          return {
-            id: member.id,
-            user_id: member.user_id,
-            team_id: member.team_id,
-            role: member.role,
-            profile: profileData ? {
-              id: profileData.id,
-              full_name: profileData.full_name,
-              avatar_url: profileData.avatar_url
-            } : null
-          };
-        });
+        const profileData = extractProfileData(member.profiles);
         
-        return {
-          ...team,
-          members: formattedMembers
-        };
+        membersByTeam[member.team_id].push({
+          id: member.id,
+          user_id: member.user_id,
+          team_id: member.team_id,
+          role: member.role,
+          profile: profileData ? {
+            id: profileData.id,
+            full_name: profileData.full_name,
+            avatar_url: profileData.avatar_url
+          } : null
+        });
+      });
+      
+      // Combine teams with their members
+      const teamsWithMembers = teamsData.map(team => ({
+        ...team,
+        members: membersByTeam[team.id] || []
       }));
       
       console.log("Fetched teams with members:", teamsWithMembers);
@@ -218,13 +209,16 @@ export function useTeams() {
     try {
       setError(null);
       
+      console.log(`Adding team member with ID ${userId} to team ${teamId} with role ${role}`);
+      
       // Add the team member
       const { error: memberError } = await typedSupabase
         .from('team_members')
         .insert({
           team_id: teamId,
           user_id: userId,
-          role
+          role: role,
+          joined_at: new Date().toISOString()
         });
         
       if (memberError) {
@@ -232,8 +226,15 @@ export function useTeams() {
         throw memberError;
       }
       
+      console.log("Team member added successfully");
+      
       // Refresh teams
       await fetchTeams();
+      
+      toast({
+        title: "Team member added",
+        description: "The team member has been added successfully",
+      });
       
       return true;
     } catch (err) {
