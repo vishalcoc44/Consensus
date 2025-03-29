@@ -7,12 +7,14 @@ import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
 import TeamRoleSelector from './TeamRoleSelector';
 import { useToast } from '@/components/ui/use-toast';
+import { typedSupabase } from '@/utils/supabaseClient';
 
 interface AddTeamMemberDialogProps {
   onAddMember: (email: string, name: string, role: string) => void;
+  teamId?: string;
 }
 
-const AddTeamMemberDialog = ({ onAddMember }: AddTeamMemberDialogProps) => {
+const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) => {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -20,7 +22,7 @@ const AddTeamMemberDialog = ({ onAddMember }: AddTeamMemberDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
@@ -46,7 +48,51 @@ const AddTeamMemberDialog = ({ onAddMember }: AddTeamMemberDialogProps) => {
         return;
       }
       
-      // Submit the form
+      // For demo purposes, create a dummy profile if needed
+      const { data: existingProfile } = await typedSupabase
+        .from('profiles')
+        .select('id')
+        .eq('full_name', name)
+        .maybeSingle();
+
+      let userId = existingProfile?.id;
+      
+      if (!userId) {
+        // Create a dummy profile for demonstration purposes
+        // In a real app, you would invite the user and they would create their own account
+        const { data: newProfile, error: profileError } = await typedSupabase
+          .from('profiles')
+          .insert({
+            id: crypto.randomUUID(),
+            full_name: name,
+            avatar_url: `https://i.pravatar.cc/150?u=${email}`
+          })
+          .select()
+          .single();
+          
+        if (profileError) {
+          throw profileError;
+        }
+        
+        userId = newProfile.id;
+      }
+      
+      // Add the team member to the team with the real Supabase client
+      if (teamId) {
+        const { error: teamMemberError } = await typedSupabase
+          .from('team_members')
+          .insert({
+            team_id: teamId,
+            user_id: userId,
+            role: role
+          });
+          
+        if (teamMemberError) {
+          throw teamMemberError;
+        }
+      }
+      
+      // Call the onAddMember callback (this will update the UI)
       onAddMember(email, name, role);
       
       // Reset form and close dialog
@@ -54,6 +100,18 @@ const AddTeamMemberDialog = ({ onAddMember }: AddTeamMemberDialogProps) => {
       setName('');
       setRole('Contributor');
       setOpen(false);
+      
+      toast({
+        title: "Team member added",
+        description: `${name} has been added to your team as a ${role}`,
+      });
+    } catch (error) {
+      console.error('Error adding team member:', error);
+      toast({
+        title: "Error adding team member",
+        description: "There was an error adding the team member. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }

@@ -6,10 +6,11 @@ import { Users, UserPlus } from 'lucide-react';
 import TeamMemberCard from '@/components/teams/TeamMemberCard';
 import AddTeamMemberDialog from '@/components/teams/AddTeamMemberDialog';
 import { useToast } from '@/components/ui/use-toast';
+import { typedSupabase } from '@/utils/supabaseClient';
 
 // Type definition for team member
 interface TeamMember {
-  id: number;
+  id: number | string;
   name: string;
   email: string;
   role: string;
@@ -17,66 +18,114 @@ interface TeamMember {
   dateAdded: string;
 }
 
-// Mock data for team members
-const initialTeamMembers = [
-  {
-    id: 1,
-    name: 'Jessica Thompson',
-    email: 'jessica@example.com',
-    role: 'Admin',
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    dateAdded: 'Jan 12, 2023',
-  },
-  {
-    id: 2,
-    name: 'Michael Chen',
-    email: 'michael@example.com',
-    role: 'Proposer',
-    avatar: 'https://i.pravatar.cc/150?img=11',
-    dateAdded: 'Mar 5, 2023',
-  },
-  {
-    id: 3,
-    name: 'Sarah Johnson',
-    email: 'sarah@example.com',
-    role: 'Contributor',
-    avatar: 'https://i.pravatar.cc/150?img=5',
-    dateAdded: 'Apr 18, 2023',
-  },
-  {
-    id: 4,
-    name: 'David Wilson',
-    email: 'david@example.com',
-    role: 'Proposer',
-    avatar: 'https://i.pravatar.cc/150?img=12',
-    dateAdded: 'May 22, 2023',
-  },
-  {
-    id: 5,
-    name: 'Aisha Patel',
-    email: 'aisha@example.com',
-    role: 'Contributor',
-    avatar: 'https://i.pravatar.cc/150?img=9',
-    dateAdded: 'Jun 7, 2023',
-  },
-  {
-    id: 6,
-    name: 'Robert Kim',
-    email: 'robert@example.com',
-    role: 'Contributor',
-    avatar: 'https://i.pravatar.cc/150?img=15',
-    dateAdded: 'Jul 30, 2023',
-  },
-];
+interface Team {
+  id: string;
+  name: string;
+  description: string | null;
+}
 
 const Teams = () => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     // Set page title
     document.title = 'Team Management - ConsensusAI';
+    
+    // Fetch teams and team members
+    fetchTeamsAndMembers();
   }, []);
+  
+  const fetchTeamsAndMembers = async () => {
+    setLoading(true);
+    try {
+      // Fetch teams
+      const { data: teamsData, error: teamsError } = await typedSupabase
+        .from('teams')
+        .select('*');
+        
+      if (teamsError) throw teamsError;
+      
+      if (teamsData && teamsData.length > 0) {
+        setTeams(teamsData);
+        setCurrentTeam(teamsData[0]);
+        
+        // Fetch team members for the first team
+        await fetchTeamMembers(teamsData[0].id);
+      } else {
+        // Create a default team if none exists
+        const { data: newTeam, error: createError } = await typedSupabase
+          .from('teams')
+          .insert({ name: 'Default Team', description: 'Your organization\'s default team' })
+          .select()
+          .single();
+          
+        if (createError) throw createError;
+        
+        setTeams([newTeam]);
+        setCurrentTeam(newTeam);
+        setTeamMembers([]);
+      }
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+      toast({
+        title: 'Error fetching teams',
+        description: 'Could not load your teams. Please try again later.',
+        variant: 'destructive'
+      });
+      setTeamMembers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const fetchTeamMembers = async (teamId: string) => {
+    try {
+      const { data, error } = await typedSupabase
+        .from('team_members')
+        .select(`
+          id,
+          role,
+          joined_at,
+          user_id,
+          profiles!inner (
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('team_id', teamId);
+        
+      if (error) throw error;
+      
+      if (data) {
+        const formattedMembers: TeamMember[] = data.map(member => ({
+          id: member.id,
+          name: member.profiles.full_name || 'Unknown',
+          email: `user-${member.user_id.substring(0, 8)}@example.com`, // Placeholder
+          role: member.role,
+          avatar: member.profiles.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
+          dateAdded: new Date(member.joined_at).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+          })
+        }));
+        
+        setTeamMembers(formattedMembers);
+      }
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+      toast({
+        title: 'Error fetching team members',
+        description: 'Could not load team members. Please try again later.',
+        variant: 'destructive'
+      });
+    }
+  };
 
   // Function to calculate role statistics
   const calculateRoleStats = () => {
@@ -99,38 +148,38 @@ const Teams = () => {
   
   // Function to add a new team member
   const handleAddTeamMember = (email: string, name: string, role: string) => {
-    // In a real app, this would make an API call to add the user to Supabase
-    // For now, we're just updating the state
-    
-    // Generate a random avatar
-    const randomImg = Math.floor(Math.random() * 20) + 1;
-    const avatar = `https://i.pravatar.cc/150?img=${randomImg}`;
-    
-    // Create a new member object
+    // The actual database insertion is now handled in the AddTeamMemberDialog component
+    // Here we just update the UI
     const newMember: TeamMember = {
-      id: teamMembers.length + 1,
+      id: Date.now(), // Temporary ID for UI purposes
       name,
       email,
       role,
-      avatar,
+      avatar: `https://i.pravatar.cc/150?u=${email}`,
       dateAdded: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     };
     
     // Add the new member to the list
     setTeamMembers([...teamMembers, newMember]);
-    
-    // Show success toast
-    toast({
-      title: "Team member added",
-      description: `${name} has been added to your team as a ${role}`,
-    });
   };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-blue"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="mb-8 animate-fade-in">
         <h1 className="text-3xl font-sf font-bold mb-2">Team Management</h1>
-        <p className="text-consensus-grey-600">Manage your organization's team members and their roles</p>
+        <p className="text-consensus-grey-600">
+          {currentTeam ? `Manage "${currentTeam.name}" team members and their roles` : 'Manage your organization\'s team members and their roles'}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -164,7 +213,7 @@ const Teams = () => {
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-purple-500" 
-                  style={{ width: `${(roleStats.admin / teamMembers.length) * 100}%` }}
+                  style={{ width: `${teamMembers.length ? (roleStats.admin / teamMembers.length) * 100 : 0}%` }}
                 ></div>
               </div>
 
@@ -175,7 +224,7 @@ const Teams = () => {
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-blue-500" 
-                  style={{ width: `${(roleStats.proposer / teamMembers.length) * 100}%` }}
+                  style={{ width: `${teamMembers.length ? (roleStats.proposer / teamMembers.length) * 100 : 0}%` }}
                 ></div>
               </div>
 
@@ -186,7 +235,7 @@ const Teams = () => {
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-green-500" 
-                  style={{ width: `${(roleStats.contributor / teamMembers.length) * 100}%` }}
+                  style={{ width: `${teamMembers.length ? (roleStats.contributor / teamMembers.length) * 100 : 0}%` }}
                 ></div>
               </div>
             </div>
@@ -203,7 +252,10 @@ const Teams = () => {
                 <p className="text-3xl font-bold">0</p>
                 <p className="text-sm text-consensus-grey-600">No inactive members</p>
               </div>
-              <AddTeamMemberDialog onAddMember={handleAddTeamMember} />
+              <AddTeamMemberDialog 
+                onAddMember={handleAddTeamMember}
+                teamId={currentTeam?.id}
+              />
             </div>
           </CardContent>
         </Card>
@@ -211,20 +263,29 @@ const Teams = () => {
 
       <div className="flex justify-between items-center mb-6 animate-fade-in animate-delay-3">
         <h2 className="text-xl font-sf font-bold">All Team Members</h2>
-        <AddTeamMemberDialog onAddMember={handleAddTeamMember} />
+        <AddTeamMemberDialog 
+          onAddMember={handleAddTeamMember}
+          teamId={currentTeam?.id}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 animate-fade-in animate-delay-3">
-        {teamMembers.map((member) => (
-          <TeamMemberCard
-            key={member.id}
-            name={member.name}
-            email={member.email}
-            role={member.role}
-            avatar={member.avatar}
-            dateAdded={member.dateAdded}
-          />
-        ))}
+        {teamMembers.length === 0 ? (
+          <div className="p-8 text-center text-consensus-grey-500 border border-dashed border-consensus-grey-300 rounded-lg">
+            No team members yet. Add your first team member to get started.
+          </div>
+        ) : (
+          teamMembers.map((member) => (
+            <TeamMemberCard
+              key={String(member.id)}
+              name={member.name}
+              email={member.email}
+              role={member.role}
+              avatar={member.avatar}
+              dateAdded={member.dateAdded}
+            />
+          ))
+        )}
       </div>
     </DashboardLayout>
   );

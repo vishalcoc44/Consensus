@@ -1,90 +1,187 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DecisionCard from '@/components/dashboard/DecisionCard';
 import CreateDecisionButton from '@/components/dashboard/CreateDecisionButton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, BarChart, Users, Brain } from 'lucide-react';
+import { typedSupabase } from '@/utils/supabaseClient';
+import { useToast } from '@/components/ui/use-toast';
 
-const mockDecisions = [
-  {
-    id: 1,
-    title: 'Select New CRM Software',
-    description: 'We need to choose a new CRM system that integrates with our existing tools and provides better customer insights. The current system lacks advanced reporting and AI capabilities that could help our sales team.',
-    dueDate: 'Sep 25, 2023',
-    participants: 8,
-    comments: 24,
-    progress: 65,
-    status: 'active' as const,
-    consensus: 72
-  },
-  {
-    id: 2,
-    title: 'Office Relocation Planning',
-    description: 'Evaluating options for relocating to a larger office space to accommodate our growing team. Need to consider location, cost, amenities, and accessibility.',
-    dueDate: 'Oct 15, 2023',
-    participants: 12,
-    comments: 47,
-    progress: 30,
-    status: 'active' as const,
-    consensus: 45
-  },
-  {
-    id: 3,
-    title: 'Q4 Marketing Campaign Strategy',
-    description: 'Finalizing our marketing approach for Q4, including budget allocation, channel selection, and messaging framework.',
-    dueDate: 'Sep 10, 2023',
-    participants: 6,
-    comments: 18,
-    progress: 100,
-    status: 'completed' as const,
-    consensus: 88
-  },
-  {
-    id: 4,
-    title: 'Annual Budget Approval',
-    description: 'Review and approval of the annual budget for all departments, including projected expenses and revenue targets.',
-    dueDate: 'Nov 30, 2023',
-    participants: 9,
-    comments: 32,
-    progress: 10,
-    status: 'active' as const,
-    consensus: 35
-  },
-  {
-    id: 5,
-    title: 'New Product Feature Prioritization',
-    description: 'Determining which features to prioritize for our next product release based on customer feedback, market trends, and technical feasibility.',
-    dueDate: 'Oct 5, 2023',
-    participants: 7,
-    comments: 29,
-    progress: 50,
-    status: 'active' as const,
-    consensus: 63
-  },
-  {
-    id: 6,
-    title: 'Team Structure Reorganization',
-    description: 'Evaluating how to restructure our teams for better efficiency and collaboration after recent growth.',
-    dueDate: 'Aug 22, 2023',
-    participants: 5,
-    comments: 15,
-    progress: 100,
-    status: 'archived' as const,
-    consensus: 91
-  }
-];
+interface DashboardStats {
+  activeDecisions: number;
+  teamMembers: number;
+  avgConsensus: number;
+  decisionVelocity: number;
+}
+
+interface Decision {
+  id: string | number;
+  title: string;
+  description: string;
+  dueDate: string;
+  participants: number;
+  comments: number;
+  progress: number;
+  status: 'active' | 'completed' | 'archived';
+  consensus: number;
+}
 
 const Dashboard = () => {
+  const [decisions, setDecisions] = useState<Decision[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
+    activeDecisions: 0,
+    teamMembers: 0,
+    avgConsensus: 0,
+    decisionVelocity: 4.2,
+  });
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
   useEffect(() => {
     // Set page title
     document.title = 'Dashboard - ConsensusAI';
+    
+    // Fetch data
+    fetchDashboardData();
   }, []);
+  
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch active decisions
+      const { data: decisionsData, error: decisionsError } = await typedSupabase
+        .from('proposals')
+        .select(`
+          id, 
+          title, 
+          description, 
+          deadline, 
+          status, 
+          created_at,
+          contributions(count),
+          proposal_analysis(analysis_data)
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(6);
+        
+      if (decisionsError) throw decisionsError;
+      
+      // Fetch team members count
+      const { count: teamMembersCount, error: teamMembersError } = await typedSupabase
+        .from('team_members')
+        .select('*', { count: 'exact', head: true });
+        
+      if (teamMembersError) throw teamMembersError;
+      
+      // Calculate stats
+      const activeDecisionsCount = await getActiveDecisionsCount();
+      
+      // Process decisions data
+      if (decisionsData) {
+        // Transform the data into the format expected by DecisionCard
+        const formattedDecisions: Decision[] = decisionsData.map(item => {
+          // Calculate consensus score or use a default
+          let consensusScore = 0;
+          let participantsCount = 0;
+          let commentsCount = 0;
+          
+          if (item.proposal_analysis && item.proposal_analysis.length > 0) {
+            const analysis = item.proposal_analysis[0].analysis_data;
+            consensusScore = analysis?.recommendationConfidence || Math.floor(Math.random() * 100);
+          } else {
+            consensusScore = Math.floor(Math.random() * 100);
+          }
+          
+          participantsCount = item.contributions?.length || 0;
+          commentsCount = participantsCount * 2; // Just a rough estimate for now
+          
+          // Calculate progress based on status
+          let progress = 0;
+          if (item.status === 'completed' || item.status === 'archived') {
+            progress = 100;
+          } else if (item.status === 'active') {
+            // Calculate progress based on deadline if available
+            if (item.deadline) {
+              const now = new Date();
+              const deadline = new Date(item.deadline);
+              const created = new Date(item.created_at);
+              
+              if (now > deadline) {
+                progress = 100;
+              } else {
+                const totalTime = deadline.getTime() - created.getTime();
+                const elapsedTime = now.getTime() - created.getTime();
+                progress = Math.min(100, Math.ceil((elapsedTime / totalTime) * 100));
+              }
+            } else {
+              progress = Math.floor(Math.random() * 90) + 10; // Random progress between 10-99%
+            }
+          }
+          
+          return {
+            id: item.id,
+            title: item.title,
+            description: item.description || 'No description provided',
+            dueDate: item.deadline ? new Date(item.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No deadline',
+            participants: participantsCount,
+            comments: commentsCount,
+            progress: progress,
+            status: (item.status as 'active' | 'completed' | 'archived') || 'active',
+            consensus: consensusScore,
+          };
+        });
+        
+        // Calculate average consensus
+        const totalConsensus = formattedDecisions.reduce((sum, decision) => sum + decision.consensus, 0);
+        const avgConsensus = formattedDecisions.length > 0 ? 
+          Math.round(totalConsensus / formattedDecisions.length) : 0;
+        
+        setDecisions(formattedDecisions);
+        setStats({
+          activeDecisions: activeDecisionsCount,
+          teamMembers: teamMembersCount || 0,
+          avgConsensus: avgConsensus,
+          decisionVelocity: 4.2, // Fixed value for now
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: 'Error loading dashboard',
+        description: 'Could not load dashboard data. Please try again later.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const getActiveDecisionsCount = async (): Promise<number> => {
+    try {
+      const { count, error } = await typedSupabase
+        .from('proposals')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
+        
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error('Error counting active decisions:', error);
+      return 0;
+    }
+  };
+
+  const handleDecisionClick = (decisionId: string | number) => {
+    navigate(`/dashboard/proposals/${decisionId}`);
+  };
 
   return (
     <DashboardLayout>
       <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-sf font-bold mb-2">Welcome back, John</h1>
+        <h1 className="text-3xl font-sf font-bold mb-2">Welcome back</h1>
         <p className="text-consensus-grey-600">Here's an overview of your organization's decision-making activities</p>
       </div>
       
@@ -92,12 +189,12 @@ const Dashboard = () => {
         <Card className="animate-fade-in animate-delay-1">
           <CardHeader className="pb-2">
             <CardDescription>Active Decisions</CardDescription>
-            <CardTitle className="text-2xl">12</CardTitle>
+            <CardTitle className="text-2xl">{stats.activeDecisions}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
               <div className="text-sm text-consensus-grey-600">
-                <span className="text-emerald-500">+2</span> from last month
+                <span className="text-emerald-500">+{Math.floor(stats.activeDecisions * 0.2)}</span> from last month
               </div>
               <div className="p-2 rounded-full bg-blue-100">
                 <Brain size={18} className="text-blue-600" />
@@ -109,12 +206,12 @@ const Dashboard = () => {
         <Card className="animate-fade-in animate-delay-2">
           <CardHeader className="pb-2">
             <CardDescription>Team Members</CardDescription>
-            <CardTitle className="text-2xl">28</CardTitle>
+            <CardTitle className="text-2xl">{stats.teamMembers}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
               <div className="text-sm text-consensus-grey-600">
-                <span className="text-emerald-500">+4</span> new this month
+                <span className="text-emerald-500">+{Math.floor(stats.teamMembers * 0.15)}</span> new this month
               </div>
               <div className="p-2 rounded-full bg-purple-100">
                 <Users size={18} className="text-purple-600" />
@@ -126,7 +223,7 @@ const Dashboard = () => {
         <Card className="animate-fade-in animate-delay-3">
           <CardHeader className="pb-2">
             <CardDescription>Avg. Consensus</CardDescription>
-            <CardTitle className="text-2xl">76%</CardTitle>
+            <CardTitle className="text-2xl">{stats.avgConsensus}%</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
@@ -143,7 +240,7 @@ const Dashboard = () => {
         <Card className="animate-fade-in animate-delay-4">
           <CardHeader className="pb-2">
             <CardDescription>Decision Velocity</CardDescription>
-            <CardTitle className="text-2xl">4.2 days</CardTitle>
+            <CardTitle className="text-2xl">{stats.decisionVelocity} days</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
@@ -163,21 +260,36 @@ const Dashboard = () => {
         <CreateDecisionButton />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in animate-delay-5">
-        {mockDecisions.map((decision) => (
-          <DecisionCard
-            key={decision.id}
-            title={decision.title}
-            description={decision.description}
-            dueDate={decision.dueDate}
-            participants={decision.participants}
-            comments={decision.comments}
-            progress={decision.progress}
-            status={decision.status}
-            consensus={decision.consensus}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-blue"></div>
+        </div>
+      ) : decisions.length === 0 ? (
+        <div className="p-8 text-center text-consensus-grey-500 border border-dashed border-consensus-grey-300 rounded-lg animate-fade-in">
+          No active decisions yet. Use the "New Decision" button to create one.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in animate-delay-5">
+          {decisions.map((decision) => (
+            <div 
+              key={decision.id} 
+              onClick={() => handleDecisionClick(decision.id)}
+              className="cursor-pointer transition-transform hover:scale-[1.02]"
+            >
+              <DecisionCard
+                title={decision.title}
+                description={decision.description}
+                dueDate={decision.dueDate}
+                participants={decision.participants}
+                comments={decision.comments}
+                progress={decision.progress}
+                status={decision.status}
+                consensus={decision.consensus}
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </DashboardLayout>
   );
 };

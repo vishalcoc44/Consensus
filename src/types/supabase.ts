@@ -38,10 +38,12 @@ export interface Database extends OriginalDatabase {
         };
       }
     } & OriginalDatabase['public']['Tables'];
+    Views: OriginalDatabase['public']['Views'];
+    Functions: OriginalDatabase['public']['Functions'];
+    Enums: OriginalDatabase['public']['Enums'];
+    CompositeTypes: OriginalDatabase['public']['CompositeTypes'];
   };
 }
 
-// Create a custom supabase client type that includes our extended Database type
-export type TypedSupabaseClient = ReturnType<typeof createClient<Database>>;
-
-import { createClient } from '@supabase/supabase-js';
+// Export the type for the typed Supabase client
+export type TypedSupabaseClient = ReturnType<typeof import('@supabase/supabase-js').createClient<Database>>;

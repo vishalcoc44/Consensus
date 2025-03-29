@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,6 +14,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
+import { typedSupabase } from '@/utils/supabaseClient';
 
 const CreateDecisionButton = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,25 +23,66 @@ const CreateDecisionButton = () => {
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!title.trim() || !description.trim() || !dueDate) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log('Creating decision:', { title, description, dueDate });
-    
-    // Reset form and close modal
-    setTitle('');
-    setDescription('');
-    setDueDate('');
-    setLoading(false);
-    closeModal();
+    try {
+      // Save the decision to Supabase
+      const { data: proposal, error } = await typedSupabase
+        .from('proposals')
+        .insert({
+          title,
+          description,
+          deadline: new Date(dueDate).toISOString(),
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Decision created",
+        description: "Your new decision has been created successfully",
+      });
+      
+      // Reset form and close modal
+      setTitle('');
+      setDescription('');
+      setDueDate('');
+      closeModal();
+      
+      // Navigate to the newly created decision
+      navigate(`/dashboard/proposals/${proposal.id}`);
+    } catch (error) {
+      console.error('Error creating decision:', error);
+      toast({
+        title: "Error creating decision",
+        description: "There was an error creating your decision. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
