@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { typedSupabase, extractProfileData } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
@@ -51,33 +50,10 @@ export function useTeams() {
         return;
       }
       
-      // First fetch team memberships for the current user
-      const { data: memberData, error: memberError } = await typedSupabase
-        .from('team_members')
-        .select('team_id')
-        .eq('user_id', session.user.id);
-        
-      if (memberError) {
-        console.error("Error fetching team memberships:", memberError);
-        throw memberError;
-      }
-      
-      if (!memberData || memberData.length === 0) {
-        console.log("User is not a member of any teams");
-        setTeams([]);
-        setLoading(false);
-        return;
-      }
-      
-      // Extract team IDs from memberships
-      const teamIds = memberData.map(member => member.team_id);
-      console.log("User belongs to these teams:", teamIds);
-      
-      // Fetch teams data
+      // First get teams for the current user
       const { data: teamsData, error: teamsError } = await typedSupabase
         .from('teams')
-        .select('*')
-        .in('id', teamIds);
+        .select('*');
         
       if (teamsError) {
         console.error("Error fetching teams data:", teamsError);
@@ -85,7 +61,7 @@ export function useTeams() {
       }
       
       if (!teamsData || teamsData.length === 0) {
-        console.log("No teams found with the given IDs");
+        console.log("No teams found");
         setTeams([]);
         setLoading(false);
         return;
@@ -93,7 +69,9 @@ export function useTeams() {
       
       console.log("Found teams:", teamsData);
       
-      // Fetch all members for these teams with their profiles
+      // Now get all members for these teams
+      const teamIds = teamsData.map(team => team.id);
+      
       const { data: allMembers, error: membersError } = await typedSupabase
         .from('team_members')
         .select(`

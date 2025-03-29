@@ -47,6 +47,7 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
+      // Get active decisions
       const { data: decisionsData, error: decisionsError } = await typedSupabase
         .from('proposals')
         .select(`
@@ -65,11 +66,12 @@ const Dashboard = () => {
       
       if (decisionsError) throw decisionsError;
       
+      // Get team members count
       const { count: teamMembersCount, error: teamMembersError } = await typedSupabase
         .from('team_members')
         .select('*', { count: 'exact', head: true });
       
-      if (teamMembersError) throw teamMembersError;
+      if (teamMembersError && teamMembersError.code !== '42P17') throw teamMembersError;
       
       const activeDecisionsCount = await getActiveDecisionsCount();
       
