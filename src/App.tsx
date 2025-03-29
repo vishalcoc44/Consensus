@@ -20,30 +20,46 @@ import ProposalDetails from "./pages/ProposalDetails";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
 
 const App = () => {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
+    // Listen for auth changes first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        if (session) {
-          console.log("User authenticated:", session.user.email);
+      (_event, newSession) => {
+        console.log("Auth state changed:", _event);
+        setSession(newSession);
+        
+        if (newSession) {
+          console.log("User authenticated:", newSession.user.email);
+          
+          // Refresh the query cache when auth state changes
+          queryClient.invalidateQueries();
         } else {
           console.log("User signed out");
         }
       }
     );
+
+    // Then check for current session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Initial session check:", currentSession ? "Logged in" : "Not logged in");
+      setSession(currentSession);
+      setLoading(false);
+    }).catch(error => {
+      console.error("Error checking session:", error);
+      setLoading(false);
+    });
 
     // Cleanup subscription
     return () => {
@@ -57,6 +73,7 @@ const App = () => {
     }
     
     if (!session) {
+      console.log("Access denied: No session found");
       toast({
         title: "Authentication required",
         description: "Please sign in to access this page",
@@ -66,6 +83,9 @@ const App = () => {
 
     return children;
   };
+
+  // Log the session state for debugging
+  console.log("Current auth state:", loading ? "Loading..." : (session ? "Authenticated" : "Not authenticated"));
 
   return (
     <QueryClientProvider client={queryClient}>

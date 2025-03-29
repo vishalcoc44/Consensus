@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Loader2 } from 'lucide-react';
+import { getUserProfile } from '@/components/auth/services/authService';
 
 interface Profile {
   id: string;
@@ -23,35 +24,73 @@ const Settings = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fullName, setFullName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     const getProfile = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
+        // First, check that we have a valid session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
+          console.log("No session found, redirecting to login");
           navigate('/login');
           return;
         }
         
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+        console.log("Current user ID:", session.user.id);
         
-        if (error) {
-          console.error('Error fetching profile:', error);
-          throw error;
+        try {
+          // Use the getUserProfile function from our auth service
+          const profileData = await getUserProfile(session.user.id);
+          
+          if (profileData) {
+            console.log("Profile loaded successfully:", profileData);
+            setProfile(profileData as Profile);
+            setFullName(profileData.full_name || '');
+            setAvatarUrl(profileData.avatar_url || '');
+          } else {
+            console.log("No profile found for user, creating one");
+            // If no profile exists, create one
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .upsert({
+                id: session.user.id,
+                full_name: session.user.user_metadata?.full_name || '',
+                created_at: new Date().toISOString()
+              })
+              .select('*')
+              .single();
+              
+            if (createError) {
+              console.error("Error creating profile:", createError);
+              throw createError;
+            }
+            
+            setProfile(newProfile as Profile);
+            setFullName(newProfile.full_name || '');
+            setAvatarUrl(newProfile.avatar_url || '');
+          }
+        } catch (profileError) {
+          console.error('Error loading profile:', profileError);
+          setError('There was a problem loading your profile. Please try again later.');
+          
+          // Show toast notification for the error
+          toast({
+            variant: "destructive",
+            title: "Error loading profile",
+            description: "There was a problem loading your profile information. Please try refreshing the page."
+          });
         }
-        
-        setProfile(data as Profile);
-        setFullName(data.full_name || '');
-        setAvatarUrl(data.avatar_url || '');
       } catch (error) {
         console.error('Error in getProfile:', error);
+        setError('Unable to load your profile. Please try again later.');
+        
         toast({
           variant: "destructive",
           title: "Error loading profile",
@@ -68,13 +107,17 @@ const Settings = () => {
   const updateProfile = async () => {
     try {
       setUpdating(true);
+      setError(null);
       
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        console.log("No session found, redirecting to login");
         navigate('/login');
         return;
       }
+      
+      console.log("Updating profile for user:", session.user.id);
       
       const updates = {
         id: session.user.id,
@@ -83,21 +126,39 @@ const Settings = () => {
         updated_at: new Date().toISOString(),
       };
       
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .upsert(updates);
       
-      if (error) {
-        throw error;
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        throw updateError;
       }
+      
+      console.log("Profile updated successfully");
       
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully."
       });
       
+      // Refresh the profile data
+      const { data: refreshedProfile, error: refreshError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (refreshError) {
+        console.error('Error refreshing profile:', refreshError);
+      } else {
+        setProfile(refreshedProfile as Profile);
+      }
+      
     } catch (error) {
       console.error('Error updating profile:', error);
+      setError('There was a problem updating your profile.');
+      
       toast({
         variant: "destructive",
         title: "Update failed",
@@ -130,6 +191,20 @@ const Settings = () => {
     <DashboardLayout>
       <div className="container max-w-5xl py-8">
         <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
+        
+        {error && (
+          <div className="bg-red-50 text-red-800 p-4 rounded-lg mb-6">
+            {error}
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="mt-2 text-sm"
+              onClick={() => window.location.reload()}
+            >
+              Refresh page
+            </Button>
+          </div>
+        )}
         
         {loading ? (
           <div className="flex justify-center items-center h-64">

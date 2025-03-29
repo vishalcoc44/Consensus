@@ -34,8 +34,12 @@ export const registerUser = async (email: string, password: string, name: string
   
   if (error) throw error;
   
+  // Add console logs to track profile creation
+  console.log("User registered with ID:", data.user?.id);
+  
   if (data.user) {
     try {
+      // Create profile entry in the profiles table
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
@@ -46,16 +50,19 @@ export const registerUser = async (email: string, password: string, name: string
         
       if (profileError) {
         console.error("Error creating profile:", profileError);
+        throw profileError;
+      } else {
+        console.log("Profile successfully created for user:", data.user.id);
       }
     } catch (profileError) {
       console.error("Profile creation error:", profileError);
+      throw profileError;
     }
   }
   
   return data;
 };
 
-// Fix password reset functionality
 export const requestPasswordReset = async (email: string) => {
   // Trim whitespace from email
   const trimmedEmail = email.trim();
@@ -71,7 +78,6 @@ export const requestPasswordReset = async (email: string) => {
 
 export const resetPassword = async (newPassword: string) => {
   // The token is automatically handled by Supabase in the URL
-  // We don't need to extract it manually
   
   try {
     const { error } = await supabase.auth.updateUser({
@@ -85,4 +91,35 @@ export const resetPassword = async (newPassword: string) => {
     console.error('Reset password error:', error);
     throw error;
   }
+};
+
+// Add a function to get the current session
+export const getCurrentSession = async () => {
+  const { data, error } = await supabase.auth.getSession();
+  
+  if (error) {
+    console.error("Error getting current session:", error);
+    throw error;
+  }
+  
+  return data.session;
+};
+
+// Add a function to get user profile
+export const getUserProfile = async (userId: string) => {
+  console.log("Fetching profile for user:", userId);
+  
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+  
+  if (error) {
+    console.error("Error fetching user profile:", error);
+    throw error;
+  }
+  
+  console.log("Fetched profile:", data);
+  return data;
 };
