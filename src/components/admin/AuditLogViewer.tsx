@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,16 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search, Download, FileText, Shield, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { typedSupabase } from '@/utils/supabaseClient';
 import { hashData } from '@/utils/encryption';
 
 interface AuditLog {
   id: string;
-  user_id: string;
+  user_id: string | null;
   action: string;
   timestamp: string;
   details: Record<string, any>;
-  ip_address: string;
-  user_agent: string;
+  ip_address: string | null;
+  user_agent: string | null;
   hash: string | null;
 }
 
@@ -27,50 +27,50 @@ const AuditLogViewer = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   
-  // Fetch audit logs from Supabase
   const { data: logs, isLoading, error, refetch } = useQuery({
     queryKey: ['auditLogs', page, pageSize, searchTerm, actionFilter],
     queryFn: async () => {
-      let query = supabase
-        .from('audit_logs')
-        .select('*', { count: 'exact' })
-        .order('timestamp', { ascending: false })
-        .range((page - 1) * pageSize, page * pageSize - 1);
-      
-      if (searchTerm) {
-        query = query.or(`user_id.ilike.%${searchTerm}%,action.ilike.%${searchTerm}%`);
+      try {
+        let query = typedSupabase
+          .from('audit_logs')
+          .select('*', { count: 'exact' })
+          .order('timestamp', { ascending: false })
+          .range((page - 1) * pageSize, page * pageSize - 1);
+        
+        if (searchTerm) {
+          query = query.or(`user_id.ilike.%${searchTerm}%,action.ilike.%${searchTerm}%`);
+        }
+        
+        if (actionFilter) {
+          query = query.eq('action', actionFilter);
+        }
+        
+        const { data, error, count } = await query;
+        
+        if (error) throw error;
+        
+        return {
+          logs: data as AuditLog[],
+          total: count || 0
+        };
+      } catch (err) {
+        console.error("Error fetching audit logs:", err);
+        throw err;
       }
-      
-      if (actionFilter) {
-        query = query.eq('action', actionFilter);
-      }
-      
-      const { data, error, count } = await query;
-      
-      if (error) throw error;
-      
-      return {
-        logs: data as AuditLog[],
-        total: count || 0
-      };
     }
   });
   
-  // Generate unique action types for filtering
   const actionTypes = logs?.logs
     ? Array.from(new Set(logs.logs.map(log => log.action)))
     : [];
   
-  // Function to verify hash integrity (would connect to blockchain in production)
   const verifyLogIntegrity = async (log: AuditLog) => {
     try {
       if (!log.hash) return false;
       
-      // Create a hash of the log data excluding the hash itself
       const { hash, ...logData } = log;
       const calculatedHash = await hashData(JSON.stringify(logData));
       
-      // Compare the stored hash with the calculated hash
       return calculatedHash === hash;
     } catch (error) {
       console.error('Error verifying log integrity:', error);
@@ -78,25 +78,22 @@ const AuditLogViewer = () => {
     }
   };
   
-  // Function to export logs as CSV
   const exportLogs = () => {
     if (!logs?.logs) return;
     
-    // Create CSV content
     const headers = ['ID', 'User ID', 'Action', 'Timestamp', 'Details', 'IP Address'];
     const csvContent = [
       headers.join(','),
       ...logs.logs.map(log => [
         log.id,
-        log.user_id,
+        log.user_id || 'anonymous',
         log.action,
         log.timestamp,
         JSON.stringify(log.details).replace(/,/g, ';'),
-        log.ip_address
+        log.ip_address || 'unknown'
       ].join(','))
     ].join('\n');
     
-    // Create and download file
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -108,12 +105,10 @@ const AuditLogViewer = () => {
     URL.revokeObjectURL(url);
   };
   
-  // Format the timestamp for display
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString();
   };
   
-  // Get action badge color
   const getActionColor = (action: string) => {
     if (action.includes('success')) return 'bg-green-100 text-green-800';
     if (action.includes('failed')) return 'bg-red-100 text-red-800';
@@ -134,7 +129,6 @@ const AuditLogViewer = () => {
       </CardHeader>
       
       <CardContent>
-        {/* Search and filter controls */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -177,7 +171,6 @@ const AuditLogViewer = () => {
           </div>
         </div>
         
-        {/* Logs table */}
         {isLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
@@ -213,7 +206,7 @@ const AuditLogViewer = () => {
                           {formatTimestamp(log.timestamp)}
                         </TableCell>
                         <TableCell className="font-mono text-xs max-w-[120px] truncate">
-                          {log.user_id}
+                          {log.user_id || 'anonymous'}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={getActionColor(log.action)}>
@@ -244,7 +237,6 @@ const AuditLogViewer = () => {
               </Table>
             </div>
             
-            {/* Pagination */}
             {logs && logs.total > pageSize && (
               <div className="flex justify-between items-center mt-4">
                 <div className="text-sm text-gray-500">

@@ -1,4 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
+import { typedSupabase } from '@/utils/supabaseClient';
 import { encrypt, decrypt } from '@/utils/encryption';
 
 export const loginUser = async (email: string, password: string) => {
@@ -269,9 +271,9 @@ export const logAuthEvent = async (
   try {
     const timestamp = new Date().toISOString();
     const { data: { session } } = await supabase.auth.getSession();
-    const userId = session?.user?.id || 'unauthenticated';
+    const userId = session?.user?.id || null;
     
-    const { error } = await supabase
+    const { error } = await typedSupabase
       .from('audit_logs')
       .insert({
         user_id: userId,
