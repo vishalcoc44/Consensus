@@ -35,10 +35,10 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Listen for auth changes first
+    // First set up auth state listener to catch any auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
-        console.log("Auth state changed:", _event);
+      (event, newSession) => {
+        console.log("Auth state changed:", event);
         setSession(newSession);
         
         if (newSession) {

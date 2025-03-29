@@ -105,21 +105,58 @@ export const getCurrentSession = async () => {
   return data.session;
 };
 
-// Add a function to get user profile
+// Improved getUserProfile function with better error handling
 export const getUserProfile = async (userId: string) => {
-  console.log("Fetching profile for user:", userId);
-  
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
-  
-  if (error) {
-    console.error("Error fetching user profile:", error);
-    throw error;
+  if (!userId) {
+    console.error("Cannot fetch profile: userId is undefined or null");
+    throw new Error("User ID is required to fetch profile");
   }
   
-  console.log("Fetched profile:", data);
-  return data;
+  console.log("Fetching profile for user:", userId);
+  
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle(); // Using maybeSingle instead of single to handle cases where profile might not exist
+    
+    if (error) {
+      console.error("Error fetching user profile:", error);
+      throw error;
+    }
+    
+    console.log("Fetched profile:", data);
+    
+    // If no profile exists and we have a valid userId, create one with basic info
+    if (!data && userId) {
+      const { data: userData } = await supabase.auth.getUser(userId);
+      if (userData && userData.user) {
+        const newProfile = {
+          id: userId,
+          full_name: userData.user.user_metadata?.full_name || userData.user.email?.split('@')[0] || 'User',
+          created_at: new Date().toISOString()
+        };
+        
+        const { data: createdProfile, error: createError } = await supabase
+          .from('profiles')
+          .upsert(newProfile)
+          .select('*')
+          .maybeSingle();
+        
+        if (createError) {
+          console.error("Error creating user profile:", createError);
+          throw createError;
+        }
+        
+        console.log("Created new profile for user:", createdProfile);
+        return createdProfile;
+      }
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error in getUserProfile:", error);
+    throw error;
+  }
 };
