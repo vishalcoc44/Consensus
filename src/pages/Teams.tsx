@@ -6,7 +6,8 @@ import { Users, UserPlus } from 'lucide-react';
 import TeamMemberCard from '@/components/teams/TeamMemberCard';
 import AddTeamMemberDialog from '@/components/teams/AddTeamMemberDialog';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from "@/integrations/supabase/client";
+import { typedSupabase } from "@/utils/supabaseClient";
+import { useTeams } from '@/hooks/useTeams';
 
 // Type definition for team member
 interface TeamMember {
@@ -18,145 +19,41 @@ interface TeamMember {
   dateAdded: string;
 }
 
-interface Team {
-  id: string;
-  name: string;
-  description: string | null;
-}
-
-interface Profile {
-  id: string;
-  full_name: string | null;
-  avatar_url: string | null;
-}
-
 const Teams = () => {
+  const { teams, loading, error, refreshTeams } = useTeams();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [currentTeam, setCurrentTeam] = useState<any | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     // Set page title
     document.title = 'Team Management - ConsensusAI';
     
-    // Fetch teams and team members
-    fetchTeamsAndMembers();
+    // No need for additional fetching as useTeams hook handles it
   }, []);
   
-  const fetchTeamsAndMembers = async () => {
-    setLoading(true);
-    try {
-      // Fetch teams
-      const { data: teamsData, error: teamsError } = await supabase
-        .from('teams')
-        .select('*');
-        
-      if (teamsError) throw teamsError;
+  useEffect(() => {
+    // When teams data is loaded, set the current team and its members
+    if (teams.length > 0) {
+      setCurrentTeam(teams[0]);
       
-      if (teamsData && teamsData.length > 0) {
-        setTeams(teamsData);
-        setCurrentTeam(teamsData[0]);
-        
-        // Fetch team members for the first team
-        await fetchTeamMembers(teamsData[0].id);
-      } else {
-        try {
-          // Create a default team if none exists
-          const { data: newTeam, error: createError } = await supabase
-            .from('teams')
-            .insert({ name: 'Default Team', description: 'Your organization\'s default team' })
-            .select()
-            .single();
-            
-          if (createError) throw createError;
-          
-          if (newTeam) {
-            setTeams([newTeam]);
-            setCurrentTeam(newTeam);
-            setTeamMembers([]);
-          } else {
-            throw new Error('Failed to create default team');
-          }
-        } catch (createTeamError) {
-          console.error('Error creating default team:', createTeamError);
-          toast({
-            title: 'Error creating team',
-            description: 'Could not create a default team. Please try again later.',
-            variant: 'destructive'
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching teams:', error);
-      toast({
-        title: 'Error fetching teams',
-        description: 'Could not load your teams. Please try again later.',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const fetchTeamMembers = async (teamId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('team_members')
-        .select(`
-          id,
-          role,
-          joined_at,
-          user_id,
-          profiles:user_id(
-            id,
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('team_id', teamId);
-        
-      if (error) throw error;
+      // Format team members for display
+      const formattedMembers = teams[0].members.map(member => ({
+        id: member.id,
+        name: member.profile?.full_name || 'Unknown',
+        email: `user-${member.user_id.substring(0, 8)}@example.com`, // Placeholder
+        role: member.role,
+        avatar: member.profile?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
+        dateAdded: new Date().toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric', 
+          year: 'numeric' 
+        })
+      }));
       
-      if (data) {
-        const formattedMembers: TeamMember[] = data.map((member) => {
-          // Handle profile data - it might be an array or an object
-          let profile: Profile | null = null;
-          
-          if (member.profiles) {
-            if (Array.isArray(member.profiles)) {
-              profile = member.profiles[0] as Profile;
-            } else {
-              profile = member.profiles as unknown as Profile;
-            }
-          }
-          
-          return {
-            id: member.id,
-            name: profile?.full_name || 'Unknown',
-            email: `user-${member.user_id.substring(0, 8)}@example.com`, // Placeholder
-            role: member.role,
-            avatar: profile?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
-            dateAdded: new Date(member.joined_at).toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric', 
-              year: 'numeric' 
-            })
-          };
-        });
-        
-        setTeamMembers(formattedMembers);
-      }
-    } catch (error) {
-      console.error('Error fetching team members:', error);
-      toast({
-        title: 'Error fetching team members',
-        description: 'Could not load team members. Please try again later.',
-        variant: 'destructive'
-      });
+      setTeamMembers(formattedMembers);
     }
-  };
+  }, [teams]);
 
   // Function to calculate role statistics
   const calculateRoleStats = () => {
@@ -179,19 +76,9 @@ const Teams = () => {
   
   // Function to add a new team member
   const handleAddTeamMember = (email: string, name: string, role: string) => {
-    // The actual database insertion is now handled in the AddTeamMemberDialog component
-    // Here we just update the UI
-    const newMember: TeamMember = {
-      id: Date.now(), // Temporary ID for UI purposes
-      name,
-      email,
-      role,
-      avatar: `https://i.pravatar.cc/150?u=${email}`,
-      dateAdded: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    };
-    
-    // Add the new member to the list
-    setTeamMembers([...teamMembers, newMember]);
+    // This is now a UI-only function as the actual database interaction
+    // happens in the AddTeamMemberDialog component
+    refreshTeams(); // Refresh teams data after a new member is added
   };
 
   if (loading) {
@@ -199,6 +86,30 @@ const Teams = () => {
       <DashboardLayout>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-blue"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="p-8 text-center text-red-500 border border-dashed border-red-300 rounded-lg">
+          Error loading teams: {error}
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (teams.length === 0) {
+    return (
+      <DashboardLayout>
+        <div className="mb-8 animate-fade-in">
+          <h1 className="text-3xl font-sf font-bold mb-2">Team Management</h1>
+          <p className="text-consensus-grey-600">You don't have any teams yet</p>
+        </div>
+        <div className="p-8 text-center text-consensus-grey-500 border border-dashed border-consensus-grey-300 rounded-lg">
+          No teams found. Please create a team to get started.
         </div>
       </DashboardLayout>
     );
@@ -275,13 +186,12 @@ const Teams = () => {
 
         <Card className="animate-fade-in animate-delay-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Inactive Members</CardTitle>
+            <CardTitle className="text-xl">Team Actions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold">0</p>
-                <p className="text-sm text-consensus-grey-600">No inactive members</p>
+                <p className="text-sm text-consensus-grey-600">Add new team members</p>
               </div>
               <AddTeamMemberDialog 
                 onAddMember={handleAddTeamMember}

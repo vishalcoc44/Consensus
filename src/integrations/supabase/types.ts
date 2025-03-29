@@ -473,6 +473,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_team_member: {
+        Args: {
+          team_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

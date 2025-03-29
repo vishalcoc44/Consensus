@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
 import TeamRoleSelector from './TeamRoleSelector';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from "@/integrations/supabase/client";
+import { typedSupabase } from "@/utils/supabaseClient";
 
 interface AddTeamMemberDialogProps {
   onAddMember: (email: string, name: string, role: string) => void;
@@ -60,7 +61,7 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
       console.log("Searching for profile with name:", name);
       
       // Check if the profile exists
-      const { data: profileData, error: profileQueryError } = await supabase
+      const { data: profileData, error: profileQueryError } = await typedSupabase
         .from('profiles')
         .select('id')
         .ilike('full_name', name)
@@ -78,7 +79,7 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
         console.log("Creating new profile for:", name);
         // Create a new profile
         const newUserId = crypto.randomUUID();
-        const { data: newProfile, error: profileError } = await supabase
+        const { data: newProfile, error: profileError } = await typedSupabase
           .from('profiles')
           .insert({
             id: newUserId,
@@ -104,7 +105,7 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
       console.log("Adding team member with user ID:", userId, "to team:", teamId, "with role:", role);
       
       // Add the team member to the team
-      const { error: teamMemberError } = await supabase
+      const { error: teamMemberError } = await typedSupabase
         .from('team_members')
         .insert({
           team_id: teamId,

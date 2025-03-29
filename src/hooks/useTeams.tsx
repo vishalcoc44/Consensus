@@ -51,22 +51,41 @@ export function useTeams() {
         return;
       }
       
-      // Fetch teams directly with all related data in one query
+      // First fetch team memberships for the current user
+      const { data: memberData, error: memberError } = await typedSupabase
+        .from('team_members')
+        .select('team_id')
+        .eq('user_id', session.user.id);
+        
+      if (memberError) {
+        console.error("Error fetching team memberships:", memberError);
+        throw memberError;
+      }
+      
+      if (!memberData || memberData.length === 0) {
+        console.log("User is not a member of any teams");
+        setTeams([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Extract team IDs from memberships
+      const teamIds = memberData.map(member => member.team_id);
+      console.log("User belongs to these teams:", teamIds);
+      
+      // Fetch teams data
       const { data: teamsData, error: teamsError } = await typedSupabase
         .from('teams')
-        .select(`
-          *,
-          team_members!inner(*)
-        `)
-        .eq('team_members.user_id', session.user.id);
+        .select('*')
+        .in('id', teamIds);
         
       if (teamsError) {
-        console.error("Error fetching teams:", teamsError);
+        console.error("Error fetching teams data:", teamsError);
         throw teamsError;
       }
       
       if (!teamsData || teamsData.length === 0) {
-        console.log("User is not a member of any teams");
+        console.log("No teams found with the given IDs");
         setTeams([]);
         setLoading(false);
         return;
@@ -74,9 +93,7 @@ export function useTeams() {
       
       console.log("Found teams:", teamsData);
       
-      // Now fetch all members for these teams with their profiles
-      const teamIds = teamsData.map(team => team.id);
-      
+      // Fetch all members for these teams with their profiles
       const { data: allMembers, error: membersError } = await typedSupabase
         .from('team_members')
         .select(`
@@ -93,7 +110,7 @@ export function useTeams() {
       // Group members by team
       const membersByTeam: Record<string, TeamMember[]> = {};
       
-      allMembers.forEach(member => {
+      allMembers?.forEach(member => {
         if (!membersByTeam[member.team_id]) {
           membersByTeam[member.team_id] = [];
         }
