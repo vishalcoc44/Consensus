@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -27,13 +26,10 @@ const Decisions = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set page title
     document.title = 'Decisions - ConsensusAI';
-    
-    // Fetch decisions from Supabase
     fetchDecisions();
   }, []);
-  
+
   const fetchDecisions = async () => {
     try {
       const { data, error } = await typedSupabase
@@ -49,38 +45,46 @@ const Decisions = () => {
           proposal_analysis(analysis_data)
         `)
         .order('created_at', { ascending: false });
-        
+
       if (error) throw error;
-      
+
       if (data) {
-        // Transform the data into the format expected by DecisionCard
         const formattedDecisions: Decision[] = data.map(item => {
-          // Calculate consensus score or use a default
           let consensusScore = 0;
           let participantsCount = 0;
           let commentsCount = 0;
-          
+
           if (item.proposal_analysis && item.proposal_analysis.length > 0) {
-            const analysis = item.proposal_analysis[0].analysis_data;
-            consensusScore = analysis?.recommendationConfidence || Math.floor(Math.random() * 100);
+            const analysisData = item.proposal_analysis[0].analysis_data;
+
+            if (
+              typeof analysisData === 'object' && 
+              analysisData !== null && 
+              'recommendation' in analysisData && 
+              typeof analysisData.recommendation === 'object' && 
+              analysisData.recommendation !== null && 
+              'confidenceScore' in analysisData.recommendation
+            ) {
+              consensusScore = analysisData.recommendation.confidenceScore || Math.floor(Math.random() * 100);
+            } else {
+              consensusScore = Math.floor(Math.random() * 100);
+            }
           } else {
             consensusScore = Math.floor(Math.random() * 100);
           }
-          
+
           participantsCount = item.contributions?.length || 0;
-          commentsCount = participantsCount * 2; // Just a rough estimate for now
-          
-          // Calculate progress based on status
+          commentsCount = participantsCount * 2;
+
           let progress = 0;
           if (item.status === 'completed' || item.status === 'archived') {
             progress = 100;
           } else if (item.status === 'active') {
-            // Calculate progress based on deadline if available
             if (item.deadline) {
               const now = new Date();
               const deadline = new Date(item.deadline);
               const created = new Date(item.created_at);
-              
+
               if (now > deadline) {
                 progress = 100;
               } else {
@@ -89,10 +93,10 @@ const Decisions = () => {
                 progress = Math.min(100, Math.ceil((elapsedTime / totalTime) * 100));
               }
             } else {
-              progress = Math.floor(Math.random() * 90) + 10; // Random progress between 10-99%
+              progress = Math.floor(Math.random() * 90) + 10;
             }
           }
-          
+
           return {
             id: item.id,
             title: item.title,
@@ -105,7 +109,7 @@ const Decisions = () => {
             consensus: consensusScore,
           };
         });
-        
+
         setDecisions(formattedDecisions);
       }
     } catch (error) {

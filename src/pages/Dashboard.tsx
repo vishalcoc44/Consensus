@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -41,16 +40,12 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set page title
     document.title = 'Dashboard - ConsensusAI';
-    
-    // Fetch data
     fetchDashboardData();
   }, []);
-  
+
   const fetchDashboardData = async () => {
     try {
-      // Fetch active decisions
       const { data: decisionsData, error: decisionsError } = await typedSupabase
         .from('proposals')
         .select(`
@@ -66,44 +61,49 @@ const Dashboard = () => {
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(6);
-        
+      
       if (decisionsError) throw decisionsError;
       
-      // Fetch team members count
       const { count: teamMembersCount, error: teamMembersError } = await typedSupabase
         .from('team_members')
         .select('*', { count: 'exact', head: true });
-        
+      
       if (teamMembersError) throw teamMembersError;
       
-      // Calculate stats
       const activeDecisionsCount = await getActiveDecisionsCount();
       
-      // Process decisions data
       if (decisionsData) {
-        // Transform the data into the format expected by DecisionCard
         const formattedDecisions: Decision[] = decisionsData.map(item => {
-          // Calculate consensus score or use a default
           let consensusScore = 0;
           let participantsCount = 0;
           let commentsCount = 0;
           
           if (item.proposal_analysis && item.proposal_analysis.length > 0) {
-            const analysis = item.proposal_analysis[0].analysis_data;
-            consensusScore = analysis?.recommendationConfidence || Math.floor(Math.random() * 100);
+            const analysisData = item.proposal_analysis[0].analysis_data;
+            
+            if (
+              typeof analysisData === 'object' && 
+              analysisData !== null && 
+              'recommendation' in analysisData && 
+              typeof analysisData.recommendation === 'object' && 
+              analysisData.recommendation !== null && 
+              'confidenceScore' in analysisData.recommendation
+            ) {
+              consensusScore = analysisData.recommendation.confidenceScore || Math.floor(Math.random() * 100);
+            } else {
+              consensusScore = Math.floor(Math.random() * 100);
+            }
           } else {
             consensusScore = Math.floor(Math.random() * 100);
           }
           
           participantsCount = item.contributions?.length || 0;
-          commentsCount = participantsCount * 2; // Just a rough estimate for now
+          commentsCount = participantsCount * 2;
           
-          // Calculate progress based on status
           let progress = 0;
           if (item.status === 'completed' || item.status === 'archived') {
             progress = 100;
           } else if (item.status === 'active') {
-            // Calculate progress based on deadline if available
             if (item.deadline) {
               const now = new Date();
               const deadline = new Date(item.deadline);
@@ -117,7 +117,7 @@ const Dashboard = () => {
                 progress = Math.min(100, Math.ceil((elapsedTime / totalTime) * 100));
               }
             } else {
-              progress = Math.floor(Math.random() * 90) + 10; // Random progress between 10-99%
+              progress = Math.floor(Math.random() * 90) + 10;
             }
           }
           
@@ -134,7 +134,6 @@ const Dashboard = () => {
           };
         });
         
-        // Calculate average consensus
         const totalConsensus = formattedDecisions.reduce((sum, decision) => sum + decision.consensus, 0);
         const avgConsensus = formattedDecisions.length > 0 ? 
           Math.round(totalConsensus / formattedDecisions.length) : 0;
@@ -144,7 +143,7 @@ const Dashboard = () => {
           activeDecisions: activeDecisionsCount,
           teamMembers: teamMembersCount || 0,
           avgConsensus: avgConsensus,
-          decisionVelocity: 4.2, // Fixed value for now
+          decisionVelocity: 4.2,
         });
       }
     } catch (error) {
@@ -158,14 +157,14 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
-  
+
   const getActiveDecisionsCount = async (): Promise<number> => {
     try {
       const { count, error } = await typedSupabase
         .from('proposals')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active');
-        
+      
       if (error) throw error;
       return count || 0;
     } catch (error) {
