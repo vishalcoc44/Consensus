@@ -102,20 +102,18 @@ const Teams = () => {
       
       if (data) {
         const formattedMembers: TeamMember[] = data.map(member => {
-          // The issue is that profiles is returned as a single object, not an array
-          // We need to explicitly type and access it as a single object
-          const profile = member.profiles as {
-            id: string;
-            full_name: string | null;
-            avatar_url: string | null;
-          };
+          // When using Supabase joins with (), the joined data comes as an object
+          // or as the first element of an array if multiple rows could be returned
+          const profile = Array.isArray(member.profiles) 
+            ? member.profiles[0] 
+            : member.profiles;
           
           return {
             id: member.id,
-            name: profile.full_name || 'Unknown',
+            name: profile?.full_name || 'Unknown',
             email: `user-${member.user_id.substring(0, 8)}@example.com`, // Placeholder
             role: member.role,
-            avatar: profile.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
+            avatar: profile?.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
             dateAdded: new Date(member.joined_at).toLocaleDateString('en-US', { 
               month: 'short', 
               day: 'numeric', 
