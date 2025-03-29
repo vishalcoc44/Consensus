@@ -102,18 +102,22 @@ const Teams = () => {
       if (error) throw error;
       
       if (data) {
-        const formattedMembers: TeamMember[] = data.map(member => ({
-          id: member.id,
-          name: member.profiles.full_name || 'Unknown',
-          email: `user-${member.user_id.substring(0, 8)}@example.com`, // Placeholder
-          role: member.role,
-          avatar: member.profiles.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
-          dateAdded: new Date(member.joined_at).toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
-          })
-        }));
+        const formattedMembers: TeamMember[] = data.map(member => {
+          // Fix: Correctly access the profile properties
+          const profile = member.profiles;
+          return {
+            id: member.id,
+            name: profile.full_name || 'Unknown',
+            email: `user-${member.user_id.substring(0, 8)}@example.com`, // Placeholder
+            role: member.role,
+            avatar: profile.avatar_url || `https://i.pravatar.cc/150?u=${member.user_id}`,
+            dateAdded: new Date(member.joined_at).toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric', 
+              year: 'numeric' 
+            })
+          };
+        });
         
         setTeamMembers(formattedMembers);
       }
