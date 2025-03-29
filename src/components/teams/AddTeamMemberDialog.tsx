@@ -48,22 +48,38 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
         return;
       }
       
+      if (!teamId) {
+        toast({
+          title: "Team not found",
+          description: "No team is selected. Please refresh the page and try again.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
       // For demo purposes, create a dummy profile if needed
-      const { data: existingProfile } = await typedSupabase
+      const { data: existingProfile, error: profileQueryError } = await typedSupabase
         .from('profiles')
         .select('id')
         .eq('full_name', name)
         .maybeSingle();
+        
+      if (profileQueryError) {
+        console.error("Error querying profiles:", profileQueryError);
+        throw profileQueryError;
+      }
 
       let userId = existingProfile?.id;
       
       if (!userId) {
         // Create a dummy profile for demonstration purposes
         // In a real app, you would invite the user and they would create their own account
+        const newUserId = crypto.randomUUID();
         const { data: newProfile, error: profileError } = await typedSupabase
           .from('profiles')
           .insert({
-            id: crypto.randomUUID(),
+            id: newUserId,
             full_name: name,
             avatar_url: `https://i.pravatar.cc/150?u=${email}`
           })
@@ -71,25 +87,29 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
           .single();
           
         if (profileError) {
+          console.error("Error creating profile:", profileError);
           throw profileError;
+        }
+        
+        if (!newProfile) {
+          throw new Error('Failed to create user profile');
         }
         
         userId = newProfile.id;
       }
       
-      // Add the team member to the team with the real Supabase client
-      if (teamId) {
-        const { error: teamMemberError } = await typedSupabase
-          .from('team_members')
-          .insert({
-            team_id: teamId,
-            user_id: userId,
-            role: role
-          });
+      // Add the team member to the team
+      const { error: teamMemberError } = await typedSupabase
+        .from('team_members')
+        .insert({
+          team_id: teamId,
+          user_id: userId,
+          role: role
+        });
           
-        if (teamMemberError) {
-          throw teamMemberError;
-        }
+      if (teamMemberError) {
+        console.error("Error adding team member:", teamMemberError);
+        throw teamMemberError;
       }
       
       // Call the onAddMember callback (this will update the UI)

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +22,20 @@ interface Team {
   id: string;
   name: string;
   description: string | null;
+}
+
+interface Profile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+}
+
+interface TeamMemberData {
+  id: string;
+  role: string;
+  joined_at: string;
+  user_id: string;
+  profiles: Profile | Profile[];
 }
 
 const Teams = () => {
@@ -55,18 +70,31 @@ const Teams = () => {
         // Fetch team members for the first team
         await fetchTeamMembers(teamsData[0].id);
       } else {
-        // Create a default team if none exists
-        const { data: newTeam, error: createError } = await typedSupabase
-          .from('teams')
-          .insert({ name: 'Default Team', description: 'Your organization\'s default team' })
-          .select()
-          .single();
+        try {
+          // Create a default team if none exists
+          const { data: newTeam, error: createError } = await typedSupabase
+            .from('teams')
+            .insert({ name: 'Default Team', description: 'Your organization\'s default team' })
+            .select()
+            .single();
+            
+          if (createError) throw createError;
           
-        if (createError) throw createError;
-        
-        setTeams([newTeam]);
-        setCurrentTeam(newTeam);
-        setTeamMembers([]);
+          if (newTeam) {
+            setTeams([newTeam]);
+            setCurrentTeam(newTeam);
+            setTeamMembers([]);
+          } else {
+            throw new Error('Failed to create default team');
+          }
+        } catch (createTeamError) {
+          console.error('Error creating default team:', createTeamError);
+          toast({
+            title: 'Error creating team',
+            description: 'Could not create a default team. Please try again later.',
+            variant: 'destructive'
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching teams:', error);
@@ -75,7 +103,6 @@ const Teams = () => {
         description: 'Could not load your teams. Please try again later.',
         variant: 'destructive'
       });
-      setTeamMembers([]);
     } finally {
       setLoading(false);
     }
@@ -101,7 +128,7 @@ const Teams = () => {
       if (error) throw error;
       
       if (data) {
-        const formattedMembers: TeamMember[] = data.map(member => {
+        const formattedMembers: TeamMember[] = data.map((member: TeamMemberData) => {
           // When using Supabase joins with (), the joined data comes as an object
           // or as the first element of an array if multiple rows could be returned
           const profile = Array.isArray(member.profiles) 
