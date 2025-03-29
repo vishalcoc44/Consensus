@@ -6,7 +6,7 @@ import { Users, UserPlus } from 'lucide-react';
 import TeamMemberCard from '@/components/teams/TeamMemberCard';
 import AddTeamMemberDialog from '@/components/teams/AddTeamMemberDialog';
 import { useToast } from '@/components/ui/use-toast';
-import { typedSupabase } from '@/utils/supabaseClient';
+import { supabase } from "@/integrations/supabase/client";
 
 // Type definition for team member
 interface TeamMember {
@@ -30,14 +30,6 @@ interface Profile {
   avatar_url: string | null;
 }
 
-interface TeamMemberData {
-  id: string;
-  role: string;
-  joined_at: string;
-  user_id: string;
-  profiles: Profile | Profile[];
-}
-
 const Teams = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -57,7 +49,7 @@ const Teams = () => {
     setLoading(true);
     try {
       // Fetch teams
-      const { data: teamsData, error: teamsError } = await typedSupabase
+      const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
         .select('*');
         
@@ -72,7 +64,7 @@ const Teams = () => {
       } else {
         try {
           // Create a default team if none exists
-          const { data: newTeam, error: createError } = await typedSupabase
+          const { data: newTeam, error: createError } = await supabase
             .from('teams')
             .insert({ name: 'Default Team', description: 'Your organization\'s default team' })
             .select()
@@ -110,14 +102,14 @@ const Teams = () => {
   
   const fetchTeamMembers = async (teamId: string) => {
     try {
-      const { data, error } = await typedSupabase
+      const { data, error } = await supabase
         .from('team_members')
         .select(`
           id,
           role,
           joined_at,
           user_id,
-          profiles(
+          profiles:user_id(
             id,
             full_name,
             avatar_url
@@ -128,12 +120,17 @@ const Teams = () => {
       if (error) throw error;
       
       if (data) {
-        const formattedMembers: TeamMember[] = data.map((member: TeamMemberData) => {
-          // When using Supabase joins with (), the joined data comes as an object
-          // or as the first element of an array if multiple rows could be returned
-          const profile = Array.isArray(member.profiles) 
-            ? member.profiles[0] 
-            : member.profiles;
+        const formattedMembers: TeamMember[] = data.map((member) => {
+          // Handle profile data - it might be an array or an object
+          let profile: Profile | null = null;
+          
+          if (member.profiles) {
+            if (Array.isArray(member.profiles)) {
+              profile = member.profiles[0] as Profile;
+            } else {
+              profile = member.profiles as unknown as Profile;
+            }
+          }
           
           return {
             id: member.id,
@@ -170,9 +167,9 @@ const Teams = () => {
     };
     
     teamMembers.forEach(member => {
-      if (member.role === 'Admin') stats.admin++;
-      if (member.role === 'Proposer') stats.proposer++;
-      if (member.role === 'Contributor') stats.contributor++;
+      if (member.role.toLowerCase() === 'admin') stats.admin++;
+      if (member.role.toLowerCase() === 'proposer') stats.proposer++;
+      if (member.role.toLowerCase() === 'contributor') stats.contributor++;
     });
     
     return stats;

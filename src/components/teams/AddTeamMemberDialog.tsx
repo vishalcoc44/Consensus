@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
 import TeamRoleSelector from './TeamRoleSelector';
 import { useToast } from '@/components/ui/use-toast';
-import { typedSupabase } from '@/utils/supabaseClient';
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddTeamMemberDialogProps {
   onAddMember: (email: string, name: string, role: string) => void;
@@ -59,7 +59,7 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
       }
       
       // For demo purposes, create a dummy profile if needed
-      const { data: existingProfile, error: profileQueryError } = await typedSupabase
+      const { data: existingProfile, error: profileQueryError } = await supabase
         .from('profiles')
         .select('id')
         .eq('full_name', name)
@@ -76,7 +76,7 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
         // Create a dummy profile for demonstration purposes
         // In a real app, you would invite the user and they would create their own account
         const newUserId = crypto.randomUUID();
-        const { data: newProfile, error: profileError } = await typedSupabase
+        const { data: newProfile, error: profileError } = await supabase
           .from('profiles')
           .insert({
             id: newUserId,
@@ -99,7 +99,7 @@ const AddTeamMemberDialog = ({ onAddMember, teamId }: AddTeamMemberDialogProps) 
       }
       
       // Add the team member to the team
-      const { error: teamMemberError } = await typedSupabase
+      const { error: teamMemberError } = await supabase
         .from('team_members')
         .insert({
           team_id: teamId,
