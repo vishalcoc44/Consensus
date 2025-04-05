@@ -11,7 +11,7 @@ interface EmailInputProps {
 const EmailInput = ({ email, setEmail }: EmailInputProps) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="email" className="text-sm font-medium">
+      <Label htmlFor="email" className="text-sm font-medium text-white">
         Email Address
       </Label>
       <div className="relative">
@@ -22,7 +22,7 @@ const EmailInput = ({ email, setEmail }: EmailInputProps) => {
           placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="pl-10 py-6 rounded-xl"
+          className="pl-10 py-6 rounded-xl bg-consensus-dark-200 border-consensus-dark-100 text-white"
           required
         />
       </div>

@@ -11,7 +11,7 @@ interface NameInputProps {
 const NameInput = ({ name, setName }: NameInputProps) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="name" className="text-sm font-medium">
+      <Label htmlFor="name" className="text-sm font-medium text-white">
         Full Name
       </Label>
       <div className="relative">
@@ -22,7 +22,7 @@ const NameInput = ({ name, setName }: NameInputProps) => {
           placeholder="Enter your name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="pl-10 py-6 rounded-xl"
+          className="pl-10 py-6 rounded-xl bg-consensus-dark-200 border-consensus-dark-100 text-white"
           required
         />
       </div>

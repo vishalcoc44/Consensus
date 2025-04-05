@@ -51,25 +51,25 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-consensus-grey-100">
+    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-consensus-dark-400">
       <div className="w-full max-w-md mx-auto">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-consensus-blue">Reset Password</h2>
-          <p className="mt-2 text-consensus-grey-600">
+          <h2 className="text-3xl font-bold text-white">Reset Password</h2>
+          <p className="mt-2 text-consensus-grey-400">
             Enter your email to receive a password reset link
           </p>
         </div>
 
-        <div className="bg-white p-8 rounded-2xl shadow-lg animate-scale-in">
+        <div className="bg-consensus-dark-300 p-8 rounded-2xl shadow-lg border border-consensus-dark-100 animate-scale-in">
           {isSuccess ? (
             <div className="text-center py-4">
-              <h3 className="text-xl font-medium text-green-600 mb-2">Email Sent!</h3>
-              <p className="text-gray-600 mb-6">
+              <h3 className="text-xl font-medium text-consensus-green mb-2">Email Sent!</h3>
+              <p className="text-consensus-grey-300 mb-6">
                 If an account exists with this email, you'll receive a password reset link shortly.
               </p>
               <Link 
                 to="/login" 
-                className="inline-block text-consensus-blue hover:underline mt-4"
+                className="inline-block text-consensus-green hover:text-consensus-teal transition-colors hover:underline mt-4"
               >
                 Return to login
               </Link>
@@ -77,7 +77,7 @@ const ForgotPassword = () => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-white mb-1">
                   Email address
                 </label>
                 <Input
@@ -86,13 +86,13 @@ const ForgotPassword = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="py-5 px-4 rounded-xl"
+                  className="py-5 px-4 rounded-xl bg-consensus-dark-200 border-consensus-dark-100 text-white"
                   required
                 />
               </div>
               <Button
                 type="submit"
-                className="w-full bg-consensus-blue hover:bg-blue-700 py-5 rounded-xl"
+                className="w-full bg-consensus-green hover:bg-consensus-teal text-consensus-dark-800 py-5 rounded-xl transition-all duration-300"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Sending Reset Link...' : 'Send Reset Link'}
@@ -104,7 +104,7 @@ const ForgotPassword = () => {
             <div className="mt-8 text-center">
               <Link 
                 to="/login" 
-                className="text-consensus-blue hover:underline"
+                className="text-consensus-green hover:text-consensus-teal transition-colors hover:underline"
               >
                 Back to login
               </Link>

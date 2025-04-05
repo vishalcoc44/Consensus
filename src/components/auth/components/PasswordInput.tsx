@@ -25,13 +25,13 @@ const PasswordInput = ({
   return (
     <div className="space-y-2">
       <div className="flex justify-between">
-        <Label htmlFor="password" className="text-sm font-medium">
+        <Label htmlFor="password" className="text-sm font-medium text-white">
           Password
         </Label>
         {showForgotPassword && (
           <Link 
             to="/forgot-password" 
-            className="text-sm text-consensus-blue hover:underline"
+            className="text-sm text-consensus-green hover:text-consensus-teal transition-colors hover:underline"
           >
             Forgot password?
           </Link>
@@ -45,13 +45,13 @@ const PasswordInput = ({
           placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="pl-10 py-6 pr-10 rounded-xl"
+          className="pl-10 py-6 pr-10 rounded-xl bg-consensus-dark-200 border-consensus-dark-100 text-white"
           required
         />
         <button
           type="button"
           onClick={toggleShowPassword}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400 hover:text-consensus-grey-600"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400 hover:text-white"
         >
           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>

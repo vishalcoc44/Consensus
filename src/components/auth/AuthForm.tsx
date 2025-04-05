@@ -109,7 +109,7 @@ const AuthForm = ({ type }: AuthFormProps) => {
     <div className="w-full max-w-md mx-auto">
       <AuthHeader type={type} />
 
-      <div className="bg-white p-8 rounded-2xl shadow-lg animate-scale-in">
+      <div className="bg-consensus-dark-300 p-8 rounded-2xl border border-consensus-dark-100 shadow-lg animate-scale-in">
         <ErrorDisplay error={error} />
         
         <form onSubmit={handleSubmit} className="space-y-5">
