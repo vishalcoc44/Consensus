@@ -3,9 +3,13 @@ import { useState, useEffect } from 'react';
 import { typedSupabase } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { PostgrestError } from '@supabase/supabase-js';
+import { Database } from '@/types/supabase';
+
+// Define valid table names from Database type
+type ValidTableNames = keyof Database['public']['Tables'];
 
 interface UseSupabaseQueryProps<T> {
-  tableName: string;
+  tableName: ValidTableNames;
   queryFn?: (query: any) => any;
   enabled?: boolean;
   onSuccess?: (data: T[]) => void;
@@ -62,10 +66,13 @@ export function useSupabaseQuery<T>({
       }
       
       console.log(`Data fetched from ${tableName}:`, result?.length || 0, "records");
-      setData(result || []);
+      
+      // Safely cast the result to T[]
+      const typedResult = (result || []) as T[];
+      setData(typedResult);
       
       if (onSuccess) {
-        onSuccess(result || []);
+        onSuccess(typedResult);
       }
     } catch (err: any) {
       console.error(`Error in useSupabaseQuery for ${tableName}:`, err);
