@@ -47,6 +47,11 @@ export function useSupabaseQuery<T>({
       
       if (!session) {
         console.log("No active session found");
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to access this data",
+          variant: "destructive"
+        });
         throw new Error("Authentication required");
       }
       
@@ -82,6 +87,23 @@ export function useSupabaseQuery<T>({
         if (onError) {
           onError(err);
         }
+        
+        // Show a more specific error message if we can determine what went wrong
+        let errorMessage = err.message || `Could not load data from ${tableName}.`;
+        
+        if (err.code === '42501') {
+          errorMessage = "You don't have permission to access this data. This could be due to Row Level Security policies.";
+        } else if (err.code === '42P01') {
+          errorMessage = `The table "${tableName}" doesn't exist or you don't have access to it.`;
+        } else if (err.code === '23505') {
+          errorMessage = "A duplicate record already exists.";
+        }
+        
+        toast({
+          title: `Error loading data`,
+          description: errorMessage,
+          variant: 'destructive'
+        });
       } else {
         // This is a generic error
         const genericError = {
@@ -95,13 +117,13 @@ export function useSupabaseQuery<T>({
         if (onError) {
           onError(genericError);
         }
+        
+        toast({
+          title: `Error loading data`,
+          description: err.message || `Could not load data from ${tableName}. Please try again later.`,
+          variant: 'destructive'
+        });
       }
-      
-      toast({
-        title: `Error loading data`,
-        description: err.message || `Could not load data from ${tableName}. Please try again later.`,
-        variant: 'destructive'
-      });
     } finally {
       setLoading(false);
     }
