@@ -4,10 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DecisionCard from '@/components/dashboard/DecisionCard';
 import CreateDecisionButton from '@/components/dashboard/CreateDecisionButton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { typedSupabase } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertCircle } from 'lucide-react';
 import ErrorDisplay from '@/components/auth/components/ErrorDisplay';
 
 interface Decision {
@@ -70,20 +68,18 @@ const Decisions = () => {
         if (data.length > 0) {
           const proposalIds = data.map(item => item.id);
           
-          // Fix: Use proper count query method
-          const { data: countData, error: countError } = await typedSupabase
-            .from('contributions')
-            .select('proposal_id, id', { count: 'exact', head: false })
-            .in('proposal_id', proposalIds)
-            .groupBy('proposal_id');
-            
-          if (countError) {
-            console.error("Error fetching contribution counts:", countError);
-          } else if (countData) {
-            // Group counts by proposal
-            countData.forEach(item => {
-              contributionCounts[item.proposal_id] = 1; // Count each group as one participant
-            });
+          // Fix: Use separate count queries for each proposal to avoid groupBy
+          for (const proposalId of proposalIds) {
+            const { count, error: countError } = await typedSupabase
+              .from('contributions')
+              .select('*', { count: 'exact', head: true })
+              .eq('proposal_id', proposalId);
+              
+            if (countError) {
+              console.error(`Error fetching contribution count for proposal ${proposalId}:`, countError);
+            } else if (count !== null) {
+              contributionCounts[proposalId] = count;
+            }
           }
         }
         
