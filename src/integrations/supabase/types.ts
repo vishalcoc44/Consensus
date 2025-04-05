@@ -467,6 +467,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_proposal: {
+        Args: {
+          proposal_id: string
+        }
+        Returns: boolean
+      }
       is_team_admin: {
         Args: {
           team_id: string
@@ -475,7 +481,7 @@ export type Database = {
       }
       is_team_member: {
         Args: {
-          team_id: string
+          check_team_id: string
         }
         Returns: boolean
       }

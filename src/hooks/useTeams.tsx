@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { typedSupabase, extractProfileData } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
@@ -52,20 +51,14 @@ export function useTeams() {
         return;
       }
       
-      // Fetch teams using a simpler query approach to avoid recursion
+      // Use simple query to avoid recursion issues
       const { data: teamsData, error: teamsError } = await typedSupabase
         .from('teams')
         .select('*');
         
       if (teamsError) {
-        // Handle specific RLS policy errors
-        if (teamsError.code === '42501') {
-          console.error("Permission denied error:", teamsError);
-          throw new Error("You don't have permission to access team data. Please contact support.");
-        } else {
-          console.error("Error fetching teams data:", teamsError);
-          throw teamsError;
-        }
+        console.error("Error fetching teams data:", teamsError);
+        throw teamsError;
       }
       
       if (!teamsData || teamsData.length === 0) {
@@ -77,9 +70,10 @@ export function useTeams() {
       
       console.log("Found teams:", teamsData);
       
-      // Now get all members for these teams with a simpler query
+      // Get all members for these teams
       const teamIds = teamsData.map(team => team.id);
       
+      // Use a separate query for members to avoid recursion
       const { data: allMembers, error: membersError } = await typedSupabase
         .from('team_members')
         .select(`
@@ -89,14 +83,8 @@ export function useTeams() {
         .in('team_id', teamIds);
         
       if (membersError) {
-        // Handle specific RLS policy errors
-        if (membersError.code === '42501') {
-          console.error("Permission denied error for team members:", membersError);
-          throw new Error("You don't have permission to access team member data. Please contact support.");
-        } else {
-          console.error("Error fetching team members:", membersError);
-          throw membersError;
-        }
+        console.error("Error fetching team members:", membersError);
+        throw membersError;
       }
       
       // Group members by team

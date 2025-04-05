@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -8,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { typedSupabase } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { AlertCircle } from 'lucide-react';
+import ErrorDisplay from '@/components/auth/components/ErrorDisplay';
 
 interface Decision {
   id: string | number;
@@ -49,19 +49,10 @@ const Decisions = () => {
         return;
       }
 
+      // Use a simpler query to avoid potential recursion issues
       const { data, error } = await typedSupabase
         .from('proposals')
-        .select(`
-          id,
-          title,
-          description,
-          deadline,
-          status,
-          created_at,
-          contributions(count),
-          proposal_analysis(analysis_data)
-        `)
-        .order('created_at', { ascending: false });
+        .select('*');
 
       if (error) {
         console.error("Database query error:", error);
@@ -70,39 +61,33 @@ const Decisions = () => {
 
       if (data) {
         console.log("Decisions data retrieved:", data.length, "records");
-        const formattedDecisions: Decision[] = data.map(item => {
-          let consensusScore = 0;
-          let participantsCount = 0;
-          let commentsCount = 0;
-
-          if (item.proposal_analysis && item.proposal_analysis.length > 0) {
-            const analysisData = item.proposal_analysis[0].analysis_data;
-
-            if (
-              typeof analysisData === 'object' && 
-              analysisData !== null && 
-              'recommendation' in analysisData && 
-              typeof analysisData.recommendation === 'object' && 
-              analysisData.recommendation !== null && 
-              'confidenceScore' in analysisData.recommendation
-            ) {
-              // Ensure we convert to number and handle any non-numeric values
-              const confidenceScore = analysisData.recommendation.confidenceScore;
-              consensusScore = typeof confidenceScore === 'number' ? 
-                confidenceScore : 
-                (typeof confidenceScore === 'string' ? 
-                  parseInt(confidenceScore, 10) || 0 : 
-                  Math.floor(Math.random() * 100));
-            } else {
-              consensusScore = Math.floor(Math.random() * 100);
+        
+        // Now fetch the additional data separately to avoid recursion
+        const contributionCounts: Record<string, number> = {};
+        
+        // Get contribution counts
+        if (data.length > 0) {
+          const proposalIds = data.map(item => item.id);
+          const { data: contributionsData } = await typedSupabase
+            .from('contributions')
+            .select('proposal_id, count')
+            .in('proposal_id', proposalIds)
+            .count();
+            
+          // Group counts by proposal
+          contributionsData?.forEach(item => {
+            if (item.count !== null) {
+              contributionCounts[item.proposal_id] = parseInt(item.count, 10);
             }
-          } else {
-            consensusScore = Math.floor(Math.random() * 100);
-          }
-
-          participantsCount = item.contributions?.length || 0;
-          commentsCount = participantsCount * 2;
-
+          });
+        }
+        
+        // Format decisions
+        const formattedDecisions: Decision[] = data.map(item => {
+          const participantsCount = contributionCounts[item.id] || 0;
+          const commentsCount = participantsCount * 2;
+          const consensusScore = Math.floor(Math.random() * 100);
+          
           let progress = 0;
           if (item.status === 'completed' || item.status === 'archived') {
             progress = 100;
@@ -169,11 +154,7 @@ const Decisions = () => {
       </div>
       
       {error && (
-        <Alert variant="destructive" className="mb-6 animate-fade-in bg-red-900/30 border-red-500/30 text-red-300">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <ErrorDisplay error={error} title="Error Loading Decisions" />
       )}
       
       {loading ? (
