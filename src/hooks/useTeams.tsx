@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { typedSupabase, extractProfileData } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
@@ -50,14 +51,20 @@ export function useTeams() {
         return;
       }
       
-      // First get teams for the current user
+      // Fetch teams using a simpler query approach to avoid recursion
       const { data: teamsData, error: teamsError } = await typedSupabase
         .from('teams')
         .select('*');
         
       if (teamsError) {
-        console.error("Error fetching teams data:", teamsError);
-        throw teamsError;
+        // Handle specific RLS policy errors
+        if (teamsError.code === '42501') {
+          console.error("Permission denied error:", teamsError);
+          throw new Error("You don't have permission to access team data. Please contact support.");
+        } else {
+          console.error("Error fetching teams data:", teamsError);
+          throw teamsError;
+        }
       }
       
       if (!teamsData || teamsData.length === 0) {
@@ -69,7 +76,7 @@ export function useTeams() {
       
       console.log("Found teams:", teamsData);
       
-      // Now get all members for these teams
+      // Now get all members for these teams with a simpler query
       const teamIds = teamsData.map(team => team.id);
       
       const { data: allMembers, error: membersError } = await typedSupabase
@@ -81,8 +88,14 @@ export function useTeams() {
         .in('team_id', teamIds);
         
       if (membersError) {
-        console.error(`Error fetching team members:`, membersError);
-        throw membersError;
+        // Handle specific RLS policy errors
+        if (membersError.code === '42501') {
+          console.error("Permission denied error for team members:", membersError);
+          throw new Error("You don't have permission to access team member data. Please contact support.");
+        } else {
+          console.error("Error fetching team members:", membersError);
+          throw membersError;
+        }
       }
       
       // Group members by team
