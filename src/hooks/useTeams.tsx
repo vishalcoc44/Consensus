@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { typedSupabase, extractProfileData } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
+import ErrorDisplay from '@/components/auth/components/ErrorDisplay';
 
 interface TeamMember {
   id: string;
