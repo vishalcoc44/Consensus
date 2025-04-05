@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -68,18 +69,22 @@ const Decisions = () => {
         // Get contribution counts
         if (data.length > 0) {
           const proposalIds = data.map(item => item.id);
-          const { data: contributionsData } = await typedSupabase
+          
+          // Fix: Use proper count query method
+          const { data: countData, error: countError } = await typedSupabase
             .from('contributions')
-            .select('proposal_id, count')
+            .select('proposal_id, id', { count: 'exact', head: false })
             .in('proposal_id', proposalIds)
-            .count();
+            .groupBy('proposal_id');
             
-          // Group counts by proposal
-          contributionsData?.forEach(item => {
-            if (item.count !== null) {
-              contributionCounts[item.proposal_id] = parseInt(item.count, 10);
-            }
-          });
+          if (countError) {
+            console.error("Error fetching contribution counts:", countError);
+          } else if (countData) {
+            // Group counts by proposal
+            countData.forEach(item => {
+              contributionCounts[item.proposal_id] = 1; // Count each group as one participant
+            });
+          }
         }
         
         // Format decisions
