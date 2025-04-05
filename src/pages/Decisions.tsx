@@ -2,11 +2,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { Card } from '@/components/ui/card';
 import DecisionCard from '@/components/dashboard/DecisionCard';
 import CreateDecisionButton from '@/components/dashboard/CreateDecisionButton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { typedSupabase } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
+import { AlertCircle } from 'lucide-react';
 
 interface Decision {
   id: string | number;
@@ -23,6 +24,7 @@ interface Decision {
 const Decisions = () => {
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -33,6 +35,20 @@ const Decisions = () => {
 
   const fetchDecisions = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      console.log("Fetching decisions data...");
+      
+      // Get the current user's session to check auth
+      const { data: { session } } = await typedSupabase.auth.getSession();
+      
+      if (!session) {
+        console.log("No active session found");
+        setError("Authentication required to view decisions");
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await typedSupabase
         .from('proposals')
         .select(`
@@ -47,9 +63,13 @@ const Decisions = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database query error:", error);
+        throw error;
+      }
 
       if (data) {
+        console.log("Decisions data retrieved:", data.length, "records");
         const formattedDecisions: Decision[] = data.map(item => {
           let consensusScore = 0;
           let participantsCount = 0;
@@ -119,11 +139,12 @@ const Decisions = () => {
 
         setDecisions(formattedDecisions);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching decisions:', error);
+      setError(error.message || 'Could not load decisions. Please try again later.');
       toast({
         title: 'Error fetching decisions',
-        description: 'Could not load decisions. Please try again later.',
+        description: error.message || 'Could not load decisions. Please try again later.',
         variant: 'destructive'
       });
     } finally {
@@ -147,9 +168,17 @@ const Decisions = () => {
         <CreateDecisionButton />
       </div>
       
+      {error && (
+        <Alert variant="destructive" className="mb-6 animate-fade-in bg-red-900/30 border-red-500/30 text-red-300">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-blue"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-green"></div>
         </div>
       ) : decisions.length === 0 ? (
         <div className="p-8 text-center text-consensus-grey-500 border border-dashed border-consensus-grey-300 rounded-lg animate-fade-in">

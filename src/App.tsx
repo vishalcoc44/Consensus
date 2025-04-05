@@ -25,8 +25,9 @@ import Decisions from "./pages/Decisions";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: 2,
       staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -36,6 +37,8 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("App.tsx: Setting up auth state listener");
+    
     // First set up auth state listener to catch any auth changes
     const { data: { subscription } } = typedSupabase.auth.onAuthStateChange(
       (event, newSession) => {
@@ -73,7 +76,11 @@ const App = () => {
 
   const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     if (loading) {
-      return <div className="flex justify-center items-center h-screen">Loading...</div>;
+      return (
+        <div className="flex justify-center items-center h-screen bg-consensus-dark-500">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-green"></div>
+        </div>
+      );
     }
     
     if (!session) {
@@ -81,6 +88,7 @@ const App = () => {
       toast({
         title: "Authentication required",
         description: "Please sign in to access this page",
+        variant: "destructive"
       });
       return <Navigate to="/login" replace />;
     }
