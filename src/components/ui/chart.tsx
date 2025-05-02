@@ -7,4 +7,6 @@ export {
   ChartLegendContent,
   ChartStyle,
   type ChartConfig,
+  useChartAnimation,
+  formatChartValue,
 } from "./chart/index";
