@@ -16,5 +16,6 @@ export {
 
 export {
   ChartResponsive,
-  PieChartResponsive
+  PieChartResponsive,
+  RadarChartResponsive
 } from "./chart/chart-responsive";

@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for formatting and transforming chart data
  */
@@ -15,18 +14,21 @@ export function formatValue(
     decimals?: number;
     prefix?: string;
     suffix?: string;
+    colorCoding?: boolean;
   } = {}
-): string {
+): { value: string; color?: string } {
   const {
     format = 'number',
     locale = 'en-US',
     currency = 'USD',
     decimals = 0,
     prefix = '',
-    suffix = ''
+    suffix = '',
+    colorCoding = false
   } = options;
 
   let formattedValue = '';
+  let color;
 
   switch (format) {
     case 'currency':
@@ -58,7 +60,19 @@ export function formatValue(
       }).format(value);
   }
 
-  return `${prefix}${formattedValue}${suffix}`;
+  if (colorCoding) {
+    // For percentage or numbers that can be interpreted as good/bad
+    if (value > 0) {
+      color = 'text-green-600';
+    } else if (value < 0) {
+      color = 'text-red-600';
+    }
+  }
+
+  return { 
+    value: `${prefix}${formattedValue}${suffix}`,
+    color
+  };
 }
 
 /**
@@ -67,10 +81,22 @@ export function formatValue(
 export function transformForRadarChart<T extends Record<string, any>>(
   data: T[],
   categories: string[],
-  valueAccessor: (item: T, category: string) => number
+  valueAccessor: (item: T, category: string) => number,
+  maxValue?: number
 ): Array<Record<string, any>> {
+  // Calculate max value across all data points if not provided
+  const calculatedMaxValue = maxValue || Math.max(
+    ...data.flatMap(item => 
+      categories.map(category => valueAccessor(item, category))
+    ),
+    5 // Default minimum max value
+  );
+  
   return categories.map(category => {
-    const result: Record<string, any> = { category };
+    const result: Record<string, any> = { 
+      category,
+      fullMark: calculatedMaxValue
+    };
     
     data.forEach((item, index) => {
       // Use a property name like 'item0', 'item1', etc. to store the value
@@ -128,4 +154,42 @@ export function transformHierarchicalData<T extends Record<string, any>>(
   });
   
   return root;
+}
+
+/**
+ * Create comparison data for multi-series charts
+ */
+export function createComparisonData(
+  categories: string[], 
+  series: Array<{name: string, values: number[]}>
+): Array<Record<string, any>> {
+  return categories.map((category, categoryIndex) => {
+    const item: Record<string, any> = { name: category };
+    
+    series.forEach(seriesItem => {
+      item[seriesItem.name] = seriesItem.values[categoryIndex];
+    });
+    
+    return item;
+  });
+}
+
+/**
+ * Generate color palette with transparency
+ */
+export function generateColorWithOpacity(
+  baseColors: string[], 
+  opacityLevels: number[] = [1, 0.8, 0.6, 0.4, 0.2]
+): string[] {
+  return baseColors.flatMap(color => {
+    // Convert hex to rgb
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+    
+    // Generate colors with different opacity
+    return opacityLevels.map(opacity => 
+      `rgba(${r}, ${g}, ${b}, ${opacity})`
+    );
+  });
 }

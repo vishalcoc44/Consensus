@@ -8,6 +8,9 @@ interface ChartResponsiveProps {
   minHeight?: number;
   aspectRatio?: number;
   className?: string;
+  maxHeight?: number;
+  padding?: string | number;
+  border?: boolean;
 }
 
 /**
@@ -17,7 +20,10 @@ export const ChartResponsive: React.FC<ChartResponsiveProps> = ({
   children, 
   minHeight = 250, 
   aspectRatio = 16/9,
-  className
+  className,
+  maxHeight = 600,
+  padding = 0,
+  border = false
 }) => {
   const isMobile = useMediaQuery('(max-width: 640px)');
   const isTablet = useMediaQuery('(min-width: 641px) and (max-width: 1024px)');
@@ -28,9 +34,12 @@ export const ChartResponsive: React.FC<ChartResponsiveProps> = ({
   return (
     <div className={className} style={{ 
       width: '100%', 
-      height: Math.max(minHeight, height),
+      height: Math.max(minHeight, Math.min(height, maxHeight)),
       aspectRatio: aspectRatio.toString(),
-      margin: '0 auto'
+      margin: '0 auto',
+      padding: padding,
+      border: border ? '1px solid var(--border, #e5e7eb)' : 'none',
+      borderRadius: border ? 'var(--radius, 0.5rem)' : 'none',
     }}>
       <ResponsiveContainer width="100%" height="100%">
         {children}
@@ -44,4 +53,11 @@ export const ChartResponsive: React.FC<ChartResponsiveProps> = ({
  */
 export const PieChartResponsive: React.FC<Omit<ChartResponsiveProps, 'aspectRatio'>> = (props) => {
   return <ChartResponsive {...props} aspectRatio={4/3} />;
+};
+
+/**
+ * A responsive container for radar/spider charts with square aspect ratio
+ */
+export const RadarChartResponsive: React.FC<Omit<ChartResponsiveProps, 'aspectRatio'>> = (props) => {
+  return <ChartResponsive {...props} aspectRatio={1/1} />;
 };
