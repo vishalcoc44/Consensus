@@ -7,6 +7,21 @@ import CreateDecisionButton from '@/components/dashboard/CreateDecisionButton';
 import { typedSupabase } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import ErrorDisplay from '@/components/auth/components/ErrorDisplay';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Search, Filter, SlidersHorizontal } from 'lucide-react';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 
 interface Decision {
   id: string | number;
@@ -22,8 +37,12 @@ interface Decision {
 
 const Decisions = () => {
   const [decisions, setDecisions] = useState<Decision[]>([]);
+  const [filteredDecisions, setFilteredDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('date');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -31,6 +50,47 @@ const Decisions = () => {
     document.title = 'Decisions - ConsensusAI';
     fetchDecisions();
   }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [decisions, searchQuery, statusFilter, sortBy]);
+
+  const applyFilters = () => {
+    let result = [...decisions];
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        decision => 
+          decision.title.toLowerCase().includes(query) ||
+          decision.description.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(decision => decision.status === statusFilter);
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'date':
+        result.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+        break;
+      case 'title':
+        result.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'progress':
+        result.sort((a, b) => b.progress - a.progress);
+        break;
+      case 'consensus':
+        result.sort((a, b) => b.consensus - a.consensus);
+        break;
+    }
+
+    setFilteredDecisions(result);
+  };
 
   const fetchDecisions = async () => {
     try {
@@ -124,6 +184,8 @@ const Decisions = () => {
         });
 
         setDecisions(formattedDecisions);
+        // Initially set filtered decisions to all decisions
+        setFilteredDecisions(formattedDecisions);
       }
     } catch (error: any) {
       console.error('Error fetching decisions:', error);
@@ -149,8 +211,61 @@ const Decisions = () => {
         <p className="text-consensus-grey-600">View and manage all your organization's decisions</p>
       </div>
       
-      <div className="flex justify-between items-center mb-6 animate-fade-in">
-        <h2 className="text-xl font-sf font-bold">All Decisions</h2>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 animate-fade-in">
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <div className="relative flex-grow">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-consensus-grey-500" />
+            <Input 
+              type="text" 
+              placeholder="Search decisions..." 
+              className="pl-9 pr-4 py-2" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <SlidersHorizontal size={16} />
+                <span>Filters</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-60 p-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Status</label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All statuses</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Sort by</label>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date">Date</SelectItem>
+                      <SelectItem value="title">Title</SelectItem>
+                      <SelectItem value="progress">Progress</SelectItem>
+                      <SelectItem value="consensus">Consensus</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
         <CreateDecisionButton />
       </div>
       
@@ -162,13 +277,19 @@ const Decisions = () => {
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-green"></div>
         </div>
-      ) : decisions.length === 0 ? (
-        <div className="p-8 text-center text-consensus-grey-500 border border-dashed border-consensus-grey-300 rounded-lg animate-fade-in">
-          No decisions yet. Use the "New Decision" button to create one.
-        </div>
+      ) : filteredDecisions.length === 0 ? (
+        searchQuery || statusFilter !== 'all' ? (
+          <div className="p-8 text-center text-consensus-grey-500 border border-dashed border-consensus-grey-300 rounded-lg animate-fade-in">
+            No decisions match your filters. Try adjusting your search criteria.
+          </div>
+        ) : (
+          <div className="p-8 text-center text-consensus-grey-500 border border-dashed border-consensus-grey-300 rounded-lg animate-fade-in">
+            No decisions yet. Use the "New Decision" button to create one.
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
-          {decisions.map((decision) => (
+          {filteredDecisions.map((decision) => (
             <div 
               key={decision.id} 
               onClick={() => handleDecisionClick(decision.id)}
@@ -186,6 +307,12 @@ const Decisions = () => {
               />
             </div>
           ))}
+        </div>
+      )}
+      
+      {filteredDecisions.length > 0 && (
+        <div className="mt-6 text-center text-consensus-grey-500 text-sm">
+          Showing {filteredDecisions.length} of {decisions.length} decisions
         </div>
       )}
     </DashboardLayout>

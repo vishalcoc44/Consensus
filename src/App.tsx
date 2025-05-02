@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -21,6 +20,7 @@ import ProposalDetails from "./pages/ProposalDetails";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Decisions from "./pages/Decisions";
+import ActivityLog from "./pages/ActivityLog";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -144,6 +144,11 @@ const App = () => {
             <Route path="/dashboard/analytics/:proposalId" element={
               <ProtectedRoute>
                 <Analytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/activity" element={
+              <ProtectedRoute>
+                <ActivityLog />
               </ProtectedRoute>
             } />
             <Route path="/dashboard/settings" element={

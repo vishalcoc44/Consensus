@@ -4,12 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, HelpCircle } from 'lucide-react';
 import ProposalBasicInfo from './ProposalBasicInfo';
 import ProposalOptions from './ProposalOptions';
 import ProposalCriteria from './ProposalCriteria';
 import ProposalReview from './ProposalReview';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProposalData {
   title: string;
@@ -28,6 +34,29 @@ interface ProposalData {
   }>;
 }
 
+const steps = [
+  {
+    id: 'basic-info',
+    title: 'Basic Info',
+    description: 'Define the scope and timeframe for your decision'
+  },
+  {
+    id: 'options',
+    title: 'Options',
+    description: 'Add the various choices to be considered'
+  },
+  {
+    id: 'criteria',
+    title: 'Criteria',
+    description: 'Set evaluation criteria and weights'
+  },
+  {
+    id: 'review',
+    title: 'Review',
+    description: 'Confirm all details before submitting'
+  }
+];
+
 const ProposalWizard = () => {
   const [activeTab, setActiveTab] = useState('basic-info');
   const [proposalData, setProposalData] = useState<ProposalData>({
@@ -40,6 +69,9 @@ const ProposalWizard = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Calculate current step index
+  const currentStepIndex = steps.findIndex(step => step.id === activeTab);
 
   const updateProposalData = (data: Partial<ProposalData>) => {
     setProposalData(prev => ({ ...prev, ...data }));
@@ -156,14 +188,44 @@ const ProposalWizard = () => {
     }, 1000);
   };
 
+  // Calculate progress percentage
+  const progressPercentage = ((currentStepIndex + 1) / steps.length) * 100;
+
   return (
     <Card className="animate-fade-in p-6">
+      {/* Progress bar */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium text-consensus-grey-600">Progress</span>
+          <span className="text-sm font-medium text-consensus-blue">{Math.round(progressPercentage)}%</span>
+        </div>
+        <div className="w-full bg-consensus-grey-200 rounded-full h-2">
+          <div 
+            className="bg-consensus-blue h-2 rounded-full transition-all duration-300 ease-in-out"
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
+      </div>
+      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-4 mb-8">
-          <TabsTrigger value="basic-info" className="data-[state=active]:text-consensus-blue data-[state=active]:shadow">Basic Info</TabsTrigger>
-          <TabsTrigger value="options" className="data-[state=active]:text-consensus-blue data-[state=active]:shadow">Options</TabsTrigger>
-          <TabsTrigger value="criteria" className="data-[state=active]:text-consensus-blue data-[state=active]:shadow">Criteria</TabsTrigger>
-          <TabsTrigger value="review" className="data-[state=active]:text-consensus-blue data-[state=active]:shadow">Review</TabsTrigger>
+          {steps.map(step => (
+            <TooltipProvider key={step.id}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger 
+                    value={step.id} 
+                    className="data-[state=active]:text-consensus-blue data-[state=active]:shadow"
+                  >
+                    {step.title}
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{step.description}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ))}
         </TabsList>
         
         <TabsContent value="basic-info">
@@ -225,6 +287,35 @@ const ProposalWizard = () => {
               Submit Proposal
             </Button>
           )}
+        </div>
+        
+        {/* Help text */}
+        <div className="mt-6 p-4 bg-consensus-blue/5 border border-consensus-blue/10 rounded-lg flex items-start">
+          <HelpCircle size={20} className="text-consensus-blue mr-3 mt-0.5 flex-shrink-0" />
+          <div>
+            <h5 className="text-sm font-medium mb-1">Help with {steps[currentStepIndex].title}</h5>
+            <p className="text-sm text-consensus-grey-600">{steps[currentStepIndex].description}</p>
+            {activeTab === 'basic-info' && (
+              <p className="text-sm text-consensus-grey-600 mt-2">
+                Start by naming your decision and adding a clear description. Set a deadline to ensure timely inputs from all participants.
+              </p>
+            )}
+            {activeTab === 'options' && (
+              <p className="text-sm text-consensus-grey-600 mt-2">
+                Add all possible options you want the team to consider. Each option should be distinct and well-described.
+              </p>
+            )}
+            {activeTab === 'criteria' && (
+              <p className="text-sm text-consensus-grey-600 mt-2">
+                Define clear criteria against which all options will be evaluated. Set weights to indicate importance.
+              </p>
+            )}
+            {activeTab === 'review' && (
+              <p className="text-sm text-consensus-grey-600 mt-2">
+                Review all information before finalizing. You can go back to previous steps if you need to make changes.
+              </p>
+            )}
+          </div>
         </div>
       </Tabs>
     </Card>
