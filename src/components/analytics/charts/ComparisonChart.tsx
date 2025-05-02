@@ -76,7 +76,7 @@ const ComparisonChart: React.FC<ComparisonChartProps> = ({
             tick={{ fill: chartStyle.textColor, fontSize: dimensions.fontSize }}
             axisLine={{ stroke: chartStyle.tickColor }}
             tickLine={{ stroke: chartStyle.tickColor }}
-            tickFormatter={(value) => formatValue(value, { format: 'compact' })}
+            tickFormatter={(value) => formatValue(value, { format: 'compact' }).value}
           />
           <Tooltip
             content={({ active, payload, label }) => {
@@ -92,7 +92,7 @@ const ComparisonChart: React.FC<ComparisonChartProps> = ({
                             style={{ backgroundColor: entry.color }}
                           />
                           <span className="text-sm opacity-70">
-                            {entry.name}: {formatValue(Number(entry.value), { format: 'number' })}
+                            {entry.name}: {formatValue(Number(entry.value), { format: 'number' }).value}
                           </span>
                         </div>
                       ))}
