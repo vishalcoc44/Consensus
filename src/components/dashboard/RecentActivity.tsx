@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, User, MessageSquare, Eye } from 'lucide-react';
 import { typedSupabase } from '@/utils/supabaseClient';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { extractProfileData } from '@/utils/supabaseClient';
 
 interface ActivityItem {
   id: string;
@@ -65,7 +66,11 @@ const RecentActivity = () => {
       
       if (data) {
         const formattedActivities: ActivityItem[] = data.map(item => {
-          const profileData = item.profiles || { full_name: 'Anonymous User', avatar_url: null };
+          // Safely extract profile data to handle the possible error case
+          const profileData = extractProfileData(item.profiles);
+          const userName = profileData?.full_name || 'Anonymous User';
+          const avatarUrl = profileData?.avatar_url || undefined;
+          
           const proposalTitle = item.proposals?.title || 'Unknown Proposal';
           
           return {
@@ -75,8 +80,8 @@ const RecentActivity = () => {
             description: `New contribution added to "${proposalTitle}"`,
             timestamp: item.created_at,
             user: {
-              name: profileData.full_name || 'Anonymous User',
-              avatar: profileData.avatar_url || undefined
+              name: userName,
+              avatar: avatarUrl
             },
             proposal_id: item.proposal_id
           };
