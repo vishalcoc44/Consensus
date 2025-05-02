@@ -4,7 +4,7 @@ import { ResponsiveContainer } from 'recharts';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface ChartResponsiveProps {
-  children: React.ReactNode;
+  children: React.ReactElement;
   minHeight?: number;
   aspectRatio?: number;
   className?: string;
