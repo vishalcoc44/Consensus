@@ -24,26 +24,26 @@ export const useChartAnimation = () => {
     isAnimationActive: true,
     animationBegin: 100 + (index * 150),
     animationDuration: 1000,
-    animationEasing: "ease-out",
+    animationEasing: "ease-out" as const,
     ...customConfig
   });
 
   // Get animation for specific chart types
   const getBarAnimationProps = (index = 0) => ({
     ...getAnimationProps(index),
-    animationEasing: "cubic-bezier(0.2, 0.8, 0.2, 1)"
+    animationEasing: "ease" as const
   });
   
   const getPieAnimationProps = (index = 0) => ({
     ...getAnimationProps(index),
     animationDuration: 1200,
-    animationEasing: "ease-out"
+    animationEasing: "ease-out" as const
   });
 
   const getLineAnimationProps = (index = 0) => ({
     ...getAnimationProps(index),
     animationDuration: 1500,
-    animationEasing: "ease-in-out"
+    animationEasing: "ease-in-out" as const
   });
   
   return { 
