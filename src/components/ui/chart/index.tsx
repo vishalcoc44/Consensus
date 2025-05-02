@@ -97,5 +97,6 @@ export const chartColorSchemes = {
   default: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
   cool: ['#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#22c55e'],
   warm: ['#f97316', '#f59e0b', '#eab308', '#a3e635', '#84cc16'],
-  pastel: ['#a5b4fc', '#bae6fd', '#a7f3d0', '#fef08a', '#fed7aa']
+  pastel: ['#a5b4fc', '#bae6fd', '#a7f3d0', '#fef08a', '#fed7aa'],
+  monochrome: ['#1e293b', '#334155', '#475569', '#64748b', '#94a3b8']
 };

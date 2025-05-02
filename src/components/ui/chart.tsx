@@ -9,4 +9,12 @@ export {
   type ChartConfig,
   useChartAnimation,
   formatChartValue,
+  chartColorSchemes,
+  responsiveConfig,
+  chartBreakpoints
 } from "./chart/index";
+
+export {
+  ChartResponsive,
+  PieChartResponsive
+} from "./chart/chart-responsive";
