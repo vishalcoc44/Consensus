@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Hero from '@/components/landing/Hero';
 import Features from '@/components/landing/Features';
@@ -7,22 +7,52 @@ import Testimonials from '@/components/landing/Testimonials';
 import CTA from '@/components/landing/CTA';
 
 const Index = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
     // Scroll to top when the page loads
     window.scrollTo(0, 0);
+    
+    // Set up intersection observers for animations
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-fade-in', 'opacity-100');
+            entry.target.classList.remove('opacity-0', 'translate-y-10');
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    
+    // Select all sections to animate
+    const sections = document.querySelectorAll('.animate-on-scroll');
+    sections.forEach((section) => {
+      section.classList.add('opacity-0', 'translate-y-10', 'transition-all', 'duration-700');
+      observer.observe(section);
+    });
+    
+    return () => {
+      sections.forEach((section) => {
+        observer.unobserve(section);
+      });
+    };
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-consensus-dark-500 text-white">
+    <div ref={containerRef} className="min-h-screen flex flex-col bg-consensus-dark-500 text-white overflow-x-hidden">
       <Navbar />
       <main className="flex-1">
         <Hero />
         <Features />
         <Testimonials />
-        <CTA />
+        <div className="animate-on-scroll">
+          <CTA />
+        </div>
       </main>
       
-      <footer className="bg-consensus-dark-400 py-12 border-t border-consensus-dark-300">
+      <footer className="bg-consensus-dark-400 py-12 border-t border-consensus-dark-300 animate-on-scroll">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-1">

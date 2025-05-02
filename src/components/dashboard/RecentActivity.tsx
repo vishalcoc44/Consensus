@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, User, MessageSquare, Eye } from 'lucide-react';
+import { Clock, User, MessageSquare, Eye, Filter } from 'lucide-react';
 import { typedSupabase } from '@/utils/supabaseClient';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { extractProfileData } from '@/utils/supabaseClient';
+import { useTeamsFilter } from '@/hooks/useTeamsFilter';
+import TeamSelector from './TeamSelector';
 
 interface ActivityItem {
   id: string;
@@ -20,11 +22,16 @@ interface ActivityItem {
     avatar?: string;
   };
   proposal_id: string;
+  team_id?: string;
 }
 
 const RecentActivity = () => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { selectedTeamId, setSelectedTeamId, filteredItems: filteredActivities } = useTeamsFilter<ActivityItem>(
+    activities,
+    'team_id'
+  );
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -52,7 +59,7 @@ const RecentActivity = () => {
           created_at,
           proposal_id,
           user_id,
-          proposals(title),
+          proposals(title, team_id),
           profiles!contributions_user_id_fkey(full_name, avatar_url)
         `)
         .order('created_at', { ascending: false })
@@ -72,6 +79,7 @@ const RecentActivity = () => {
           const avatarUrl = profileData?.avatar_url || undefined;
           
           const proposalTitle = item.proposals?.title || 'Unknown Proposal';
+          const teamId = item.proposals?.team_id || undefined;
           
           return {
             id: item.id,
@@ -83,7 +91,8 @@ const RecentActivity = () => {
               name: userName,
               avatar: avatarUrl
             },
-            proposal_id: item.proposal_id
+            proposal_id: item.proposal_id,
+            team_id: teamId
           };
         });
         
@@ -117,8 +126,13 @@ const RecentActivity = () => {
   
   return (
     <Card className="animate-fade-in">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-medium">Recent Activity</CardTitle>
+        <TeamSelector 
+          selectedTeamId={selectedTeamId}
+          onTeamChange={setSelectedTeamId}
+          className="w-[140px]"
+        />
       </CardHeader>
       <CardContent className="space-y-4">
         {loading ? (
@@ -131,13 +145,16 @@ const RecentActivity = () => {
               </div>
             </div>
           ))
-        ) : activities.length === 0 ? (
+        ) : filteredActivities.length === 0 ? (
           <div className="text-center text-consensus-grey-500 py-4">
-            <p>No recent activity found.</p>
+            {activities.length === 0 ? 
+              <p>No recent activity found.</p> : 
+              <p>No activity found for the selected team.</p>
+            }
           </div>
         ) : (
-          activities.map(activity => (
-            <div key={activity.id} className="flex items-start space-x-3 py-2 group">
+          filteredActivities.map(activity => (
+            <div key={activity.id} className="flex items-start space-x-3 py-2 group hover:bg-gray-50 rounded-md px-2 transition-colors">
               <div className="mt-0.5">
                 {getActivityIcon(activity.type)}
               </div>
