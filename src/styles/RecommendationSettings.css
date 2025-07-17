@@ -1,0 +1,131 @@
+/* src/styles/RecommendationSettings.css */
+
+.recommendation-settings-container {
+  padding: 2rem;
+  background-color: #1e1e2d; /* Dark background */
+  border-radius: 8px;
+  color: #e0e0e0;
+}
+
+.recommendation-settings-container h2 {
+  font-size: 1.8rem;
+  color: #a29bfe; /* Light purple */
+  margin-bottom: 0.5rem;
+}
+
+.recommendation-settings-container .settings-description {
+  font-size: 1rem;
+  color: #b0b0b0;
+  margin-bottom: 2rem;
+}
+
+.settings-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.settings-form .form-group label {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 0.75rem;
+  color: #c7c7c7;
+}
+
+.settings-form .form-group input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  background: #444;
+  border-radius: 5px;
+  outline: none;
+  cursor: pointer;
+}
+
+.settings-form .form-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #a29bfe;
+  cursor: pointer;
+  border: 3px solid #1e1e2d;
+  transition: background 0.3s ease-in-out;
+}
+
+.settings-form .form-group input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #a29bfe;
+  cursor: pointer;
+  border: 3px solid #1e1e2d;
+  transition: background 0.3s ease-in-out;
+}
+
+.settings-form .form-group input[type="range"]:hover::-webkit-slider-thumb {
+  background: #b9b1ff;
+}
+.settings-form .form-group input[type="range"]:hover::-moz-range-thumb {
+  background: #b9b1ff;
+}
+
+.settings-form .field-description {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 0.5rem;
+}
+
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #444;
+}
+
+.total-weight {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.total-weight.unbalanced {
+    color: #ff7675; /* Light red for warning */
+}
+
+.total-weight .weight-warning {
+    font-size: 0.9rem;
+    margin-left: 0.75rem;
+    font-weight: normal;
+    font-style: italic;
+}
+
+.save-btn {
+  background-color: #a29bfe;
+  color: #1e1e2d;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.save-btn:hover:not(:disabled) {
+  background-color: #b9b1ff;
+  transform: translateY(-2px);
+}
+
+.save-btn:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+} 

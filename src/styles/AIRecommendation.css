@@ -1,0 +1,109 @@
+/* src/styles/AIRecommendation.css */
+
+.ai-recommendation-card {
+  background: linear-gradient(145deg, #2c2c3e, #1e1e2d);
+  border-radius: 12px;
+  padding: 24px;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  margin-top: 2rem;
+}
+
+.ai-recommendation-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #444;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ai-recommendation-card .card-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.5rem;
+  color: #a29bfe;
+  margin: 0;
+}
+
+.ai-recommendation-card .header-icon {
+  font-size: 1.6rem;
+}
+
+.ai-recommendation-card .confidence-badge {
+  background-color: rgba(162, 155, 254, 0.1);
+  color: #a29bfe;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.ai-recommendation-card .card-body .recommended-option {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.ai-recommendation-card .recommended-option h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #c7c7c7;
+}
+
+.ai-recommendation-card .recommended-option p {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.ai-recommendation-card .explanation h4 {
+  font-size: 1.1rem;
+  color: #c7c7c7;
+  margin-bottom: 0.5rem;
+}
+
+.ai-recommendation-card .explanation p {
+  font-style: italic;
+  color: #b0b0b0;
+  line-height: 1.6;
+}
+
+.ai-recommendation-card .details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.ai-recommendation-card .detail-item {
+  background: #2a2a3a;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #3a3a4a;
+}
+
+.ai-recommendation-card .detail-icon {
+  font-size: 2rem;
+  color: #a29bfe;
+  margin-bottom: 0.75rem;
+}
+
+.ai-recommendation-card .detail-item h5 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  color: #e0e0e0;
+}
+
+.ai-recommendation-card .detail-item p {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+} 

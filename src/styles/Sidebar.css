@@ -1,0 +1,227 @@
+:root {
+    --sidebar-bg-color: #1a202c;
+    --main-bg-color: #0f172a;
+    --card-bg-color: #1e293b;
+    --text-color: #cbd5e1;
+    --text-secondary-color: #94a3b8;
+    --accent-color: #10B981;
+    --accent-color-light: #34D399;
+    --border-color: #334155;
+}
+
+.sidebar-desktop {
+    height: 100%;
+    padding: 1rem;
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    background-color: var(--sidebar-bg-color);
+    width: 260px; /* Default open width */
+    flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+    .sidebar-desktop {
+        display: flex; /* Visible on md screens and up */
+    }
+}
+
+.sidebar-mobile-header {
+    height: 2.5rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--sidebar-bg-color);
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .sidebar-mobile-header {
+        display: none; /* Hidden on md screens and up */
+    }
+}
+
+.sidebar-mobile {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    background-color: var(--main-bg-color);
+    padding: 2.5rem;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.sidebar-link:hover .sidebar-link-label {
+    transform: translateX(4px);
+    transition: transform 0.15s;
+}
+
+
+.sidebar-link-label {
+    color: var(--text-secondary-color);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    white-space: pre;
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    transition: transform 0.15s;
+}
+
+.sidebar-link:hover .sidebar-link-label {
+    color: var(--text-color);
+}
+
+/* For icons inside the link */
+.sidebar-link svg {
+    color: var(--text-secondary-color);
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+}
+.sidebar-link:hover svg {
+    color: var(--text-color);
+}
+
+.sidebar-link.active {
+    background-color: var(--accent-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 0 10px var(--accent-color-light);
+}
+
+.sidebar-link.active .sidebar-link-label {
+    color: white;
+}
+
+.sidebar-link.active svg {
+    color: white;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+.z-20 {
+    z-index: 20;
+}
+.w-full {
+    width: 100%;
+}
+.text-neutral-800 {
+    color: var(--text-color);
+}
+.dark\:text-neutral-200 {
+    color: var(--text-color);
+}
+.absolute {
+    position: absolute;
+}
+.right-10 {
+    right: 2.5rem;
+}
+.top-10 {
+    top: 2.5rem;
+}
+.z-50 {
+    z-index: 50;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+.gap-10 {
+    gap: 2.5rem;
+}
+.flex {
+    display: flex;
+}
+.flex-1 {
+    flex: 1 1 0%;
+}
+.flex-col {
+    flex-direction: column;
+}
+.overflow-y-auto {
+    overflow-y: auto;
+}
+.overflow-x-hidden {
+    overflow-x: hidden;
+}
+.mt-8 {
+    margin-top: 2rem;
+}
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.user-avatar-small {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background-color: var(--accent-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    font-size: 0.8rem;
+}
+
+/* Logo and LogoIcon styles */
+.logo-container {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    font-size: 0.875rem; /* text-sm */
+    line-height: 1.25rem;
+    font-weight: 400; /* font-normal */
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.logo-icon-div {
+    height: 1.25rem; /* h-5 */
+    width: 1.5rem; /* w-6 */
+    flex-shrink: 0;
+    border-top-left-radius: 0.5rem; /* rounded-tl-lg */
+    border-top-right-radius: 0.25rem; /* rounded-tr-sm */
+    border-bottom-right-radius: 0.5rem; /* rounded-br-lg */
+    border-bottom-left-radius: 0.25rem; /* rounded-bl-sm */
+    background-color: var(--accent-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+}
+
+.logo-text {
+    font-weight: 500; /* font-medium */
+    white-space: pre;
+    color: var(--text-color);
+}
+
+.sidebar-desktop.collapsed .sidebar-link {
+    justify-content: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+} 

@@ -1,0 +1,114 @@
+.wizard-progress {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.progress-step {
+    color: var(--text-secondary-color);
+    font-weight: 500;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+.progress-step.active {
+    color: var(--accent-color-light);
+}
+
+.progress-step.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1rem;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--accent-color);
+    transform: translateY(-50%);
+    border-radius: 2px;
+}
+
+.modal h2 {
+    font-size: 1.5rem;
+    margin: 0 0 0.25rem 0;
+}
+
+.modal p {
+    color: var(--text-secondary-color);
+    margin: 0 0 1.5rem 0;
+}
+
+/* Dynamic Inputs */
+.dynamic-input-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.dynamic-input-group input[type="text"] {
+    flex-grow: 1;
+}
+
+.add-btn, .remove-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+}
+
+.add-btn {
+    background-color: transparent;
+    border: 1px dashed var(--border-color);
+    color: var(--text-secondary-color);
+    padding: 0.5rem 1rem;
+    width: 100%;
+    text-align: center;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+    font-weight: 500;
+}
+.add-btn:hover {
+    background-color: var(--card-bg-color);
+    color: var(--text-color);
+}
+
+.remove-btn {
+    color: var(--text-secondary-color);
+    background-color: #334155;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+.remove-btn:hover {
+    background-color: #991b1b;
+    color: white;
+}
+
+/* Criteria Specific */
+.criterion-group {
+    display: grid;
+    grid-template-columns: 1fr auto auto 2rem;
+    gap: 1rem;
+    align-items: center;
+}
+
+.criterion-group input[type="range"] {
+    flex-grow: 1;
+}
+
+.criterion-group label {
+    font-size: 0.875rem;
+    color: var(--text-secondary-color);
+}
+.criterion-group span {
+    font-weight: bold;
+    color: var(--text-color);
+    width: 2ch; /* 2 characters wide */
+    text-align: right;
+} 

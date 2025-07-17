@@ -1,0 +1,181 @@
+.input-collection-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.form-section {
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background-color: #222;
+}
+
+.form-section legend {
+    padding: 0 0.5rem;
+    margin-left: 1rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #e0e0e0;
+}
+
+/* Voting Options */
+.vote-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.radio-label {
+    flex-grow: 1;
+    display: block;
+    background: #333;
+    color: #f0f0f0;
+    padding: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-align: center;
+    border: 2px solid transparent;
+}
+
+.radio-label input[type="radio"] {
+    display: none;
+}
+
+.radio-label:hover {
+    background: #444;
+}
+
+.radio-label.selected {
+    background-color: #3498db;
+    border-color: #8ecae6;
+    color: white;
+    font-weight: bold;
+}
+
+/* Criteria Rating */
+.criteria-rating-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.criterion-rating-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.criterion-rating-item label {
+    font-size: 1.1rem;
+    flex-grow: 1;
+}
+
+.star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.star {
+    font-size: 2rem;
+    color: #555;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.star-rating:hover .star,
+.star.active,
+.star.active ~ .star {
+    color: #f1c40f;
+}
+
+/* Comment Box */
+textarea {
+    width: 100%;
+    min-height: 120px;
+    background-color: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 0.75rem;
+    color: #f0f0f0;
+    font-family: inherit;
+    font-size: 1rem;
+    resize: vertical;
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 0.8rem;
+    color: #777;
+    margin-top: 0.5rem;
+}
+
+/* File Upload */
+.file-upload-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: #333;
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.file-upload-label:hover {
+    background-color: #444;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.file-preview {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #2a2a2a;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    color: #aaa;
+}
+
+/* Error & Submit */
+.form-error {
+    color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.1);
+    border: 1px solid #e74c3c;
+    padding: 1rem;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.submit-btn {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 6px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.submit-btn:hover {
+    background-color: #2ecc71;
+}
+
+.submit-btn:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+.form-section:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+} 
