@@ -1,10 +1,8 @@
-import { Link } from 'react-router-dom';
-import LogoIcon from './LogoIcon';
 import { useSidebar } from './ui/sidebar'; // Assuming sidebar context is in this path
 import { motion } from 'framer-motion';
 
 const Logo = () => {
-    const { open } = useSidebar();
+    const { isOpen } = useSidebar();
     return (
         <a href="/" className="logo-container">
             <div className="logo-icon-div">
@@ -12,8 +10,8 @@ const Logo = () => {
             </div>
             <motion.span
                 animate={{
-                    display: open ? 'inline-block' : 'none',
-                    opacity: open ? 1 : 0,
+                    display: isOpen ? 'inline-block' : 'none',
+                    opacity: isOpen ? 1 : 0,
                 }}
                 className="logo-text"
             >

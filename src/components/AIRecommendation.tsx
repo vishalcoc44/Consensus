@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import './../styles/AIRecommendation.css';
 import { FiStar, FiThumbsUp, FiBarChart2 } from 'react-icons/fi';
 

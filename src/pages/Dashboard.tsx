@@ -21,7 +21,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [recentDecisions, setRecentDecisions] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,6 +29,7 @@ const Dashboard = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("User not found.");
+        setUserId(user.id);
 
         // Fetch user's teams
         const { data: teamMembersData, error: teamMembersError } = await supabase
@@ -81,7 +81,7 @@ const Dashboard = () => {
         .eq('created_by', userId)
         .limit(5);
       if (error) console.error('Error fetching decisions', error);
-      else setRecentDecisions(data);
+      else setDecisions(data);
     };
 
     if (userId && supabase) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import './../styles/Teams.css'; // Re-using styles for the modal
+import './../styles/Teams.css';
 
 interface Profile {
   id: string;
@@ -22,41 +22,44 @@ const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ isOpen, onClose, onTe
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchProfiles = async () => {
+      if (!supabase) return;
+      const { data, error } = await supabase.from('profiles').select('id, full_name');
+      if (error) {
+        console.error("Error fetching profiles:", error);
+        setError("Could not load users.");
+      } else {
+        setProfiles(data || []);
+      }
+    };
+
     if (isOpen) {
-      // Fetch all user profiles to populate the member selection
-      const fetchProfiles = async () => {
-        const { data, error } = await supabase.from('profiles').select('id, full_name');
-        if (error) {
-          console.error("Error fetching profiles:", error);
-          setError("Could not load users.");
-        } else {
-          setProfiles(data || []);
-        }
-      };
       fetchProfiles();
     }
   }, [isOpen]);
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!supabase) {
+      setError("Supabase is not initialized.");
+      return;
+    }
+
+    if (!teamName || selectedMembers.length === 0) {
+      setError('Please provide a team name and at least one member.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
-    if (!teamName || selectedMembers.length === 0) {
-      alert('Please provide a team name and at least one member.');
-      return;
-    }
-
-    if (!supabase) {
-      alert('Supabase client is not available');
-      return;
-    }
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("You must be logged in to create a team.");
+      if (!user) {
+        throw new Error("You must be logged in to create a team.");
+      }
 
-      // 1. Create the new team
       const { data: newTeam, error: teamError } = await supabase
         .from('teams')
         .insert({
@@ -69,21 +72,18 @@ const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ isOpen, onClose, onTe
 
       if (teamError) throw teamError;
 
-      // 2. Add members to the team (including the creator)
       const membersToInsert = [
-        // Ensure the creator is always a member
         ...new Set([user.id, ...selectedMembers])
       ].map(userId => ({
         team_id: newTeam.id,
         user_id: userId,
-        role: userId === user.id ? 'admin' : 'member', // Make the creator an admin
+        role: userId === user.id ? 'admin' : 'member',
       }));
 
       const { error: membersError } = await supabase.from('team_members').insert(membersToInsert);
 
       if (membersError) throw membersError;
 
-      // Success
       onTeamCreated();
       onClose();
       
@@ -93,20 +93,6 @@ const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ isOpen, onClose, onTe
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const searchUsers = async (searchTerm: string) => {
-    if (!supabase) return;
-    const { data, error } = await supabase
-      .from('profiles') // Changed from 'users' to 'profiles' to match existing code
-      .select('id, full_name')
-      .ilike('full_name', `%${searchTerm}%`)
-      .limit(10);
-    if (error) {
-      console.error('Error searching users:', error);
-      return;
-    }
-    setProfiles(data || []); // Update profiles state
   };
 
   if (!isOpen) return null;

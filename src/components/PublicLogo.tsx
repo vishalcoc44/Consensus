@@ -1,9 +1,6 @@
-import { Link } from 'react-router-dom';
-import LogoIcon from './LogoIcon';
-
 const PublicLogo = () => {
     return (
-        <a href="/" className="logo-container">
+        <a href="/" className="logo-container public-logo">
             <div className="logo-icon-div">
                 C
             </div>

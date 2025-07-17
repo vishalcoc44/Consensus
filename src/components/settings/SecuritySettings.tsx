@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiLock, FiKey, FiSmartphone, FiLogIn } from 'react-icons/fi';
+import { FiKey, FiSmartphone, FiLogIn } from 'react-icons/fi';
 import { supabase } from '../../lib/supabaseClient';
 
 const SecuritySettings = () => {
