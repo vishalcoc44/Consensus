@@ -20,15 +20,13 @@ const Dashboard = () => {
   const [newDecisionDeadline, setNewDecisionDeadline] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [recentDecisions, setRecentDecisions] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!supabase) {
-      setError("Supabase client is not initialized.");
-      setLoading(false);
-      return;
-    }
-
     const fetchData = async () => {
+      if (!supabase) return;
+
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("User not found.");
@@ -42,7 +40,7 @@ const Dashboard = () => {
         if (teamMembersError) throw teamMembersError;
 
         if (teamMembersData) {
-          const userTeams = teamMembersData.map(tm => tm.teams).filter(Boolean);
+          const userTeams = teamMembersData.map((tm: { teams: any }) => tm.teams).filter(Boolean);
           setTeams(userTeams);
         }
         
@@ -57,7 +55,6 @@ const Dashboard = () => {
           setDecisions(decisionsData);
         }
       } catch (error: any) {
-        console.error("Error fetching data:", error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -66,6 +63,32 @@ const Dashboard = () => {
     
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const fetchTeams = async (supabaseClient: any) => {
+      const { data, error } = await supabaseClient
+        .from('teams')
+        .select('id, name')
+        .eq('created_by', userId);
+      if (error) console.error('Error fetching teams', error);
+      else setTeams(data);
+    };
+
+    const fetchDecisions = async (supabaseClient: any) => {
+      const { data, error } = await supabaseClient
+        .from('decisions')
+        .select('id, title, status')
+        .eq('created_by', userId)
+        .limit(5);
+      if (error) console.error('Error fetching decisions', error);
+      else setRecentDecisions(data);
+    };
+
+    if (userId && supabase) {
+      fetchTeams(supabase);
+      fetchDecisions(supabase);
+    }
+  }, [userId]);
 
   const handleCreateDecision = async (e: React.FormEvent) => {
     e.preventDefault();

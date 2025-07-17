@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FiDownload, FiTrash2, FiFileText, FiShield } from 'react-icons/fi';
 import { supabase } from '../../lib/supabaseClient';
 

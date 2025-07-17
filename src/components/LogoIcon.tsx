@@ -1,5 +1,3 @@
-import React from 'react';
-
 const LogoIcon = () => {
     return (
         <a href="#" className="logo-container">

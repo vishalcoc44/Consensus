@@ -42,6 +42,16 @@ const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ isOpen, onClose, onTe
     setIsLoading(true);
     setError(null);
 
+    if (!teamName || selectedMembers.length === 0) {
+      alert('Please provide a team name and at least one member.');
+      return;
+    }
+
+    if (!supabase) {
+      alert('Supabase client is not available');
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("You must be logged in to create a team.");
@@ -83,6 +93,20 @@ const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ isOpen, onClose, onTe
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const searchUsers = async (searchTerm: string) => {
+    if (!supabase) return;
+    const { data, error } = await supabase
+      .from('profiles') // Changed from 'users' to 'profiles' to match existing code
+      .select('id, full_name')
+      .ilike('full_name', `%${searchTerm}%`)
+      .limit(10);
+    if (error) {
+      console.error('Error searching users:', error);
+      return;
+    }
+    setProfiles(data || []); // Update profiles state
   };
 
   if (!isOpen) return null;

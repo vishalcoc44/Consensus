@@ -1,4 +1,5 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
+import LogoIcon from './LogoIcon';
 import { useSidebar } from './ui/sidebar'; // Assuming sidebar context is in this path
 import { motion } from 'framer-motion';
 

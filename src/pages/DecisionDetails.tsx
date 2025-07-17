@@ -164,26 +164,46 @@ const DecisionDetails = () => {
     }, [decisionId]);
 
     useEffect(() => {
-        fetchDecisionDetails();
-    }, [fetchDecisionDetails]);
+        if (!decisionId || !supabase) return;
 
-    // New useEffect for fetching and subscribing to messages
+        fetchDecisionDetails();
+
+        const channel = supabase
+            .channel('realtime:decisions')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'decisions', filter: `id=eq.${decisionId}` }, () => {
+                fetchDecisionDetails();
+            })
+            .subscribe();
+
+        // Cleanup subscription on component unmount
+        return () => {
+            if (supabase) {
+                supabase.removeChannel(channel);
+            }
+        };
+    }, [decisionId, supabase, fetchDecisionDetails]);
+
     useEffect(() => {
         if (!decisionId || !supabase) return;
 
         fetchMessages();
 
         // Subscribe to real-time updates
-        const channel = supabase.channel(`decision-chat-${decisionId}`)
-            .on('postgres_changes', {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'messages',
-                filter: `decision_id=eq.${decisionId}`
-            }, (payload) => {
-                // Re-fetch all messages to ensure UI is in sync
-                fetchMessages();
-            })
+        const channel = supabase
+            .channel(`decision-chat-${decisionId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'messages',
+                    filter: `decision_id=eq.${decisionId}`
+                },
+                () => {
+                    // Re-fetch all messages to ensure UI is in sync
+                    fetchMessages();
+                }
+            )
             .subscribe();
 
         // Cleanup subscription on component unmount

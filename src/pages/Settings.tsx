@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import '../styles/Settings.css';
 import ProfileSettings from '../components/settings/ProfileSettings';
 import PrivacySettings from '../components/settings/PrivacySettings';

@@ -1,43 +1,54 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import { useNavigate, Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
+    const checkUser = async () => {
+      if (!supabase) {
+        // Redirect to login or show an error if supabase is not initialized
+        navigate('/signin');
+        return;
+      }
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error getting session:', error);
+        navigate('/signin');
+        return;
+      }
+      
+      if (data.session) {
+        setUser(data.session.user);
+      } else {
+        navigate('/signin');
+      }
       setLoading(false);
     };
 
-    getSession();
+    checkUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+    if (!supabase) return;
 
-    return () => subscription.unsubscribe();
-  }, []);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
 
-  useEffect(() => {
-    if (!loading && !session) {
-      navigate('/signin');
-    }
-  }, [session, loading, navigate]);
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   if (loading) {
     return <div>Loading...</div>; // Or a spinner component
   }
 
-  if (session) {
-    return <>{children}</>;
-  }
-
-  return null;
+  return user ? children : <Navigate to="/signin" />;
 };
 
 export default ProtectedRoute; 
