@@ -90,18 +90,17 @@ const TeamDetails = () => {
     if (!newMemberEmail || !teamId || !supabase) return;
 
     try {
-        // Note: Supabase handles the invitation flow. 
-        // You need to configure the email template in your Supabase project settings.
-        const { error } = await supabase.auth.admin.inviteUserByEmail(newMemberEmail, {
-            data: { team_id: teamId } // Pass team_id in metadata
-        });
-
-        if (error) throw error;
-        alert('Invitation sent successfully!');
-        setNewMemberEmail('');
+      const { data, error } = await supabase.functions.invoke('invite-user', {
+        body: { email: newMemberEmail, team_id: teamId }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      alert('Invitation sent successfully!');
+      setNewMemberEmail('');
     } catch (err: any) {
-        console.error("Error inviting member:", err);
-        setError(err.message || 'Failed to send invitation.');
+      const detailed = err?.context?.error || err?.message || 'Failed to send invitation.';
+      console.error('Error inviting member:', detailed);
+      setError(detailed);
     }
   };
 
@@ -174,17 +173,32 @@ const TeamDetails = () => {
     }
   };
 
+  const handleCopyInviteLink = async () => {
+    if (!teamId) return;
+    const url = `${window.location.origin}/join/${teamId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('Invite link copied to clipboard!');
+    } catch (e) {
+      console.error('Clipboard error:', e);
+      alert(`Invite link: ${url}`);
+    }
+  };
+
   if (loading) return <div>Loading team details...</div>;
   if (error) return <div className="error-message">{error}</div>;
   if (!team) return <div>Team not found.</div>;
 
-  const isAdmin = currentUserRole === 'Admin';
+  const isAdmin = currentUserRole === 'Admin' || currentUserRole === 'admin';
 
   return (
     <div className="team-details-container">
       <div className="team-details-header">
         <h1>{team.name}</h1>
-        <button className="delete-team-btn" onClick={handleDeleteTeam}>Delete Team</button>
+        <div className="header-actions">
+          <button className="delete-team-btn" onClick={handleDeleteTeam}>Delete Team</button>
+          <button className="add-member-btn" onClick={handleCopyInviteLink}>Copy Invite Link</button>
+        </div>
       </div>
       <p className="team-description">{team.description}</p>
       

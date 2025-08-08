@@ -9,6 +9,8 @@ import CTA from './components/CTA'
 import Footer from './components/Footer'
 import SignIn from './components/SignIn'
 import SignUp from './components/SignUp'
+import ForgotPassword from './components/ForgotPassword'
+import ResetPassword from './components/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Teams from './pages/Teams'
 import Layout from './components/Layout'
@@ -20,15 +22,21 @@ import { AnimatePresence } from 'framer-motion'
 import AnimatedPage from './components/AnimatedPage'
 import ScrollAnimatedSection from './components/ScrollAnimatedSection'
 import DecisionDetails from './pages/DecisionDetails'
+import AuthHashRouter from './components/AuthHashRouter'
+import JoinTeam from './pages/JoinTeam'
 
 function App() {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
+      <AuthHashRouter />
       <Routes location={location} key={location.pathname}>
         {/* Public routes */}
         <Route path="/signin" element={<AnimatedPage><SignIn /></AnimatedPage>} />
         <Route path="/signup" element={<AnimatedPage><SignUp /></AnimatedPage>} />
+        <Route path="/forgot-password" element={<AnimatedPage><ForgotPassword /></AnimatedPage>} />
+        <Route path="/reset-password" element={<AnimatedPage><ResetPassword /></AnimatedPage>} />
+        <Route path="/join/:teamId" element={<AnimatedPage><JoinTeam /></AnimatedPage>} />
         <Route path="/" element={
           <AnimatedPage>
             <div className="app">
