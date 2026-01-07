@@ -1,129 +1,75 @@
 
-import { useRef, useEffect } from 'react';
-import { Users, Brain, LineChart, Shield, Zap, ArrowUpRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { BrainCircuit, Users, BarChart3, ShieldCheck, Zap, MessageSquare } from 'lucide-react';
 
 const features = [
-  {
-    title: "Collaborative Input",
-    description: "Gather insights from all stakeholders in one centralized platform, ensuring every voice is heard.",
-    icon: Users,
-    color: "bg-blue-500/10 text-blue-500",
-    colorHover: "group-hover:bg-blue-500/20"
-  },
-  {
-    title: "AI-Powered Analysis",
-    description: "Harness advanced algorithms to identify patterns, sentiment, and valuable insights from collected input.",
-    icon: Brain,
-    color: "bg-purple-500/10 text-purple-500",
-    colorHover: "group-hover:bg-purple-500/20"
-  },
-  {
-    title: "Data Visualization",
-    description: "Transform complex information into intuitive visualizations that make trends and insights immediately clear.",
-    icon: LineChart,
-    color: "bg-teal-500/10 text-teal-500",
-    colorHover: "group-hover:bg-teal-500/20"
-  },
-  {
-    title: "Ethical Guardrails",
-    description: "Ensure decisions align with your organization's values and priorities through AI-driven ethical analysis.",
-    icon: Shield,
-    color: "bg-amber-500/10 text-amber-500",
-    colorHover: "group-hover:bg-amber-500/20"
-  },
-  {
-    title: "Enhanced Efficiency",
-    description: "Streamline decision processes, saving time while improving quality through structured collaborative workflows.",
-    icon: Zap,
-    color: "bg-rose-500/10 text-rose-500",
-    colorHover: "group-hover:bg-rose-500/20"
-  }
+	{
+		icon: BrainCircuit,
+		title: "AI-Powered Synthesis",
+		description: "Our advanced AI analyzes discussion points, identifies consensus, and highlights points of contention automatically."
+	},
+	{
+		icon: Users,
+		title: "Collective Intelligence",
+		description: "Harness the wisdom of your entire team. Give everyone a voice while avoiding the noise of endless chat threads."
+	},
+	{
+		icon: BarChart3,
+		title: "Decision Analytics",
+		description: "Track decision quality, participation rates, and alignment scores to improve your organization's decision-making velocity."
+	},
+	{
+		icon: ShieldCheck,
+		title: "Bias Detection",
+		description: "Built-in safeguards identify potential groupthink, confirmation bias, and authority bias in your decision-making process."
+	},
+	{
+		icon: Zap,
+		title: "Rapid Alignment",
+		description: "Reach agreement 3x faster than traditional meetings. Asynchronous workflows allow deep thinking and quick resolution."
+	},
+	{
+		icon: MessageSquare,
+		title: "Structured Discourse",
+		description: "Move beyond chaotic threads. Our structured proposal framework keeps discussions focused and productive."
+	}
 ];
 
 const Features = () => {
-  const featuresRef = useRef<HTMLDivElement>(null);
+	return (
+		<section id="features" className="py-24 bg-consensus-dark-500 relative">
+			<div className="container mx-auto px-6">
+				<div className="mb-16 text-center animate-on-scroll">
+					<h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+						Intelligence built for <span className="text-consensus-green">modern teams</span>
+					</h2>
+					<p className="text-consensus-grey-300 max-w-2xl mx-auto text-lg">
+						Reimagine how decisions happen. Move from clarity to consensus with tools designed for high-performance organizations.
+					</p>
+				</div>
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const elements = entry.target.querySelectorAll('.feature-card');
-            elements.forEach((el, index) => {
-              setTimeout(() => {
-                el.classList.add('opacity-100', 'translate-y-0');
-                el.classList.remove('opacity-0', 'translate-y-10');
-              }, index * 100);
-            });
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+					{features.map((feature, index) => (
+						<div
+							key={index}
+							className={`dark-card p-8 group hover:border-consensus-green/30 animate-on-scroll animate-delay-${index % 3 + 1}`}
+						>
+							<div className="w-12 h-12 rounded-lg bg-consensus-dark-300 border border-consensus-dark-100 flex items-center justify-center mb-6 group-hover:bg-consensus-green/10 group-hover:border-consensus-green/30 transition-all duration-300">
+								<feature.icon className="text-consensus-green" size={24} />
+							</div>
 
-    if (featuresRef.current) {
-      observer.observe(featuresRef.current);
-    }
+							<h3 className="text-xl font-bold text-white mb-3 group-hover:text-consensus-green transition-colors duration-300">
+								{feature.title}
+							</h3>
 
-    return () => {
-      if (featuresRef.current) {
-        observer.unobserve(featuresRef.current);
-      }
-    };
-  }, []);
-
-  return (
-    <section id="features" className="py-20 md:py-32 bg-consensus-grey-100 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-grid-pattern bg-[size:30px_30px] opacity-30"></div>
-      
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-block px-3 py-1 bg-consensus-blue/10 rounded-full text-consensus-blue text-sm font-medium mb-6">
-            Features
-          </div>
-          <h2 className="font-sf text-4xl md:text-5xl font-bold mb-6">
-            Transform How Your Team Makes Decisions
-          </h2>
-          <p className="text-xl text-consensus-grey-600">
-            Our platform combines human intuition with artificial intelligence to create a powerful decision-making ecosystem.
-          </p>
-        </div>
-        
-        <div ref={featuresRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div 
-              key={index} 
-              className="feature-card group p-8 bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 opacity-0 translate-y-10 transform"
-            >
-              <div className={`w-14 h-14 ${feature.color} ${feature.colorHover} rounded-xl flex items-center justify-center mb-6 transition-colors duration-300`}>
-                <feature.icon size={26} />
-              </div>
-              <h3 className="text-xl font-bold mb-3 group-hover:text-consensus-blue transition-colors duration-300">
-                {feature.title}
-              </h3>
-              <p className="text-consensus-grey-600">
-                {feature.description}
-              </p>
-            </div>
-          ))}
-        </div>
-        
-        <div className="mt-16 text-center">
-          <Link to="/register">
-            <Button 
-              className="rounded-full px-6 py-6 bg-consensus-blue hover:bg-consensus-blue/90 shadow-lg shadow-consensus-blue/20"
-            >
-              Get started today
-              <ArrowUpRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
+							<p className="text-consensus-grey-400 leading-relaxed">
+								{feature.description}
+							</p>
+						</div>
+					))}
+				</div>
+			</div>
+		</section>
+	);
 };
 
 export default Features;

@@ -52,9 +52,9 @@ const DecisionCard = ({
   };
 
   return (
-    <div className="relative bg-consensus-dark-300 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-consensus-dark-200 hover:border-consensus-green/30 hover-green-glow group">
+    <div className="glass-panel relative rounded-xl hover:shadow-2xl transition-all duration-300 overflow-hidden hover:border-consensus-green/30 hover-green-glow group">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-consensus-green to-consensus-teal opacity-60"></div>
-      
+
       <div className="p-5">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-lg font-medium text-white line-clamp-1 group-hover:text-consensus-green transition-colors duration-300">{title}</h3>
@@ -62,15 +62,15 @@ const DecisionCard = ({
             {status}
           </span>
         </div>
-        
+
         <p className="text-sm text-consensus-grey-300 mb-4 line-clamp-2 min-h-[40px]">{description}</p>
-        
+
         <div className="flex items-center justify-between text-sm mb-3">
           <div className="flex items-center text-consensus-grey-400">
             <CalendarDays size={14} className="mr-1" />
             <span>{dueDate}</span>
           </div>
-          
+
           <div className="flex space-x-3">
             <div className="flex items-center text-consensus-grey-400">
               <Users size={14} className="mr-1" />
@@ -82,16 +82,16 @@ const DecisionCard = ({
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs text-consensus-grey-400">Progress</span>
           <span className="text-xs text-consensus-grey-300">{progress}%</span>
         </div>
-        
+
         <Progress value={progress} className="h-1.5 bg-consensus-dark-200">
           <div className={`h-full ${getProgressColor()} rounded-full transition-all duration-500`} style={{ width: `${progress}%` }}></div>
         </Progress>
-        
+
         <div className="mt-4 pt-4 border-t border-consensus-dark-200 flex items-center justify-between">
           <div className="flex items-center">
             {status === 'completed' ? (
@@ -103,7 +103,7 @@ const DecisionCard = ({
               {status === 'completed' ? 'Completed' : 'In progress'}
             </span>
           </div>
-          
+
           <div className="flex items-center">
             <span className="text-xs mr-2 text-consensus-grey-400">Consensus</span>
             <div className="w-8 h-8 rounded-full flex items-center justify-center border border-consensus-dark-200 bg-consensus-dark-400 font-semibold text-sm">

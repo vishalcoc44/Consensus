@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, User, MessageSquare, Eye, Filter } from 'lucide-react';
-import { typedSupabase } from '@/utils/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { extractProfileData } from '@/utils/supabaseClient';
+// import { extractProfileData } from '@/utils/supabaseClient';
 import { useTeamsFilter } from '@/hooks/useTeamsFilter';
 import TeamSelector from './TeamSelector';
 
@@ -33,26 +33,31 @@ const RecentActivity = () => {
     'team_id'
   );
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     fetchRecentActivity();
   }, []);
-  
+
+  const extractProfileData = (profiles: any) => {
+    if (Array.isArray(profiles)) return profiles[0];
+    return profiles;
+  };
+
   const fetchRecentActivity = async () => {
     try {
       setLoading(true);
-      
+
       // Get the current user's session
-      const { data: { session } } = await typedSupabase.auth.getSession();
-      
+      const { data: { session } } = await supabase.auth.getSession();
+
       if (!session) {
         setLoading(false);
         return;
       }
-      
+
       // This is a simulated activity feed - in a real app, you'd fetch from a dedicated activity table
       // Fetching contributions as an example activity source
-      const { data, error } = await typedSupabase
+      const { data, error } = await supabase
         .from('contributions')
         .select(`
           id,
@@ -64,23 +69,25 @@ const RecentActivity = () => {
         `)
         .order('created_at', { ascending: false })
         .limit(5);
-        
+
       if (error) {
         console.error('Error fetching recent activity:', error);
         setLoading(false);
         return;
       }
-      
+
       if (data) {
         const formattedActivities: ActivityItem[] = data.map(item => {
           // Safely extract profile data to handle the possible error case
           const profileData = extractProfileData(item.profiles);
           const userName = profileData?.full_name || 'Anonymous User';
           const avatarUrl = profileData?.avatar_url || undefined;
-          
-          const proposalTitle = item.proposals?.title || 'Unknown Proposal';
-          const teamId = item.proposals?.team_id || undefined;
-          
+
+          const proposal = Array.isArray(item.proposals) ? item.proposals[0] : item.proposals;
+
+          const proposalTitle = proposal?.title || 'Unknown Proposal';
+          const teamId = proposal?.team_id || undefined;
+
           return {
             id: item.id,
             type: 'contribution',
@@ -95,7 +102,7 @@ const RecentActivity = () => {
             team_id: teamId
           };
         });
-        
+
         setActivities(formattedActivities);
       }
     } catch (err) {
@@ -104,7 +111,7 @@ const RecentActivity = () => {
       setLoading(false);
     }
   };
-  
+
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'comment':
@@ -119,16 +126,16 @@ const RecentActivity = () => {
         return <Clock size={16} className="text-gray-500" />;
     }
   };
-  
+
   const handleViewProposal = (proposalId: string) => {
     navigate(`/dashboard/proposals/${proposalId}`);
   };
-  
+
   return (
     <Card className="animate-fade-in">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-medium">Recent Activity</CardTitle>
-        <TeamSelector 
+        <TeamSelector
           selectedTeamId={selectedTeamId}
           onTeamChange={setSelectedTeamId}
           className="w-[140px]"
@@ -147,8 +154,8 @@ const RecentActivity = () => {
           ))
         ) : filteredActivities.length === 0 ? (
           <div className="text-center text-consensus-grey-500 py-4">
-            {activities.length === 0 ? 
-              <p>No recent activity found.</p> : 
+            {activities.length === 0 ?
+              <p>No recent activity found.</p> :
               <p>No activity found for the selected team.</p>
             }
           </div>
@@ -166,9 +173,9 @@ const RecentActivity = () => {
                   {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                 </p>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => handleViewProposal(activity.proposal_id)}
                 className="opacity-0 group-hover:opacity-100 transition-opacity"
               >
@@ -177,11 +184,11 @@ const RecentActivity = () => {
             </div>
           ))
         )}
-        
+
         {activities.length > 0 && (
-          <Button 
-            variant="link" 
-            className="w-full mt-2" 
+          <Button
+            variant="link"
+            className="w-full mt-2"
             onClick={() => navigate('/dashboard/activity')}
           >
             View all activity

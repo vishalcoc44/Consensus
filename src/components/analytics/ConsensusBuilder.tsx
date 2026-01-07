@@ -113,7 +113,7 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
     ? new Date(consensusData.updated_at).toLocaleString()
     : 'Never';
 
- // Mutation to generate consensus analysis
+  // Mutation to generate consensus analysis
   const generateMutation = useMutation({
     mutationFn: async () => {
       // Generate consensus analysis
@@ -182,337 +182,323 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
   // Render loading state
   if (isLoading) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-consensus-blue" />
-            AI Consensus Builder
-          </CardTitle>
-          <CardDescription>
-            Analyzing contributions to build consensus
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin h-8 w-8 border-4 border-consensus-blue border-t-transparent rounded-full"></div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-full glass-panel p-6 rounded-2xl animate-pulse">
+        <div className="flex items-center gap-2 mb-2">
+          <Lightbulb className="h-5 w-5 text-consensus-blue" />
+          <h3 className="text-xl font-bold text-white">AI Consensus Builder</h3>
+        </div>
+        <p className="text-consensus-grey-400 mb-8 ml-7">Analyzing contributions to build consensus</p>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin h-10 w-10 border-4 border-consensus-blue border-t-transparent rounded-full"></div>
+        </div>
+      </div>
     );
   }
 
   // Render error state
   if (isError) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-consensus-blue" />
-            AI Consensus Builder
-          </CardTitle>
-          <CardDescription>
-            Analyzing contributions to build consensus
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-red-50 p-4 rounded-lg text-red-800">
-            <p>Error loading consensus data: {(error as Error).message}</p>
-          </div>
-          <Button
-            onClick={() => generateMutation.mutate()}
-            className="mt-4"
-            disabled={generateMutation.isPending}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`} />
-            Generate Consensus Analysis
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="w-full glass-panel p-6 rounded-2xl border-red-500/20">
+        <div className="flex items-center gap-2 mb-2">
+          <Lightbulb className="h-5 w-5 text-consensus-blue" />
+          <h3 className="text-xl font-bold text-white">AI Consensus Builder</h3>
+        </div>
+        <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-xl text-red-200 mt-6">
+          <p className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            {(error as Error).message}
+          </p>
+        </div>
+        <Button
+          onClick={() => generateMutation.mutate()}
+          className="mt-6 bg-consensus-blue hover:bg-consensus-blue/90"
+          disabled={generateMutation.isPending}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`} />
+          Retry Analysis
+        </Button>
+      </div>
     );
   }
 
   // If no consensus data exists yet, render a button to generate it
   if (!consensus) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-consensus-blue" />
-            AI Consensus Builder
-          </CardTitle>
-          <CardDescription>
-            Generate AI-driven consensus-building suggestions
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-blue-50 p-4 rounded-lg text-blue-800 mb-4">
-            <p>No consensus analysis available yet. Generate one to see AI-powered suggestions for building consensus among stakeholders.</p>
-          </div>
-          <Button
-            onClick={() => generateMutation.mutate()}
-            disabled={generateMutation.isPending}
-            className="bg-consensus-blue hover:bg-consensus-blue/90"
-          >
-            {generateMutation.isPending ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <Lightbulb className="h-4 w-4 mr-2" />
-                Generate Consensus Analysis
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="w-full glass-panel p-8 rounded-2xl flex flex-col items-center text-center">
+        <div className="w-16 h-16 bg-consensus-blue/10 rounded-full flex items-center justify-center mb-6">
+          <Lightbulb className="h-8 w-8 text-consensus-blue" />
+        </div>
+        <h3 className="text-2xl font-bold text-white mb-2">Build Consensus with AI</h3>
+        <p className="text-consensus-grey-400 max-w-md mb-8">
+          Generate AI-driven suggestions to find common ground, identify friction points, and discover new compromise options.
+        </p>
+        <Button
+          onClick={() => generateMutation.mutate()}
+          disabled={generateMutation.isPending}
+          className="bg-consensus-blue hover:bg-consensus-blue/90 text-white px-8 py-6 rounded-xl text-lg shadow-lg shadow-consensus-blue/20"
+        >
+          {generateMutation.isPending ? (
+            <>
+              <RefreshCw className="h-5 w-5 mr-3 animate-spin" />
+              Analyzing Data...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-5 w-5 mr-3" />
+              Generate Analysis
+            </>
+          )}
+        </Button>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-consensus-blue" />
-              AI Consensus Builder
-            </CardTitle>
-            <CardDescription>
-              AI-driven tools to help build consensus
-            </CardDescription>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => generateMutation.mutate()}
-            disabled={generateMutation.isPending}
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`}
-            />
-            Regenerate
-          </Button>
+    <div className="w-full glass-panel p-6 rounded-2xl animate-fade-in">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h3 className="flex items-center gap-2 text-xl font-bold text-white">
+            <div className="p-2 rounded-lg bg-consensus-blue/20 text-consensus-blue">
+              <Lightbulb className="h-5 w-5" />
+            </div>
+            AI Consensus Builder
+          </h3>
+          <p className="text-consensus-grey-400 mt-1 ml-11">
+            AI-driven tools to help build consensus
+          </p>
         </div>
-      </CardHeader>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => generateMutation.mutate()}
+          disabled={generateMutation.isPending}
+          className="border-white/10 text-consensus-grey-300 hover:text-white hover:bg-white/5 bg-transparent"
+        >
+          <RefreshCw
+            className={`h-4 w-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`}
+          />
+          Regenerate
+        </Button>
+      </div>
 
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="consensus">Consensus Overview</TabsTrigger>
-            <TabsTrigger value="compromises">Compromise Suggestions</TabsTrigger>
-            <TabsTrigger value="new-options">Proposed Options</TabsTrigger>
-          </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid grid-cols-3 mb-6 bg-black/40 p-1 rounded-xl border border-white/5">
+          <TabsTrigger value="consensus" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">Consensus Overview</TabsTrigger>
+          <TabsTrigger value="compromises" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">Compromise Suggestions</TabsTrigger>
+          <TabsTrigger value="new-options" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">Proposed Options</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="consensus">
-            <div className="space-y-6">
-              {/* Broad Support Options */}
-              <div>
-                <h3 className="text-lg font-semibold text-consensus-blue mb-3 flex items-center">
-                  <CheckCircle2 className="h-5 w-5 mr-2 text-green-600" />
-                  Options with Broad Support
-                </h3>
-
-                {consensus.broadSupportOptions.length > 0 ? (
-                  <div className="space-y-3">
-                    {consensus.broadSupportOptions.map((option) => (
-                      <div key={option.id} className="bg-green-50 p-4 rounded-lg border border-green-100">
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="font-medium">{option.title}</h4>
-                          <Badge className="bg-green-100 text-green-800">
-                            {option.supportPercentage.toFixed(0)}% Support
-                          </Badge>
-                        </div>
-                        {option.description && (
-                          <p className="text-sm text-consensus-grey-600 mb-2">{option.description}</p>
-                        )}
-                        <Progress
-                          value={option.supportPercentage}
-                          className="h-2 bg-green-100"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-consensus-grey-600 italic">
-                    No options have broad support yet. Consider using compromise suggestions.
-                  </p>
-                )}
-              </div>
-
-              {/* Contentious Options */}
-              <div>
-                <h3 className="text-lg font-semibold text-consensus-blue mb-3 flex items-center">
-                  <AlertTriangle className="h-5 w-5 mr-2 text-amber-600" />
-                  Contentious Areas
-                </h3>
-
-                {consensus.contentiousOptions.length > 0 ? (
-                  <div className="space-y-3">
-                    {consensus.contentiousOptions.map((option) => (
-                      <div key={option.id} className="bg-amber-50 p-4 rounded-lg border border-amber-100">
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="font-medium">{option.title}</h4>
-                          <Badge className="bg-amber-100 text-amber-800">
-                            {option.supportPercentage.toFixed(0)}% Support
-                          </Badge>
-                        </div>
-                        {option.description && (
-                          <p className="text-sm text-consensus-grey-600 mb-2">{option.description}</p>
-                        )}
-                        <Progress
-                          value={option.supportPercentage}
-                          className="h-2 bg-amber-100"
-                        />
-                        <div className="mt-2 text-sm text-amber-800">
-                          This option has significant support but lacks consensus. Consider compromise options.
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-consensus-grey-600 italic">
-                    No contentious options identified. The team appears to be fairly aligned.
-                  </p>
-                )}
-              </div>
-
-              <div className="text-xs text-consensus-grey-500 mt-4">
-                Last updated: {lastUpdated}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="compromises">
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-consensus-blue mb-3 flex items-center">
-                <Lightbulb className="h-5 w-5 mr-2 text-amber-600" />
-                Suggested Compromises
+        <TabsContent value="consensus" className="mt-0">
+          <div className="space-y-6">
+            {/* Broad Support Options */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+                <CheckCircle2 className="h-5 w-5 mr-2 text-green-400" />
+                Options with Broad Support
               </h3>
 
-              {consensus.suggestedCompromises.length > 0 ? (
-                <Accordion type="single" collapsible className="space-y-3">
-                  {consensus.suggestedCompromises.map((compromise, index) => (
-                    <AccordionItem
-                      key={index}
-                      value={`compromise-${index}`}
-                      className="bg-blue-50 rounded-lg border border-blue-100 px-4"
-                    >
-                      <AccordionTrigger className="py-3 hover:no-underline">
-                        <div className="flex justify-between items-center w-full pr-4">
-                          <h4 className="font-medium text-left">{compromise.title}</h4>
-                          <Badge className="bg-blue-100 text-blue-800 ml-2">
-                            {compromise.estimatedApproval.toFixed(0)}% Est. Approval
-                          </Badge>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="pt-0 pb-4">
-                        <p className="text-sm text-consensus-grey-700 mb-3">
-                          {compromise.description}
-                        </p>
-
-                        <div className="bg-white p-3 rounded-md mb-3">
-                          <div className="flex items-center mb-2">
-                            <div className="w-3 h-3 rounded-full bg-amber-500 mr-2"></div>
-                            <span className="text-sm font-medium">Addresses Issue:</span>
-                            <Badge className="bg-amber-100 text-amber-800 ml-2">
-                              {compromise.targetIssue}
-                            </Badge>
-                          </div>
-
-                          <div className="flex items-center">
-                            <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                            <span className="text-sm font-medium">Reduces Disagreement:</span>
-                            <Badge className="bg-green-100 text-green-800 ml-2">
-                              {compromise.reductionInDisagreement}%
-                            </Badge>
-                          </div>
-                        </div>
-
-                        <Button size="sm" variant="outline" className="w-full mt-2">
-                          <Scale className="h-4 w-4 mr-2" />
-                          Propose This Compromise
-                        </Button>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              ) : (
-                <p className="text-sm text-consensus-grey-600 italic">
-                  No compromise suggestions available. This may indicate strong consensus or insufficient data.
-                </p>
-              )}
-
-              <div className="text-xs text-consensus-grey-500 mt-4">
-                Last updated: {lastUpdated}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="new-options">
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-consensus-blue mb-3 flex items-center">
-                <Sparkles className="h-5 w-5 mr-2 text-purple-600" />
-                AI-Generated New Options
-              </h3>
-
-              {consensus.proposedNewOptions.length > 0 ? (
-                <div className="space-y-4">
-                  {consensus.proposedNewOptions.map((option, index) => (
-                    <div key={index} className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+              {consensus.broadSupportOptions.length > 0 ? (
+                <div className="space-y-3">
+                  {consensus.broadSupportOptions.map((option) => (
+                    <div key={option.id} className="bg-green-500/10 p-5 rounded-xl border border-green-500/20 backdrop-blur-sm">
                       <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-medium">{option.title}</h4>
-                        <Badge className="bg-purple-100 text-purple-800">
-                          {option.estimatedApproval.toFixed(0)}% Est. Approval
+                        <h4 className="font-medium text-green-100">{option.title}</h4>
+                        <Badge className="bg-green-500/20 text-green-300 border-green-500/30 hover:bg-green-500/30 border">
+                          {option.supportPercentage.toFixed(0)}% Support
                         </Badge>
                       </div>
+                      {option.description && (
+                        <p className="text-sm text-green-200/70 mb-3">{option.description}</p>
+                      )}
+                      <Progress
+                        value={option.supportPercentage}
+                        className="h-1.5 bg-green-950/50"
+                      // Note: Progress component needs to handle bar color via helper or class inside it usually, or standard theme. Assuming standard theme or utility override.
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-consensus-grey-400 italic bg-white/5 p-4 rounded-lg border border-white/5">
+                  No options have broad support yet. Consider using compromise suggestions to bridge the gap.
+                </div>
+              )}
+            </div>
 
-                      <p className="text-sm text-consensus-grey-700 mb-3">
-                        {option.description}
-                      </p>
+            {/* Contentious Options */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+                <AlertTriangle className="h-5 w-5 mr-2 text-amber-400" />
+                Contentious Areas
+              </h3>
 
-                      <div className="bg-white p-3 rounded-md mb-3">
-                        <div className="text-sm font-medium mb-1">Combines elements from:</div>
-                        <div className="flex flex-wrap gap-2">
-                          {option.baseOptions.map((baseId) => {
-                            const baseOption = [
-                              ...consensus.broadSupportOptions,
-                              ...consensus.contentiousOptions
-                            ].find(opt => opt.id === baseId);
-
-                            return baseOption ? (
-                              <Badge key={baseId} variant="outline">
-                                {baseOption.title}
-                              </Badge>
-                            ) : null;
-                          })}
-                        </div>
+              {consensus.contentiousOptions.length > 0 ? (
+                <div className="space-y-3">
+                  {consensus.contentiousOptions.map((option) => (
+                    <div key={option.id} className="bg-amber-500/10 p-5 rounded-xl border border-amber-500/20 backdrop-blur-sm">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="font-medium text-amber-100">{option.title}</h4>
+                        <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30 border">
+                          {option.supportPercentage.toFixed(0)}% Support
+                        </Badge>
                       </div>
-
-                      <div className="flex space-x-2 mt-3">
-                        <Button size="sm" variant="outline" className="flex-1">
-                          <ArrowRight className="h-4 w-4 mr-2" />
-                          Add as New Option
-                        </Button>
+                      {option.description && (
+                        <p className="text-sm text-amber-200/70 mb-3">{option.description}</p>
+                      )}
+                      <Progress
+                        value={option.supportPercentage}
+                        className="h-1.5 bg-amber-950/50"
+                      />
+                      <div className="mt-3 text-xs text-amber-300/80 flex items-center">
+                        <Scale className="h-3 w-3 mr-1.5" />
+                        Significant support but lacks consensus. Needs compromise.
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-consensus-grey-600 italic">
-                  No new options have been generated. This might be due to strong support for existing options or insufficient data.
-                </p>
+                <div className="text-sm text-consensus-grey-400 italic bg-white/5 p-4 rounded-lg border border-white/5">
+                  No contentious options identified. The team appears to be reasonably aligned.
+                </div>
               )}
-
-              <div className="text-xs text-consensus-grey-500 mt-4">
-                Last updated: {lastUpdated}
-              </div>
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+
+            <div className="text-xs text-consensus-grey-500 flex justify-end">
+              Last updated: {lastUpdated}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="compromises" className="mt-0">
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+              <Lightbulb className="h-5 w-5 mr-2 text-amber-400" />
+              Suggested Compromises
+            </h3>
+
+            {consensus.suggestedCompromises.length > 0 ? (
+              <Accordion type="single" collapsible className="space-y-3">
+                {consensus.suggestedCompromises.map((compromise, index) => (
+                  <AccordionItem
+                    key={index}
+                    value={`compromise-${index}`}
+                    className="bg-consensus-blue/5 rounded-xl border border-consensus-blue/10 px-4 data-[state=open]:bg-consensus-blue/10 transition-colors"
+                  >
+                    <AccordionTrigger className="py-4 hover:no-underline text-white">
+                      <div className="flex justify-between items-center w-full pr-4">
+                        <h4 className="font-medium text-left">{compromise.title}</h4>
+                        <Badge className="bg-blue-500/20 text-blue-300 border border-blue-500/30 ml-2">
+                          {compromise.estimatedApproval.toFixed(0)}% Est. Approval
+                        </Badge>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-0 pb-4">
+                      <div className="bg-black/20 p-4 rounded-lg mb-4 border border-white/5">
+                        <p className="text-sm text-gray-300 mb-0">
+                          {compromise.description}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        <div className="flex items-center bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/10">
+                          <span className="text-xs font-medium text-amber-200">Addresses:</span>
+                          <span className="text-xs text-amber-100 ml-1.5">
+                            {compromise.targetIssue}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center bg-green-500/10 px-3 py-1.5 rounded-lg border border-green-500/10">
+                          <span className="text-xs font-medium text-green-200">Disagreement Redux:</span>
+                          <span className="text-xs text-green-100 ml-1.5">
+                            {compromise.reductionInDisagreement}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button size="sm" className="w-full bg-consensus-blue hover:bg-consensus-blue/90 text-white">
+                        <Scale className="h-4 w-4 mr-2" />
+                        Propose This Compromise
+                      </Button>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            ) : (
+              <div className="text-sm text-consensus-grey-400 italic bg-white/5 p-4 rounded-lg border border-white/5">
+                No compromise suggestions available. This may indicate strong consensus or insufficient data.
+              </div>
+            )}
+
+            <div className="text-xs text-consensus-grey-500 flex justify-end">
+              Last updated: {lastUpdated}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="new-options" className="mt-0">
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+              <Sparkles className="h-5 w-5 mr-2 text-purple-400" />
+              AI-Generated New Options
+            </h3>
+
+            {consensus.proposedNewOptions.length > 0 ? (
+              <div className="space-y-4">
+                {consensus.proposedNewOptions.map((option, index) => (
+                  <div key={index} className="bg-purple-900/10 p-5 rounded-xl border border-purple-500/20 backdrop-blur-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl -mr-16 -mt-16 pointer-events-none"></div>
+
+                    <div className="flex justify-between items-center mb-3 relative z-10">
+                      <h4 className="font-bold text-lg text-purple-100">{option.title}</h4>
+                      <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        {option.estimatedApproval.toFixed(0)}% Est. Approval
+                      </Badge>
+                    </div>
+
+                    <p className="text-sm text-purple-200/80 mb-4 leading-relaxed relative z-10">
+                      {option.description}
+                    </p>
+
+                    <div className="bg-black/30 p-3 rounded-lg mb-4 border border-white/5 relative z-10">
+                      <div className="text-xs font-medium text-purple-300 mb-2 uppercase tracking-wide">Combines elements from:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {option.baseOptions.map((baseId) => {
+                          const baseOption = [
+                            ...consensus.broadSupportOptions,
+                            ...consensus.contentiousOptions
+                          ].find(opt => opt.id === baseId);
+
+                          return baseOption ? (
+                            <Badge key={baseId} variant="outline" className="border-purple-500/30 text-purple-200 bg-purple-500/10 hover:bg-purple-500/20">
+                              {baseOption.title}
+                            </Badge>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-2 mt-2 relative z-10">
+                      <Button size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white border-0 shadow-lg shadow-purple-600/20">
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                        Add as New Option
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-consensus-grey-400 italic bg-white/5 p-4 rounded-lg border border-white/5">
+                No new options have been generated.
+              </div>
+            )}
+
+            <div className="text-xs text-consensus-grey-500 flex justify-end">
+              Last updated: {lastUpdated}
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

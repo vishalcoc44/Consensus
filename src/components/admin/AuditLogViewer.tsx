@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search, Download, FileText, Shield, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { typedSupabase } from '@/utils/supabaseClient';
+
 import { hashData } from '@/utils/encryption';
 
 interface AuditLog {
@@ -31,7 +31,7 @@ const AuditLogViewer = () => {
     queryKey: ['auditLogs', page, pageSize, searchTerm, actionFilter],
     queryFn: async () => {
       try {
-        let query = typedSupabase
+        let query = supabase
           .from('audit_logs')
           .select('*', { count: 'exact' })
           .order('timestamp', { ascending: false })

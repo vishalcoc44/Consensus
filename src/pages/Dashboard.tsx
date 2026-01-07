@@ -6,7 +6,7 @@ import DecisionCard from '@/components/dashboard/DecisionCard';
 import CreateDecisionButton from '@/components/dashboard/CreateDecisionButton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, BarChart, Users, Brain } from 'lucide-react';
-import { typedSupabase } from '@/utils/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 interface DashboardStats {
@@ -47,8 +47,10 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
+      console.log("Fetching dashboard data with auth status:", await supabase.auth.getSession());
+
       // Get active decisions
-      const { data: decisionsData, error: decisionsError } = await typedSupabase
+      const { data: decisionsData, error: decisionsError } = await supabase
         .from('proposals')
         .select(`
           id, 
@@ -63,41 +65,44 @@ const Dashboard = () => {
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(6);
-      
-      if (decisionsError) throw decisionsError;
-      
+
+      if (decisionsError) {
+        console.error("Error fetching proposals:", decisionsError);
+        throw decisionsError;
+      }
+
       // Get team members count
-      const { count: teamMembersCount, error: teamMembersError } = await typedSupabase
+      const { count: teamMembersCount, error: teamMembersError } = await supabase
         .from('team_members')
         .select('*', { count: 'exact', head: true });
-      
+
       if (teamMembersError && teamMembersError.code !== '42P17') throw teamMembersError;
-      
+
       const activeDecisionsCount = await getActiveDecisionsCount();
-      
+
       if (decisionsData) {
         const formattedDecisions: Decision[] = decisionsData.map(item => {
           let consensusScore = 0;
           let participantsCount = 0;
           let commentsCount = 0;
-          
+
           if (item.proposal_analysis && item.proposal_analysis.length > 0) {
             const analysisData = item.proposal_analysis[0].analysis_data;
-            
+
             if (
-              typeof analysisData === 'object' && 
-              analysisData !== null && 
-              'recommendation' in analysisData && 
-              typeof analysisData.recommendation === 'object' && 
-              analysisData.recommendation !== null && 
+              typeof analysisData === 'object' &&
+              analysisData !== null &&
+              'recommendation' in analysisData &&
+              typeof analysisData.recommendation === 'object' &&
+              analysisData.recommendation !== null &&
               'confidenceScore' in analysisData.recommendation
             ) {
               // Ensure we convert to number and handle any non-numeric values
               const confidenceScore = analysisData.recommendation.confidenceScore;
-              consensusScore = typeof confidenceScore === 'number' ? 
-                confidenceScore : 
-                (typeof confidenceScore === 'string' ? 
-                  parseInt(confidenceScore, 10) || 0 : 
+              consensusScore = typeof confidenceScore === 'number' ?
+                confidenceScore :
+                (typeof confidenceScore === 'string' ?
+                  parseInt(confidenceScore, 10) || 0 :
                   Math.floor(Math.random() * 100));
             } else {
               consensusScore = Math.floor(Math.random() * 100);
@@ -105,10 +110,10 @@ const Dashboard = () => {
           } else {
             consensusScore = Math.floor(Math.random() * 100);
           }
-          
+
           participantsCount = item.contributions?.length || 0;
           commentsCount = participantsCount * 2;
-          
+
           let progress = 0;
           if (item.status === 'completed' || item.status === 'archived') {
             progress = 100;
@@ -117,7 +122,7 @@ const Dashboard = () => {
               const now = new Date();
               const deadline = new Date(item.deadline);
               const created = new Date(item.created_at);
-              
+
               if (now > deadline) {
                 progress = 100;
               } else {
@@ -129,7 +134,7 @@ const Dashboard = () => {
               progress = Math.floor(Math.random() * 90) + 10;
             }
           }
-          
+
           return {
             id: item.id,
             title: item.title,
@@ -142,11 +147,11 @@ const Dashboard = () => {
             consensus: consensusScore,
           };
         });
-        
+
         const totalConsensus = formattedDecisions.reduce((sum, decision) => sum + decision.consensus, 0);
-        const avgConsensus = formattedDecisions.length > 0 ? 
+        const avgConsensus = formattedDecisions.length > 0 ?
           Math.round(totalConsensus / formattedDecisions.length) : 0;
-        
+
         setDecisions(formattedDecisions);
         setStats({
           activeDecisions: activeDecisionsCount,
@@ -169,11 +174,11 @@ const Dashboard = () => {
 
   const getActiveDecisionsCount = async (): Promise<number> => {
     try {
-      const { count, error } = await typedSupabase
+      const { count, error } = await supabase
         .from('proposals')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active');
-      
+
       if (error) throw error;
       return count || 0;
     } catch (error) {
@@ -192,9 +197,9 @@ const Dashboard = () => {
         <h1 className="text-3xl font-sf font-bold mb-2 text-white">Welcome back</h1>
         <p className="text-consensus-grey-400">Here's an overview of your organization's decision-making activities</p>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        <Card className="animate-fade-in animate-delay-1 bg-consensus-dark-300 border-consensus-dark-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:shadow-consensus-green/5 hover:border-consensus-green/20">
+        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-1 hover:shadow-2xl transition-all duration-300 hover:border-consensus-green/30 hover-green-glow group">
           <CardHeader className="pb-2">
             <CardDescription className="text-consensus-grey-400">Active Decisions</CardDescription>
             <CardTitle className="text-2xl text-white">{stats.activeDecisions}</CardTitle>
@@ -204,14 +209,14 @@ const Dashboard = () => {
               <div className="text-sm text-consensus-grey-400">
                 <span className="text-emerald-500">+{Math.floor(stats.activeDecisions * 0.2)}</span> from last month
               </div>
-              <div className="p-2 rounded-full bg-blue-500/10">
+              <div className="p-2 rounded-full bg-blue-500/10 border border-blue-500/20">
                 <Brain size={18} className="text-blue-400" />
               </div>
             </div>
           </CardContent>
-        </Card>
-        
-        <Card className="animate-fade-in animate-delay-2 bg-consensus-dark-300 border-consensus-dark-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:shadow-consensus-green/5 hover:border-consensus-green/20">
+        </div>
+
+        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-2 hover:shadow-2xl transition-all duration-300 hover:border-consensus-green/30 hover-green-glow group">
           <CardHeader className="pb-2">
             <CardDescription className="text-consensus-grey-400">Team Members</CardDescription>
             <CardTitle className="text-2xl text-white">{stats.teamMembers}</CardTitle>
@@ -221,14 +226,14 @@ const Dashboard = () => {
               <div className="text-sm text-consensus-grey-400">
                 <span className="text-emerald-500">+{Math.floor(stats.teamMembers * 0.15)}</span> new this month
               </div>
-              <div className="p-2 rounded-full bg-purple-500/10">
+              <div className="p-2 rounded-full bg-purple-500/10 border border-purple-500/20">
                 <Users size={18} className="text-purple-400" />
               </div>
             </div>
           </CardContent>
-        </Card>
-        
-        <Card className="animate-fade-in animate-delay-3 bg-consensus-dark-300 border-consensus-dark-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:shadow-consensus-green/5 hover:border-consensus-green/20">
+        </div>
+
+        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-3 hover:shadow-2xl transition-all duration-300 hover:border-consensus-green/30 hover-green-glow group">
           <CardHeader className="pb-2">
             <CardDescription className="text-consensus-grey-400">Avg. Consensus</CardDescription>
             <CardTitle className="text-2xl text-white">{stats.avgConsensus}%</CardTitle>
@@ -238,14 +243,14 @@ const Dashboard = () => {
               <div className="text-sm text-consensus-grey-400">
                 <span className="text-emerald-500">+5%</span> improvement
               </div>
-              <div className="p-2 rounded-full bg-emerald-500/10">
+              <div className="p-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                 <LineChart size={18} className="text-emerald-400" />
               </div>
             </div>
           </CardContent>
-        </Card>
-        
-        <Card className="animate-fade-in animate-delay-4 bg-consensus-dark-300 border-consensus-dark-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:shadow-consensus-green/5 hover:border-consensus-green/20">
+        </div>
+
+        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-4 hover:shadow-2xl transition-all duration-300 hover:border-consensus-green/30 hover-green-glow group">
           <CardHeader className="pb-2">
             <CardDescription className="text-consensus-grey-400">Decision Velocity</CardDescription>
             <CardTitle className="text-2xl text-white">{stats.decisionVelocity} days</CardTitle>
@@ -255,19 +260,19 @@ const Dashboard = () => {
               <div className="text-sm text-consensus-grey-400">
                 <span className="text-emerald-500">-1.3 days</span> faster
               </div>
-              <div className="p-2 rounded-full bg-amber-500/10">
+              <div className="p-2 rounded-full bg-amber-500/10 border border-amber-500/20">
                 <BarChart size={18} className="text-amber-400" />
               </div>
             </div>
           </CardContent>
-        </Card>
+        </div>
       </div>
-      
+
       <div className="flex justify-between items-center mb-6 animate-fade-in animate-delay-5">
         <h2 className="text-xl font-sf font-bold text-white">Active Decisions</h2>
         <CreateDecisionButton />
       </div>
-      
+
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-green"></div>
@@ -279,8 +284,8 @@ const Dashboard = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in animate-delay-5">
           {decisions.map((decision) => (
-            <div 
-              key={decision.id} 
+            <div
+              key={decision.id}
               onClick={() => handleDecisionClick(decision.id)}
               className="cursor-pointer transition-transform hover:scale-[1.02] transform-gpu"
             >

@@ -1,69 +1,188 @@
-# Welcome to your Lovable project
+# Collective Synthesizer
 
-## Project info
+## Project Overview
 
-**URL**: https://lovable.dev/projects/d8084113-d9a1-4bb0-8bdb-4859637c5217
+Collective Synthesizer is a collaborative decision-making platform built with React, TypeScript, and Supabase. The application enables teams to create proposals, gather contributions, analyze data, and reach consensus through a structured decision-making process.
 
-## How can I edit this code?
+## Technologies Used
 
-There are several ways of editing your application.
+- **Frontend**: React, TypeScript, Vite, shadcn/ui, Tailwind CSS
+- **Backend/Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Serverless Functions**: Supabase Edge Functions
 
-**Use Lovable**
+## Supabase Integration Documentation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d8084113-d9a1-4bb0-8bdb-4859637c5217) and start prompting.
+This project heavily integrates with Supabase for data storage, authentication, and serverless functions. Below is a comprehensive documentation of how Supabase is used throughout the codebase.
 
-Changes made via Lovable will be committed automatically to this repo.
+### Core Supabase Configuration
 
-**Use your preferred IDE**
+**`src/integrations/supabase/client.ts`**
+- Creates and exports the main Supabase client instance used throughout the application
+- Configures authentication settings including auto-refresh token, persistent sessions, and URL session detection
+- This is the primary entry point for all Supabase interactions
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+**`src/utils/supabaseClient.ts`**
+- Exports a typed Supabase client (`typedSupabase`) that provides type safety for database operations
+- Includes helper functions like `extractProfileData` to handle Supabase response formats
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+**`src/types/supabase.ts`**
+- Extends the original Supabase database types with custom types for the application
+- Defines the `TypedSupabaseClient` type for strongly-typed database operations
 
-Follow these steps:
+### Authentication and User Management
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+**`src/components/auth/services/authService.ts`**
+- Handles all authentication operations including:
+  - User login with thorough session verification and cleanup
+  - User registration with profile creation
+  - Password reset functionality
+  - Session management and verification
+  - User profile management (fetch, create, update)
+  - User data export and deletion for GDPR compliance
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+**`src/components/auth/AuthForm.tsx`**
+- Manages the authentication UI and form submission
+- Implements robust session clearing to prevent authentication issues
+- Handles login/registration state and error handling
+- Includes cookie and localStorage cleanup for Supabase tokens
 
-# Step 3: Install the necessary dependencies.
-npm i
+**`src/hooks/useAuth.tsx`**
+- Custom hook that provides authentication state and methods to components
+- Sets up auth state listeners using Supabase's `onAuthStateChange`
+- Provides signIn and signOut functionality
+- Manages authentication loading and error states
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+**`src/App.tsx`**
+- Configures global authentication state and session management
+- Implements session verification and automatic refresh for invalid sessions
+- Sets up protected routes based on authentication status
+- Provides the Supabase client to the browser console for debugging
 
-**Edit a file directly in GitHub**
+### Data Access and Management
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+**`src/hooks/useSupabaseQuery.tsx`**
+- Generic hook for fetching data from Supabase tables
+- Handles authentication requirements for queries
+- Provides error handling and loading states
+- Supports custom query functions and dependencies
 
-**Use GitHub Codespaces**
+**`src/hooks/useTeams.tsx`**
+- Manages team data fetching, creation, and member management
+- Implements team member invitation and role assignment
+- Handles data relationships between teams, members, and profiles
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+**`src/utils/auditLogger.ts`**
+- Logs user actions to the audit_logs table in Supabase
+- Captures user ID, action type, timestamp, and additional details
+- Provides security and compliance tracking
 
-## What technologies are used for this project?
+**`src/utils/consensusBuilder.ts`**
+- Fetches proposal data, options, contributions, and criteria from Supabase
+- Implements algorithms for consensus calculation and recommendation generation
 
-This project is built with .
+**`src/utils/integrationService.ts`**
+- Manages external integrations with Supabase storage
+- Handles authentication for integration connections
+- Invokes Supabase Edge Functions for data fetching and analysis
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Page Components with Supabase Integration
 
-## How can I deploy this project?
+**`src/pages/Dashboard.tsx`**
+- Fetches active decisions, team members count, and decision statistics
+- Displays decision cards with data from proposals table
+- Implements session verification before data fetching
 
-Simply open [Lovable](https://lovable.dev/projects/d8084113-d9a1-4bb0-8bdb-4859637c5217) and click on Share -> Publish.
+**`src/pages/Decisions.tsx`**
+- Retrieves all decisions with filtering and sorting capabilities
+- Fetches contribution counts for each proposal
+- Handles authentication verification before data access
 
-## I want to use a custom domain - is that possible?
+**`src/pages/Teams.tsx`**
+- Displays and manages team information and members
+- Uses the useTeams hook for team data operations
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+**`src/pages/Settings.tsx`**
+- Manages user profile settings and preferences
+- Handles profile updates and password changes
+- Implements account deletion functionality
+
+**`src/pages/ResetPassword.tsx`**
+- Verifies session and handles password reset operations
+
+**`src/pages/ActivityLog.tsx`**
+- Displays user activity from the audit_logs table
+- Implements filtering and search functionality for logs
+
+### Dashboard Components
+
+**`src/components/dashboard/RecentActivity.tsx`**
+- Fetches recent user activities from contributions
+- Displays activity feed with user and proposal information
+- Uses the extractProfileData helper for consistent profile handling
+
+**`src/components/dashboard/DashboardLayout.tsx`**
+- Implements the main dashboard layout with navigation
+- Handles user session information display
+- Provides sign-out functionality
+
+**`src/components/dashboard/CreateDecisionButton.tsx`**
+- Creates new proposals in the Supabase database
+- Handles form validation and submission
+
+### Serverless Functions
+
+**`supabase/functions/generate-recommendation/index.ts`**
+- Edge function that analyzes contributions and generates recommendations
+- Accesses proposal, options, criteria, and contribution data
+- Saves analysis results back to the proposal_analysis table
+
+**`supabase/functions/fetch-integration-data/index.ts`**
+- Retrieves data from external integrations
+- Stores integration data in the integration_data table
+- Links data to specific proposals
+
+**`supabase/functions/analyze-integration-data/index.ts`**
+- Processes integration data for insights
+- Updates integration_data records with analysis results
+
+### Database Schema Overview
+
+The application uses the following key tables in Supabase:
+- `profiles`: User profile information
+- `teams`: Team information and settings
+- `team_members`: Team membership and roles
+- `proposals`: Decision proposals with metadata
+- `proposal_options`: Options for each proposal
+- `proposal_criteria`: Evaluation criteria for proposals
+- `contributions`: User contributions to proposals
+- `proposal_analysis`: Analysis results and recommendations
+- `integration_data`: Data from external integrations
+- `audit_logs`: Security and activity tracking
+
+### Row Level Security (RLS) Policies
+
+The database implements Row Level Security policies to ensure data access control:
+- Users can view all proposals but can only modify their own
+- Users can view all proposal analysis but can only modify their own
+- Team members can view their team data
+- Team admins have extended privileges for team management
+
+## Getting Started
+
+1. Clone the repository
+2. Install dependencies with `npm install`
+3. Start the development server with `npm run dev`
+4. The application will be available at http://localhost:5173/
+
+## Deployment
+
+This project can be deployed to any hosting platform that supports static sites. For the backend, you'll need to configure your own Supabase project and update the environment variables accordingly.
+
+## Troubleshooting Authentication Issues
+
+If you encounter authentication issues:
+1. Clear browser cookies and local storage
+2. Ensure your Supabase project has the correct RLS policies
+3. Check browser console for detailed error messages
+4. Verify that you're using the correct Supabase URL and API key

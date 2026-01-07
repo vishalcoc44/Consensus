@@ -19,7 +19,7 @@ const ForgotPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email.trim()) {
       toast({
         variant: "destructive",
@@ -30,7 +30,7 @@ const ForgotPassword = () => {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       await requestPasswordReset(email.trim());
       setIsSuccess(true);
@@ -54,21 +54,21 @@ const ForgotPassword = () => {
     <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-consensus-dark-400">
       <div className="w-full max-w-md mx-auto">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white">Reset Password</h2>
+          <h2 className="text-3xl font-bold text-white hero-text-gradient">Reset Password</h2>
           <p className="mt-2 text-consensus-grey-400">
             Enter your email to receive a password reset link
           </p>
         </div>
 
-        <div className="bg-consensus-dark-300 p-8 rounded-2xl shadow-lg border border-consensus-dark-100 animate-scale-in">
+        <div className="glass-panel p-8 rounded-2xl animate-scale-in">
           {isSuccess ? (
             <div className="text-center py-4">
               <h3 className="text-xl font-medium text-consensus-green mb-2">Email Sent!</h3>
               <p className="text-consensus-grey-300 mb-6">
                 If an account exists with this email, you'll receive a password reset link shortly.
               </p>
-              <Link 
-                to="/login" 
+              <Link
+                to="/login"
                 className="inline-block text-consensus-green hover:text-consensus-teal transition-colors hover:underline mt-4"
               >
                 Return to login
@@ -99,11 +99,11 @@ const ForgotPassword = () => {
               </Button>
             </form>
           )}
-          
+
           {!isSuccess && (
             <div className="mt-8 text-center">
-              <Link 
-                to="/login" 
+              <Link
+                to="/login"
                 className="text-consensus-green hover:text-consensus-teal transition-colors hover:underline"
               >
                 Back to login

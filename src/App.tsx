@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { typedSupabase } from "@/utils/supabaseClient";
 import { toast } from "@/components/ui/use-toast";
-import { logAuthEvent } from "@/utils/auditLogger";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -22,6 +20,54 @@ import Settings from "./pages/Settings";
 import Decisions from "./pages/Decisions";
 import ActivityLog from "./pages/ActivityLog";
 
+// Error boundary component
+// Error boundary component
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: React.ErrorInfo | null;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(_: Error): Partial<ErrorBoundaryState> {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("App Error:", error, errorInfo);
+    this.setState({ error, errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: 'red', backgroundColor: '#f8d7da', border: '1px solid #f5c6cb', borderRadius: '4px' }}>
+          <h2>Something went wrong.</h2>
+          <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error && this.state.error.toString()}
+            <br />
+            {this.state.errorInfo && this.state.errorInfo.componentStack}
+          </details>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+
+console.log("App.tsx is being loaded");
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -33,58 +79,42 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  const [session, setSession] = useState<any>(null);
+  console.log("App component is rendering");
+
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null means loading
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("App.tsx: Setting up auth state listener");
-    
-    // First set up auth state listener to catch any auth changes
-    const { data: { subscription } } = typedSupabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        console.log("Auth state changed:", event);
-        setSession(newSession);
-        
-        if (newSession) {
-          console.log("User authenticated:", newSession.user.email);
-          logAuthEvent('auth_state_change', { event, user: newSession.user.id });
-          
-          // Refresh the query cache when auth state changes
-          queryClient.invalidateQueries();
-        } else {
-          console.log("User signed out");
-          logAuthEvent('auth_state_change', { event, user: null });
-        }
-      }
-    );
+    // Check active session
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setIsAuthenticated(!!session);
+        setLoading(false);
+      });
 
-    // Then check for current session
-    typedSupabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log("Initial session check:", currentSession ? "Logged in" : "Not logged in");
-      setSession(currentSession);
-      setLoading(false);
-    }).catch(error => {
-      console.error("Error checking session:", error);
-      setLoading(false);
+      // Listen for auth changes
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        setIsAuthenticated(!!session);
+        setLoading(false);
+      });
+
+      return () => subscription.unsubscribe();
     });
-
-    // Cleanup subscription
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-    if (loading) {
+    if (loading || isAuthenticated === null) {
       return (
         <div className="flex justify-center items-center h-screen bg-consensus-dark-500">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-green"></div>
         </div>
       );
     }
-    
-    if (!session) {
-      console.log("Access denied: No session found");
+
+    if (!isAuthenticated) {
       toast({
         title: "Authentication required",
         description: "Please sign in to access this page",
@@ -96,72 +126,71 @@ const App = () => {
     return children;
   };
 
-  // Log the session state for debugging
-  console.log("Current auth state:", loading ? "Loading..." : (session ? "Authenticated" : "Not authenticated"));
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/teams" element={
-              <ProtectedRoute>
-                <Teams />
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/decisions" element={
-              <ProtectedRoute>
-                <Decisions />
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/proposals/create" element={
-              <ProtectedRoute>
-                <CreateProposal />
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/proposals/:proposalId" element={
-              <ProtectedRoute>
-                <ProposalDetails />
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/analytics" element={
-              <ProtectedRoute>
-                <Analytics />
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/analytics/:proposalId" element={
-              <ProtectedRoute>
-                <Analytics />
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/activity" element={
-              <ProtectedRoute>
-                <ActivityLog />
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/settings" element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/teams" element={
+                <ProtectedRoute>
+                  <Teams />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/decisions" element={
+                <ProtectedRoute>
+                  <Decisions />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/proposals/create" element={
+                <ProtectedRoute>
+                  <CreateProposal />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/proposals/:proposalId" element={
+                <ProtectedRoute>
+                  <ProposalDetails />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/analytics" element={
+                <ProtectedRoute>
+                  <Analytics />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/analytics/:proposalId" element={
+                <ProtectedRoute>
+                  <Analytics />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/activity" element={
+                <ProtectedRoute>
+                  <ActivityLog />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/settings" element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              } />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

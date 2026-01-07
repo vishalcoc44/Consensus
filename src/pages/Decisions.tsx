@@ -4,19 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DecisionCard from '@/components/dashboard/DecisionCard';
 import CreateDecisionButton from '@/components/dashboard/CreateDecisionButton';
-import { typedSupabase } from '@/utils/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import ErrorDisplay from '@/components/auth/components/ErrorDisplay';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Search, Filter, SlidersHorizontal } from 'lucide-react';
-import { 
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -62,7 +62,7 @@ const Decisions = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        decision => 
+        decision =>
           decision.title.toLowerCase().includes(query) ||
           decision.description.toLowerCase().includes(query)
       );
@@ -97,10 +97,10 @@ const Decisions = () => {
       setLoading(true);
       setError(null);
       console.log("Fetching decisions data...");
-      
+
       // Get the current user's session to check auth
-      const { data: { session } } = await typedSupabase.auth.getSession();
-      
+      const { data: { session } } = await supabase.auth.getSession();
+
       if (!session) {
         console.log("No active session found");
         setError("Authentication required to view decisions");
@@ -109,7 +109,7 @@ const Decisions = () => {
       }
 
       // Use a simpler query to avoid potential recursion issues
-      const { data, error } = await typedSupabase
+      const { data, error } = await supabase
         .from('proposals')
         .select('*');
 
@@ -120,21 +120,21 @@ const Decisions = () => {
 
       if (data) {
         console.log("Decisions data retrieved:", data.length, "records");
-        
+
         // Now fetch the additional data separately to avoid recursion
         const contributionCounts: Record<string, number> = {};
-        
+
         // Get contribution counts
         if (data.length > 0) {
           const proposalIds = data.map(item => item.id);
-          
+
           // Fix: Use separate count queries for each proposal to avoid groupBy
           for (const proposalId of proposalIds) {
-            const { count, error: countError } = await typedSupabase
+            const { count, error: countError } = await supabase
               .from('contributions')
               .select('*', { count: 'exact', head: true })
               .eq('proposal_id', proposalId);
-              
+
             if (countError) {
               console.error(`Error fetching contribution count for proposal ${proposalId}:`, countError);
             } else if (count !== null) {
@@ -142,13 +142,13 @@ const Decisions = () => {
             }
           }
         }
-        
+
         // Format decisions
         const formattedDecisions: Decision[] = data.map(item => {
           const participantsCount = contributionCounts[item.id] || 0;
           const commentsCount = participantsCount * 2;
           const consensusScore = Math.floor(Math.random() * 100);
-          
+
           let progress = 0;
           if (item.status === 'completed' || item.status === 'archived') {
             progress = 100;
@@ -210,23 +210,23 @@ const Decisions = () => {
         <h1 className="text-3xl font-sf font-bold mb-2">Decision Management</h1>
         <p className="text-consensus-grey-600">View and manage all your organization's decisions</p>
       </div>
-      
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 animate-fade-in">
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative flex-grow">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-consensus-grey-500" />
-            <Input 
-              type="text" 
-              placeholder="Search decisions..." 
-              className="pl-9 pr-4 py-2" 
+            <Input
+              type="text"
+              placeholder="Search decisions..."
+              className="pl-9 pr-4 py-2 bg-consensus-dark-300 border-white/10 text-white placeholder:text-consensus-grey-500 focus-visible:ring-consensus-green/50"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          
+
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="flex items-center gap-2 border-white/10 bg-consensus-dark-300 hover:bg-consensus-dark-100 text-white hover:text-white">
                 <SlidersHorizontal size={16} />
                 <span>Filters</span>
               </Button>
@@ -247,7 +247,7 @@ const Decisions = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Sort by</label>
                   <Select value={sortBy} onValueChange={setSortBy}>
@@ -268,11 +268,11 @@ const Decisions = () => {
         </div>
         <CreateDecisionButton />
       </div>
-      
+
       {error && (
         <ErrorDisplay error={error} title="Error Loading Decisions" />
       )}
-      
+
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-green"></div>
@@ -290,8 +290,8 @@ const Decisions = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
           {filteredDecisions.map((decision) => (
-            <div 
-              key={decision.id} 
+            <div
+              key={decision.id}
               onClick={() => handleDecisionClick(decision.id)}
               className="cursor-pointer transition-transform hover:scale-[1.02]"
             >
@@ -309,7 +309,7 @@ const Decisions = () => {
           ))}
         </div>
       )}
-      
+
       {filteredDecisions.length > 0 && (
         <div className="mt-6 text-center text-consensus-grey-500 text-sm">
           Showing {filteredDecisions.length} of {decisions.length} decisions

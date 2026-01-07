@@ -1,33 +1,57 @@
 
 import { useState, useEffect } from 'react';
-import { typedSupabase } from '@/utils/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { PostgrestError } from '@supabase/supabase-js';
-import { Database } from '@/types/supabase';
 
-// Define valid table names from Database type
-type ValidTableNames = keyof Database['public']['Tables'];
+// Mock data types
+type MockError = {
+  message: string;
+  details: string;
+  hint: string;
+  code: string;
+};
 
-interface UseSupabaseQueryProps<T> {
-  tableName: ValidTableNames;
+interface UseQueryProps<T> {
+  tableName: string;
   queryFn?: (query: any) => any;
   enabled?: boolean;
+  requireAuth?: boolean;
   onSuccess?: (data: T[]) => void;
-  onError?: (error: PostgrestError) => void;
+  onError?: (error: MockError) => void;
   dependencies?: any[];
 }
+
+// Mock data for different tables
+const mockData: Record<string, any[]> = {
+  'profiles': [
+    { id: 'user1', full_name: 'John Doe', avatar_url: null },
+    { id: 'user2', full_name: 'Jane Smith', avatar_url: null },
+  ],
+  'teams': [
+    { id: 'team1', name: 'Engineering', created_at: '2023-01-01T00:00:00Z' },
+    { id: 'team2', name: 'Marketing', created_at: '2023-01-02T00:00:00Z' },
+  ],
+  'proposals': [
+    { id: 'prop1', title: 'New Feature', description: 'Add a new feature', created_at: '2023-01-03T00:00:00Z' },
+    { id: 'prop2', title: 'Bug Fix', description: 'Fix critical bug', created_at: '2023-01-04T00:00:00Z' },
+  ],
+  'contributions': [
+    { id: 'contrib1', user_id: 'user1', proposal_id: 'prop1', content: 'I support this', created_at: '2023-01-05T00:00:00Z' },
+    { id: 'contrib2', user_id: 'user2', proposal_id: 'prop1', content: 'Great idea', created_at: '2023-01-06T00:00:00Z' },
+  ],
+};
 
 export function useSupabaseQuery<T>({
   tableName,
   queryFn,
   enabled = true,
+  requireAuth = true,
   onSuccess,
   onError,
   dependencies = []
-}: UseSupabaseQueryProps<T>) {
+}: UseQueryProps<T>) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<PostgrestError | null>(null);
+  const [error, setError] = useState<MockError | null>(null);
   const { toast } = useToast();
 
   const fetchData = async () => {
@@ -40,90 +64,52 @@ export function useSupabaseQuery<T>({
       setLoading(true);
       setError(null);
       
-      console.log(`Fetching data from ${tableName}...`);
+      console.log(`Mock fetching data from ${tableName}...`);
       
-      // Check for authentication first
-      const { data: { session } } = await typedSupabase.auth.getSession();
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      if (!session) {
-        console.log("No active session found");
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to access this data",
-          variant: "destructive"
-        });
-        throw new Error("Authentication required");
-      }
+      // Get mock data for the table
+      const tableData = mockData[tableName] || [];
       
-      // Start with a basic query
-      let query = typedSupabase.from(tableName).select('*');
-      
-      // Apply custom query function if provided
+      // Simulate query function by filtering data
+      let result = [...tableData];
       if (queryFn) {
-        query = queryFn(query);
+        // This is just a placeholder - in a real implementation,
+        // we would apply the query function to filter the data
+        console.log("Query function provided but not applied in mock implementation");
       }
       
-      const { data: result, error: queryError } = await query;
+      console.log(`Mock data fetched from ${tableName}:`, result.length, "records");
       
-      if (queryError) {
-        console.error(`Error fetching data from ${tableName}:`, queryError);
-        throw queryError;
-      }
-      
-      console.log(`Data fetched from ${tableName}:`, result?.length || 0, "records");
-      
-      // Safely cast the result to T[]
-      const typedResult = (result || []) as T[];
+      // Cast the result to T[]
+      const typedResult = result as unknown as T[];
       setData(typedResult);
       
       if (onSuccess) {
         onSuccess(typedResult);
       }
     } catch (err: any) {
-      console.error(`Error in useSupabaseQuery for ${tableName}:`, err);
-      if (err.code && err.message) {
-        // This is a PostgrestError
-        setError(err);
-        if (onError) {
-          onError(err);
-        }
-        
-        // Show a more specific error message if we can determine what went wrong
-        let errorMessage = err.message || `Could not load data from ${tableName}.`;
-        
-        if (err.code === '42501') {
-          errorMessage = "You don't have permission to access this data. This could be due to Row Level Security policies.";
-        } else if (err.code === '42P01') {
-          errorMessage = `The table "${tableName}" doesn't exist or you don't have access to it.`;
-        } else if (err.code === '23505') {
-          errorMessage = "A duplicate record already exists.";
-        }
-        
-        toast({
-          title: `Error loading data`,
-          description: errorMessage,
-          variant: 'destructive'
-        });
-      } else {
-        // This is a generic error
-        const genericError = {
-          message: err.message || `Could not load data from ${tableName}.`,
-          details: '',
-          hint: '',
-          code: 'GENERIC_ERROR'
-        } as PostgrestError;
-        
-        setError(genericError);
-        if (onError) {
-          onError(genericError);
-        }
-        
-        toast({
-          title: `Error loading data`,
-          description: err.message || `Could not load data from ${tableName}. Please try again later.`,
-          variant: 'destructive'
-        });
+      console.error(`Error in mock query for ${tableName}:`, err);
+      
+      const mockError: MockError = {
+        message: err.message || `Could not load data from ${tableName}.`,
+        details: '',
+        hint: '',
+        code: 'MOCK_ERROR'
+      };
+      
+      setError(mockError);
+      
+      if (onError) {
+        onError(mockError);
       }
+      
+      toast({
+        title: `Error loading data`,
+        description: err.message || `Could not load data from ${tableName}. Please try again later.`,
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }

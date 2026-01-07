@@ -10,95 +10,137 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft } from 'lucide-react';
 
-// Mock data - in a real app, this would come from an API
-const mockProposal = {
-  id: '1',
-  title: 'New Office Location',
-  description: 'We need to decide on a new office location that balances cost, accessibility, and amenities.',
-  deadline: '2023-12-31',
-  status: 'active',
-  createdBy: 'Jane Smith',
-  createdAt: '2023-11-15',
-  options: [
-    { id: 1, title: 'Downtown Office', description: 'Central location with good transit links but higher rent.' },
-    { id: 2, title: 'Suburban Office Park', description: 'More space and parking, but requires longer commutes for most staff.' },
-    { id: 3, title: 'Hybrid Solution', description: 'Smaller downtown office plus flexible remote work arrangement.' }
-  ],
-  criteria: [
-    { id: 1, name: 'Cost', weight: 8, description: 'Monthly expenses including rent, utilities, and maintenance.' },
-    { id: 2, name: 'Accessibility', weight: 6, description: 'How easily can employees and clients reach the office.' },
-    { id: 3, name: 'Amenities', weight: 4, description: 'Available facilities like meeting rooms, cafeteria, and wellness areas.' }
-  ]
-};
+import { useQuery } from '@tanstack/react-query';
+import { proposalService } from '@/services/proposalService';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 const ProposalDetails = () => {
   const { proposalId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('contribute');
-  const [proposal, setProposal] = useState(mockProposal);
-  const [hasContributed, setHasContributed] = useState(false);
+  const { toast } = useToast();
+  const [session, setSession] = useState<any>(null);
 
   useEffect(() => {
-    // Set page title
-    document.title = `${proposal.title} - ConsensusAI`;
-    
-    // In a real app, fetch the proposal details based on proposalId
-    // For now, we'll use mock data
-    console.log(`Fetching proposal with ID: ${proposalId}`);
-    
-    // Check if user has already contributed to this proposal
-    // This would typically be a server-side check
-    const mockHasContributed = false;
-    setHasContributed(mockHasContributed);
-  }, [proposalId, proposal.title]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+  }, []);
 
-  const handleSubmitContribution = (contributionData) => {
-    console.log('Submitting contribution:', contributionData);
-    // In a real app, this would send the data to an API
-    setHasContributed(true);
-    // Show overview tab after submission
-    setActiveTab('overview');
+  const { data: proposal, isLoading, error, refetch } = useQuery({
+    queryKey: ['proposal', proposalId],
+    queryFn: () => proposalService.getProposalById(proposalId!),
+    enabled: !!proposalId
+  });
+
+  const { data: userContributions } = useQuery({
+    queryKey: ['userContributions', proposalId, session?.user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('contributions')
+        .select('*')
+        .eq('proposal_id', proposalId)
+        .eq('user_id', session.user.id);
+      return data;
+    },
+    enabled: !!proposalId && !!session?.user?.id
+  });
+
+  const hasContributed = userContributions && userContributions.length > 0;
+
+  useEffect(() => {
+    if (proposal) {
+      document.title = `${proposal.title} - ConsensusAI`;
+    }
+  }, [proposal]);
+
+  const handleSubmitContribution = async (contributionData: any) => {
+    try {
+      await proposalService.addContribution(
+        proposal.id,
+        contributionData.selectedOptionId,
+        contributionData.comment,
+        contributionData.ratings
+      );
+
+      toast({
+        title: "Contribution Submitted",
+        description: "Your input has been recorded successfully.",
+      });
+
+      refetch();
+      setActiveTab('overview');
+    } catch (error) {
+      console.error('Error submitting contribution:', error);
+      toast({
+        variant: "destructive",
+        title: "Submission Failed",
+        description: "There was a problem submitting your contribution.",
+      });
+    }
   };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin h-8 w-8 border-4 border-consensus-blue border-t-transparent rounded-full"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error || !proposal) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold mb-4">Proposal Not Found</h2>
+          <Button onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="mb-6 animate-fade-in">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => navigate('/dashboard')}
           className="mb-4"
         >
           <ArrowLeft size={16} className="mr-2" />
           Back to Dashboard
         </Button>
-        
+
         <ProposalHeader proposal={proposal} />
       </div>
-      
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-3 mb-8">
-          <TabsTrigger 
-            value="contribute" 
+          <TabsTrigger
+            value="contribute"
             className="data-[state=active]:text-consensus-blue data-[state=active]:shadow"
             disabled={hasContributed}
           >
             Contribute
           </TabsTrigger>
-          <TabsTrigger 
-            value="overview" 
+          <TabsTrigger
+            value="overview"
             className="data-[state=active]:text-consensus-blue data-[state=active]:shadow"
           >
             Overview
           </TabsTrigger>
-          <TabsTrigger 
-            value="integrations" 
+          <TabsTrigger
+            value="integrations"
             className="data-[state=active]:text-consensus-blue data-[state=active]:shadow"
           >
             External Data
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="contribute">
           {hasContributed ? (
             <div className="text-center p-8 bg-slate-50 rounded-lg">
@@ -111,17 +153,17 @@ const ProposalDetails = () => {
               </Button>
             </div>
           ) : (
-            <ContributionForm 
-              proposal={proposal} 
-              onSubmit={handleSubmitContribution} 
+            <ContributionForm
+              proposal={proposal}
+              onSubmit={handleSubmitContribution}
             />
           )}
         </TabsContent>
-        
+
         <TabsContent value="overview">
           <ContributionsOverview proposal={proposal} />
         </TabsContent>
-        
+
         <TabsContent value="integrations">
           <IntegrationManager proposalId={proposalId || proposal.id} />
         </TabsContent>

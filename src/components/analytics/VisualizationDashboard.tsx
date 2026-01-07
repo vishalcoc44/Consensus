@@ -1,11 +1,11 @@
 
 import { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 import {
   Select,
@@ -14,20 +14,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
 import OptionSupportChart from './charts/OptionSupportChart';
 import SentimentPieChart from './charts/SentimentPieChart';
 import ThemeWordCloud from './charts/ThemeWordCloud';
 import CriteriaRatingsChart from './charts/CriteriaRatingsChart';
+import TrendAnalysisChart from './charts/TrendAnalysisChart';
 import RecommendationEngine from './RecommendationEngine';
+import ImpactAnalysis from './ImpactAnalysis';
 import ConsensusBuilder from './ConsensusBuilder';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -37,8 +39,8 @@ interface VisualizationDashboardProps {
   isAdmin?: boolean;
 }
 
-const VisualizationDashboard = ({ 
-  proposalId, 
+const VisualizationDashboard = ({
+  proposalId,
   analysisData = null,
   isAdmin = false
 }: VisualizationDashboardProps) => {
@@ -46,7 +48,7 @@ const VisualizationDashboard = ({
   const [roleFilter, setRoleFilter] = useState('all');
   const [criteriaFilter, setCriteriaFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('insights');
-  
+
   // For now, we're using mock data similar to what's in ContributionsOverview
   // In production, this would come from the proposal_analysis table in Supabase
   const mockAnalysis = analysisData || {
@@ -74,6 +76,15 @@ const VisualizationDashboard = ({
       { theme: 'Amenities', keywords: ['restaurants', 'facilities', 'professional'], occurrences: 2 },
       { theme: 'Client Relations', keywords: ['clients', 'presence', 'professional'], occurrences: 1 }
     ],
+    trendData: [
+      { date: 'Day 1', consensusScore: 30, sentimentScore: 45 },
+      { date: 'Day 2', consensusScore: 42, sentimentScore: 50 },
+      { date: 'Day 3', consensusScore: 38, sentimentScore: 48 },
+      { date: 'Day 4', consensusScore: 55, sentimentScore: 60 },
+      { date: 'Day 5', consensusScore: 62, sentimentScore: 72 },
+      { date: 'Day 6', consensusScore: 72, sentimentScore: 78 },
+      { date: 'Today', consensusScore: 75, sentimentScore: 82 }
+    ],
     recommendedOption: 'Hybrid Solution',
     recommendationConfidence: 72
   };
@@ -92,7 +103,7 @@ const VisualizationDashboard = ({
           <SelectItem value="quarter">Past Quarter</SelectItem>
         </SelectContent>
       </Select>
-      
+
       <Select value={roleFilter} onValueChange={setRoleFilter}>
         <SelectTrigger className="w-[140px]">
           <SelectValue placeholder="User Role" />
@@ -103,7 +114,7 @@ const VisualizationDashboard = ({
           <SelectItem value="member">Members</SelectItem>
         </SelectContent>
       </Select>
-      
+
       <Select value={criteriaFilter} onValueChange={setCriteriaFilter}>
         <SelectTrigger className="w-[140px]">
           <SelectValue placeholder="Criteria" />
@@ -123,103 +134,114 @@ const VisualizationDashboard = ({
   return (
     <div className="space-y-6 animate-fade-in">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex justify-between items-center mb-4">
-          <TabsList>
-            <TabsTrigger value="insights">Data Insights</TabsTrigger>
-            <TabsTrigger value="recommendation">AI Recommendation</TabsTrigger>
-            <TabsTrigger value="consensus">Consensus Building</TabsTrigger>
+        <div className="flex justify-between items-center mb-6">
+          <TabsList className="bg-black/40 p-1 rounded-xl border border-white/5">
+            <TabsTrigger value="insights" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">Data Insights</TabsTrigger>
+            <TabsTrigger value="recommendation" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">AI Recommendation</TabsTrigger>
+            <TabsTrigger value="consensus" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">Consensus Building</TabsTrigger>
           </TabsList>
         </div>
-        
+
         {activeTab === 'insights' && <FiltersSection />}
-        
+
         <TabsContent value="recommendation" className="mt-0">
           <RecommendationEngine proposalId={proposalId} isAdmin={isAdmin} />
         </TabsContent>
-        
+
         <TabsContent value="consensus" className="mt-0">
           <ConsensusBuilder proposalId={proposalId} />
         </TabsContent>
-        
+
         <TabsContent value="insights" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Option Support</CardTitle>
-                <CardDescription>Distribution of votes across options</CardDescription>
-              </CardHeader>
-              <CardContent className="h-80">
+            <div className="glass-panel p-6 rounded-xl">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold text-white">Option Support</h3>
+                <p className="text-sm text-consensus-grey-400">Distribution of votes across options</p>
+              </div>
+              <div className="h-80">
                 <OptionSupportChart data={mockAnalysis.optionSupport} />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Sentiment Analysis</CardTitle>
-                <CardDescription>Breakdown of comment sentiments</CardDescription>
-              </CardHeader>
-              <CardContent className="h-80">
+              </div>
+            </div>
+
+            <div className="glass-panel p-6 rounded-xl">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold text-white">Sentiment Analysis</h3>
+                <p className="text-sm text-consensus-grey-400">Breakdown of comment sentiments</p>
+              </div>
+              <div className="h-80">
                 <SentimentPieChart data={mockAnalysis.sentimentAnalysis} />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Key Themes</CardTitle>
-                <CardDescription>Common themes from comments</CardDescription>
-              </CardHeader>
-              <CardContent className="h-80">
+              </div>
+            </div>
+
+            <div className="glass-panel p-6 rounded-xl">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold text-white">Key Themes</h3>
+                <p className="text-sm text-consensus-grey-400">Common themes from comments</p>
+              </div>
+              <div className="h-80">
                 <ThemeWordCloud themes={mockAnalysis.keyThemes} />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Criteria Ratings</CardTitle>
-                <CardDescription>Average ratings for each criterion</CardDescription>
-              </CardHeader>
-              <CardContent className="h-80">
+              </div>
+            </div>
+
+            <div className="glass-panel p-6 rounded-xl">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold text-white">Criteria Ratings</h3>
+                <p className="text-sm text-consensus-grey-400">Average ratings for each criterion</p>
+              </div>
+              <div className="h-80">
                 <CriteriaRatingsChart data={mockAnalysis.criteriaAnalysis} />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Options Comparison</CardTitle>
-              <CardDescription>Detailed comparison of all options</CardDescription>
-            </CardHeader>
-            <CardContent>
+
+          {/* Trend Analysis Chart */}
+          <div className="glass-panel p-6 rounded-xl mb-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-bold text-white">Consensus & Sentiment Trends</h3>
+              <p className="text-sm text-consensus-grey-400">Tracking alignment over time</p>
+            </div>
+            <div className="h-80">
+              <TrendAnalysisChart data={mockAnalysis.trendData} />
+            </div>
+          </div>
+
+          <div className="glass-panel p-6 rounded-xl">
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-white">Options Comparison</h3>
+              <p className="text-sm text-consensus-grey-400">Detailed comparison of all options</p>
+            </div>
+            <div>
               <Table>
-                <TableCaption>
+                <TableCaption className="text-consensus-grey-500">
                   Analysis results as of {new Date().toLocaleDateString()}
                 </TableCaption>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Option</TableHead>
-                    <TableHead className="text-right">Votes</TableHead>
-                    <TableHead className="text-right">Vote %</TableHead>
-                    <TableHead className="text-right">Sentiment</TableHead>
-                    <TableHead className="text-right">Support Score</TableHead>
-                    <TableHead className="text-center">Recommended</TableHead>
+                  <TableRow className="border-white/10 hover:bg-white/5">
+                    <TableHead className="text-consensus-grey-300">Option</TableHead>
+                    <TableHead className="text-right text-consensus-grey-300">Votes</TableHead>
+                    <TableHead className="text-right text-consensus-grey-300">Vote %</TableHead>
+                    <TableHead className="text-right text-consensus-grey-300">Sentiment</TableHead>
+                    <TableHead className="text-right text-consensus-grey-300">Support Score</TableHead>
+                    <TableHead className="text-center text-consensus-grey-300">Recommended</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {mockAnalysis.optionSupport
-                    .filter(option => option.option !== 'Abstained')
-                    .map((option, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{option.option}</TableCell>
-                        <TableCell className="text-right">{option.votes}</TableCell>
-                        <TableCell className="text-right">{option.percentage}%</TableCell>
-                        <TableCell className="text-right">{(option.sentiment * 100).toFixed(0)}%</TableCell>
-                        <TableCell className="text-right">{option.score}/100</TableCell>
+                    .filter((option: any) => option.option !== 'Abstained')
+                    .map((option: any, index: number) => (
+                      <TableRow key={index} className="border-white/10 hover:bg-white/5 data-[state=selected]:bg-white/10">
+                        <TableCell className="font-medium text-white">{option.option}</TableCell>
+                        <TableCell className="text-right text-gray-300">{option.votes}</TableCell>
+                        <TableCell className="text-right text-gray-300">{option.percentage}%</TableCell>
+                        <TableCell className="text-right text-gray-300">{(option.sentiment * 100).toFixed(0)}%</TableCell>
+                        <TableCell className="text-right text-gray-300">{option.score}/100</TableCell>
                         <TableCell className="text-center">
-                          {option.option === mockAnalysis.recommendedOption ? 
-                            <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                          {option.option === mockAnalysis.recommendedOption ?
+                            <span className="inline-flex items-center rounded-full bg-green-500/20 px-2.5 py-0.5 text-xs font-medium text-green-400 border border-green-500/30">
                               Yes ({mockAnalysis.recommendationConfidence}%)
-                            </span> : 
-                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                            </span> :
+                            <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-gray-400">
                               No
                             </span>
                           }
@@ -228,8 +250,8 @@ const VisualizationDashboard = ({
                     ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

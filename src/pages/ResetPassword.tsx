@@ -21,17 +21,17 @@ const ResetPassword = () => {
   useEffect(() => {
     // Set page title
     document.title = 'Set New Password - ConsensusAI';
-    
+
     // Check if the user has a valid session after the password reset flow
     const checkSession = async () => {
       const { data, error } = await supabase.auth.getSession();
-      
+
       if (error) {
         console.error('Session error:', error);
         setError('Invalid or expired session. Please request a new password reset link.');
         return;
       }
-      
+
       if (data.session) {
         console.log('Valid session detected during password reset');
         setIsAuthenticated(true);
@@ -40,7 +40,7 @@ const ResetPassword = () => {
         setError('Invalid or missing reset token. Please request a new password reset link.');
       }
     };
-    
+
     checkSession();
   }, []);
 
@@ -55,47 +55,47 @@ const ResetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     // Validate passwords
     if (!validatePassword(password)) {
       setError('Password must be at least 6 characters long');
       return;
     }
-    
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-    
+
     if (!isAuthenticated) {
       setError('You must have a valid password reset session to continue');
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       await resetPassword(password.trim());
-      
+
       toast({
         title: "Password reset successful",
         description: "Your password has been updated. You can now login with your new password.",
       });
-      
+
       // Redirect to login page
       navigate('/login');
     } catch (err) {
       console.error('Password reset error:', err);
-      
-      setError(err instanceof Error 
-        ? err.message 
+
+      setError(err instanceof Error
+        ? err.message
         : 'Failed to reset password. The link may have expired or is invalid.');
-        
+
       toast({
         variant: "destructive",
         title: "Password reset failed",
-        description: err instanceof Error 
-          ? err.message 
+        description: err instanceof Error
+          ? err.message
           : 'Failed to reset password. The link may have expired or is invalid.',
       });
     } finally {
@@ -104,25 +104,25 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-consensus-grey-100">
+    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-consensus-dark-400">
       <div className="w-full max-w-md mx-auto">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-consensus-blue">Set New Password</h2>
-          <p className="mt-2 text-consensus-grey-600">
+          <h2 className="text-3xl font-bold text-white hero-text-gradient">Set New Password</h2>
+          <p className="mt-2 text-consensus-grey-400">
             Enter your new password below
           </p>
         </div>
 
-        <div className="bg-white p-8 rounded-2xl shadow-lg animate-scale-in">
+        <div className="glass-panel p-8 rounded-2xl animate-scale-in">
           {error && (
-            <div className="bg-red-50 text-red-800 p-4 rounded-lg mb-6">
+            <div className="bg-red-900/20 border border-red-900/50 text-red-200 p-4 rounded-lg mb-6">
               {error}
               {!isAuthenticated && (
                 <div className="mt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="mt-2 text-sm"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 text-sm bg-transparent border-red-800 text-red-100 hover:bg-red-900/30 hover:text-white"
                     onClick={() => navigate('/forgot-password')}
                   >
                     Request a new reset link
@@ -131,10 +131,10 @@ const ResetPassword = () => {
               )}
             </div>
           )}
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-white">
                 New Password
               </label>
               <div className="relative">
@@ -145,21 +145,21 @@ const ResetPassword = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter new password"
-                  className="pl-10 py-6 pr-10 rounded-xl"
+                  className="pl-10 py-6 pr-10 rounded-xl bg-consensus-dark-200 border-consensus-dark-100 text-white placeholder:text-consensus-grey-500 focus:border-consensus-green"
                   required
                 />
                 <button
                   type="button"
                   onClick={toggleShowPassword}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400 hover:text-consensus-grey-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400 hover:text-white transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-            
+
             <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-white">
                 Confirm New Password
               </label>
               <div className="relative">
@@ -170,34 +170,34 @@ const ResetPassword = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
-                  className="pl-10 py-6 pr-10 rounded-xl"
+                  className="pl-10 py-6 pr-10 rounded-xl bg-consensus-dark-200 border-consensus-dark-100 text-white placeholder:text-consensus-grey-500 focus:border-consensus-green"
                   required
                 />
                 <button
                   type="button"
                   onClick={toggleShowPassword}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400 hover:text-consensus-grey-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400 hover:text-white transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-            
+
             <Button
               type="submit"
-              className="w-full bg-consensus-blue hover:bg-blue-700 py-5 rounded-xl"
+              className="w-full bg-consensus-green hover:bg-consensus-teal text-consensus-dark-800 font-medium py-5 rounded-xl transition-all duration-300"
               disabled={isSubmitting || !isAuthenticated}
             >
               {isSubmitting ? 'Updating Password...' : 'Update Password'}
             </Button>
           </form>
-          
+
           <div className="mt-6 text-center">
-            <p className="text-sm text-consensus-grey-600">
+            <p className="text-sm text-consensus-grey-400">
               Remember your password?{' '}
-              <Button 
-                variant="link" 
-                className="p-0 text-consensus-blue hover:underline"
+              <Button
+                variant="link"
+                className="p-0 text-consensus-green hover:text-consensus-teal hover:underline transition-colors"
                 onClick={() => navigate('/login')}
               >
                 Sign in

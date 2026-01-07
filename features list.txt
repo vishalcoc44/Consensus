@@ -1,0 +1,74 @@
+ConsensusAI - Features List & Functionality Overview
+======================================================
+
+1. Dashboard & Overview
+-----------------------
+The central hub for monitoring organizational decision-making health.
+*   **Key Metrics Display**: Visualizes "Active Decisions", "Team Members" count, "Avg. Consensus" score, and "Decision Velocity" (days to decide).
+*   **Real-time Stats**: Fetches live data from Supabase for active proposals and team counts.
+*   **Progress Tracking**: Calculates active decision progress based on time elapsed vs. deadline.
+*   **Quick Actions**: One-click access to create new proposals.
+
+2. Decision/Proposal Management (Core Feature)
+----------------------------------------------
+Comprehensive system to propose, discuss, and finalize organizational decisions.
+*   **Create Proposal Wizard**:
+    *   Step-by-step interface to define decision parameters.
+    *   **Details**: Title, Description, Deadline.
+    *   **Options**: Define multiple choices for the decision (e.g., Vendor A vs Vendor B).
+    *   **Criteria**: Set weighted criteria for evaluating options (e.g., Cost [40%], Quality [60%]).
+*   **Decisions List**:
+    *   **Filtering**: Filter by Status (Active, Completed, Archived).
+    *   **Searching**: Full-text search on titles and descriptions.
+    *   **Sorting**: Sort by Date, Title, Progress, or Consensus score.
+    *   **Visual Cards**: Preview of decision status, participation count, and deadline.
+
+3. Collaborative Contribution System
+------------------------------------
+Allows team members to participate in the decision-making process.
+*   **Voting & Rating**:
+    *   Users select a preferred option.
+    *   Users rate options based on defined weighted criteria (1-10 scale).
+*   **Sentiment Analysis**:
+    *   (Backend Support) content analysis of contributions.
+*   **Comments**: Contextual feedback on specific proposals.
+*   **Duplicate Prevention**: Logic to prevent multiple submissions from the same user for a single proposal.
+
+4. Detailed Proposal Analytics
+------------------------------
+Deep dive into specific decision data.
+*   **Contributions Overview**: Visual breakdown of how the team voted.
+*   **Consensus Scoring**:
+    *   Calculates a "Consensus Score" (0-100%) indicating alignment level.
+    *   Uses AI/statistical analysis (data stored in `proposal_analysis`).
+*   **Integration Data**: View external data sources linked to the proposal (e.g., Slack threads, Jira tickets) via `integration_data` table.
+
+5. Activity & Audit Logs
+------------------------
+Track changes and user actions for accountability.
+*   **Comprehensive Logging**: Tracks events like:
+    *   New Contributions
+    *   Comments
+    *   Proposal Updates
+    *   Proposal Views
+*   **Timeline View**: Chronological list of all activities with user attribution.
+*   **Filtering**: Filter logs by activity type (Comment, Contribution, View, Update) and time period.
+
+6. User & Team Management
+-------------------------
+*   **Authentication**: Secure Signup, Login, Password Reset (via Supabase Auth).
+*   **Team Structure**:
+    *   Support for multiple Teams.
+    *   Role-based access (Admin/Member) stored in `team_members`.
+    *   User Profiles with avatars and details.
+
+7. Integrations (Extensibility)
+-------------------------------
+*   **External Data Sources**: Architecture supports linking external data (content, URL, sentiment) to proposals to inform decisions.
+
+Technical Implementation Notes
+------------------------------
+*   **Backend**: Supabase (PostgreSQL) with Row Level Security (RLS) for data protection.
+*   **Frontend**: React + Vite with TypeScript.
+*   **UI Library**: Shadcn UI + Tailwind CSS for a modern, accessible interface.
+*   **State Management**: TanStack Query for efficient server state synchronization.

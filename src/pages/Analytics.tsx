@@ -1,41 +1,38 @@
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import VisualizationDashboard from '@/components/analytics/VisualizationDashboard';
-import { Button } from '@/components/ui/button';
-import { Bot, Download, Lightbulb } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { useRef } from 'react';
 
 const Analytics = () => {
   const { proposalId } = useParams();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisData, setAnalysisData] = useState(null);
   const [error, setError] = useState<string | null>(null);
-  
+  const dashboardRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     // Set page title
     document.title = 'Analytics - ConsensusAI';
-    
+
     // In a real app, we would fetch the analysis data from Supabase
     // For now, we're using mock data provided by the VisualizationDashboard component
     console.log(`Loading analysis for proposal: ${proposalId || 'all proposals'}`);
-    
+
     // Reset error state when the component mounts or proposalId changes
     setError(null);
   }, [proposalId]);
-  
+
   const runAnalysis = () => {
     setIsAnalyzing(true);
     setError(null);
-    
+
     try {
       // Simulate API call to run analysis
       setTimeout(() => {
         setIsAnalyzing(false);
         // In a real app, this would be fetched from the API
         setAnalysisData({});
-        
+
         toast({
           title: "Analysis complete",
           description: "The proposal data has been analyzed successfully."
@@ -44,7 +41,7 @@ const Analytics = () => {
     } catch (err) {
       setIsAnalyzing(false);
       setError("Failed to run analysis. Please try again.");
-      
+
       toast({
         title: "Analysis failed",
         description: "There was an error running the analysis. Please try again.",
@@ -52,15 +49,46 @@ const Analytics = () => {
       });
     }
   };
-  
-  const exportAnalysis = () => {
-    // In a real app, this would generate and download a PDF or CSV
-    console.log('Exporting analysis...');
-    
-    toast({
-      title: "Export initiated",
-      description: "Your analysis report is being generated and will download shortly."
-    });
+
+  const exportAnalysis = async () => {
+    if (!dashboardRef.current) return;
+
+    try {
+      toast({
+        title: "Export initiated",
+        description: "Generating PDF report...",
+      });
+
+      const canvas = await html2canvas(dashboardRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#121212', // Dark background for PDF
+        ignoreElements: (element) => element.classList.contains('no-print')
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`analysis-report-${proposalId || 'summary'}.pdf`);
+
+      toast({
+        title: "Export complete",
+        description: "Your report has been downloaded."
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        variant: "destructive",
+        title: "Export failed",
+        description: "Could not generate PDF report."
+      });
+    }
   };
 
   if (error) {
@@ -74,8 +102,8 @@ const Analytics = () => {
           </div>
           <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => window.location.reload()}
           >
             Try Again
@@ -89,14 +117,14 @@ const Analytics = () => {
     <DashboardLayout>
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-3xl font-sf font-bold">Analysis Dashboard</h1>
-        
+
         <div className="flex gap-3">
           <Button variant="outline" onClick={exportAnalysis}>
             <Download size={16} className="mr-2" />
             Export Report
           </Button>
-          
-          <Button 
+
+          <Button
             onClick={runAnalysis}
             disabled={isAnalyzing}
             className="bg-consensus-blue hover:bg-consensus-blue/90"
@@ -115,8 +143,10 @@ const Analytics = () => {
           </Button>
         </div>
       </div>
-      
-      <VisualizationDashboard proposalId={proposalId} analysisData={analysisData} isAdmin={true} />
+
+      <div ref={dashboardRef} className="pb-4">
+        <VisualizationDashboard proposalId={proposalId} analysisData={analysisData} isAdmin={true} />
+      </div>
     </DashboardLayout>
   );
 };
