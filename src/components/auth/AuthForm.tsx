@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
-import AuthHeader from './components/AuthHeader';
+import AuthButton from './components/AuthButton';
 import EmailInput from './components/EmailInput';
 import PasswordInput from './components/PasswordInput';
 import NameInput from './components/NameInput';
-import AuthButton from './components/AuthButton';
-import AuthFooter from './components/AuthFooter';
 import ErrorDisplay from './components/ErrorDisplay';
 import { loginUser, registerUser } from '@/components/auth/services/authService';
+import { Button } from "@/components/ui/button";
 
 interface AuthFormProps {
   type: 'login' | 'register';
@@ -81,29 +80,50 @@ const AuthForm = ({ type }: AuthFormProps) => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <AuthHeader type={type} />
+    <div className="flex flex-col gap-6 ">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <h1 className="text-2xl font-bold">{type === 'login' ? 'Login to your account' : 'Create an account'}</h1>
+        <p className="text-balance text-sm text-muted-foreground">
+          {type === 'login' ? 'Enter your email below to login to your account' : 'Enter your details below to create your account'}
+        </p>
+      </div>
 
-      <div className="glass-panel p-8 rounded-2xl animate-scale-in">
+      <div className="grid gap-6">
         <ErrorDisplay error={error} />
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {type === 'register' && (
-            <NameInput name={name} setName={setName} />
-          )}
-
-          <EmailInput email={email} setEmail={setEmail} />
-
-          <PasswordInput
-            password={password}
-            setPassword={setPassword}
-            showForgotPassword={type === 'login'}
-          />
-
-          <AuthButton loading={loading} type={type} />
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-6">
+            {type === 'register' && (
+              <NameInput name={name} setName={setName} />
+            )}
+            <EmailInput email={email} setEmail={setEmail} />
+            <PasswordInput
+              password={password}
+              setPassword={setPassword}
+              showForgotPassword={type === 'login'}
+            />
+            <AuthButton loading={loading} type={type} />
+          </div>
         </form>
 
-        <AuthFooter type={type} />
+
+      </div>
+
+      <div className="text-center text-sm">
+        {type === 'login' ? (
+          <>
+            Don&apos;t have an account?{" "}
+            <Link to="/register" className="underline underline-offset-4">
+              Sign up
+            </Link>
+          </>
+        ) : (
+          <>
+            Already have an account?{" "}
+            <Link to="/login" className="underline underline-offset-4">
+              Login
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );

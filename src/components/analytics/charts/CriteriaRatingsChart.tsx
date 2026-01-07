@@ -1,9 +1,9 @@
 
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { 
-  ChartContainer, 
-  ChartTooltip, 
-  ChartTooltipContent 
+import { Bar, BarChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent
 } from '@/components/ui/chart';
 
 interface CriteriaRatingsChartProps {
@@ -20,7 +20,7 @@ const CriteriaRatingsChart = ({ data }: CriteriaRatingsChartProps) => {
     rating: item.averageRating,
     importance: item.importance
   }));
-  
+
   const config = {
     rating: {
       label: 'Avg. Rating',
@@ -35,19 +35,17 @@ const CriteriaRatingsChart = ({ data }: CriteriaRatingsChartProps) => {
   return (
     <ChartContainer
       config={config}
-      className="w-full aspect-[4/3]"
+      className="w-full h-full"
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis domain={[0, 10]} /> {/* Max is 10 for importance, 5 for ratings */}
-          <Tooltip content={<ChartTooltipContent />} />
-          <Legend />
-          <Bar dataKey="rating" fill={config.rating.color} name={config.rating.label} />
-          <Bar dataKey="importance" fill={config.importance.color} name={config.importance.label} />
-        </BarChart>
-      </ResponsiveContainer>
+      <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis domain={[0, 10]} /> {/* Max is 10 for importance, 5 for ratings */}
+        <Tooltip content={<ChartTooltipContent />} />
+        <Legend />
+        <Bar dataKey="rating" fill={config.rating.color} name={config.rating.label} />
+        <Bar dataKey="importance" fill={config.importance.color} name={config.importance.label} />
+      </BarChart>
     </ChartContainer>
   );
 };

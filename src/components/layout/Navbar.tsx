@@ -29,8 +29,8 @@ const Navbar = () => {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-          ? 'bg-background/80 backdrop-blur-md shadow-md py-4 border-b border-border'
-          : 'bg-transparent py-6'
+        ? 'bg-background/80 backdrop-blur-md shadow-md py-4 border-b border-border'
+        : 'bg-transparent py-6'
         }`}
     >
       <div className="container mx-auto px-6 lg:px-8 flex items-center justify-between">
@@ -53,12 +53,7 @@ const Navbar = () => {
           >
             Features
           </Link>
-          <Link
-            to="/#pricing"
-            className="text-muted-foreground hover:text-primary transition-colors duration-200"
-          >
-            Pricing
-          </Link>
+
           <Link
             to="/#about"
             className="text-muted-foreground hover:text-primary transition-colors duration-200"
@@ -101,12 +96,7 @@ const Navbar = () => {
             >
               Features
             </Link>
-            <Link
-              to="/#pricing"
-              className="text-muted-foreground hover:text-primary transition-colors px-4 py-2 rounded-md hover:bg-muted"
-            >
-              Pricing
-            </Link>
+
             <Link
               to="/#about"
               className="text-muted-foreground hover:text-primary transition-colors px-4 py-2 rounded-md hover:bg-muted"

@@ -72,11 +72,15 @@ const Dashboard = () => {
       }
 
       // Get team members count
-      const { count: teamMembersCount, error: teamMembersError } = await supabase
+      // Get team members count (unique users across all teams)
+      const { data: teamMembersData, error: teamMembersError } = await supabase
         .from('team_members')
-        .select('*', { count: 'exact', head: true });
+        .select('user_id');
 
       if (teamMembersError && teamMembersError.code !== '42P17') throw teamMembersError;
+
+      // Count unique members to avoid double counting users who are in multiple teams
+      const teamMembersCount = new Set(teamMembersData?.map(m => m.user_id)).size;
 
       const activeDecisionsCount = await getActiveDecisionsCount();
 

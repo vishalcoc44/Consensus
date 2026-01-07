@@ -7,13 +7,12 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
-  ResponsiveContainer,
   Tooltip,
   ReferenceLine
 } from 'recharts';
-import { 
-  ChartContainer, 
-  ChartTooltip, 
+import {
+  ChartContainer,
+  ChartTooltip,
   ChartTooltipContent,
   useChartAnimation
 } from '@/components/ui/chart';
@@ -31,20 +30,20 @@ interface ComparisonChartProps {
   themeType?: 'default' | 'cool' | 'warm' | 'pastel' | 'monochrome';
 }
 
-const ComparisonChart: React.FC<ComparisonChartProps> = ({ 
-  data, 
+const ComparisonChart: React.FC<ComparisonChartProps> = ({
+  data,
   title,
   themeType = 'default'
 }) => {
   const { getBarAnimationProps } = useChartAnimation();
   const { colors, chartStyle, dimensions } = useChartTheme(themeType, 'md');
-  
+
   // Find max value to set proper domain
   const maxValue = Math.max(
     ...data.flatMap(item => [item.current, item.previous]),
     ...data.filter(item => item.target !== undefined).map(item => item.target as number)
   );
-  
+
   return (
     <ChartContainer
       config={{
@@ -58,80 +57,78 @@ const ComparisonChart: React.FC<ComparisonChartProps> = ({
         },
       }}
     >
-      <ResponsiveContainer width="100%" height={dimensions.height}>
-        <BarChart
-          data={data}
-          margin={dimensions.margin}
-          barGap={0}
-          barCategoryGap="20%"
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke={chartStyle.gridColor} vertical={false} />
-          <XAxis 
-            dataKey="name"
-            tick={{ fill: chartStyle.textColor, fontSize: dimensions.fontSize }}
-            axisLine={{ stroke: chartStyle.tickColor }}
-            tickLine={{ stroke: chartStyle.tickColor }}
-          />
-          <YAxis
-            tick={{ fill: chartStyle.textColor, fontSize: dimensions.fontSize }}
-            axisLine={{ stroke: chartStyle.tickColor }}
-            tickLine={{ stroke: chartStyle.tickColor }}
-            tickFormatter={(value) => formatValue(value, { format: 'compact' }).value}
-          />
-          <Tooltip
-            content={({ active, payload, label }) => {
-              if (active && payload && payload.length) {
-                return (
-                  <ChartTooltipContent>
-                    <div className="font-medium mb-1">{label}</div>
-                    <div className="space-y-1">
-                      {payload.map((entry, index) => (
-                        <div key={`tooltip-${index}`} className="flex items-center space-x-2">
-                          <div
-                            className="h-2.5 w-2.5 rounded-full"
-                            style={{ backgroundColor: entry.color }}
-                          />
-                          <span className="text-sm opacity-70">
-                            {entry.name}: {formatValue(Number(entry.value), { format: 'number' }).value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </ChartTooltipContent>
-                );
-              }
-              return null;
+      <BarChart
+        data={data}
+        margin={dimensions.margin}
+        barGap={0}
+        barCategoryGap="20%"
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke={chartStyle.gridColor} vertical={false} />
+        <XAxis
+          dataKey="name"
+          tick={{ fill: chartStyle.textColor, fontSize: dimensions.fontSize }}
+          axisLine={{ stroke: chartStyle.tickColor }}
+          tickLine={{ stroke: chartStyle.tickColor }}
+        />
+        <YAxis
+          tick={{ fill: chartStyle.textColor, fontSize: dimensions.fontSize }}
+          axisLine={{ stroke: chartStyle.tickColor }}
+          tickLine={{ stroke: chartStyle.tickColor }}
+          tickFormatter={(value) => formatValue(value, { format: 'compact' }).value}
+        />
+        <Tooltip
+          content={({ active, payload, label }) => {
+            if (active && payload && payload.length) {
+              return (
+                <ChartTooltipContent>
+                  <div className="font-medium mb-1">{label}</div>
+                  <div className="space-y-1">
+                    {payload.map((entry, index) => (
+                      <div key={`tooltip-${index}`} className="flex items-center space-x-2">
+                        <div
+                          className="h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: entry.color }}
+                        />
+                        <span className="text-sm opacity-70">
+                          {entry.name}: {formatValue(Number(entry.value), { format: 'number' }).value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </ChartTooltipContent>
+              );
+            }
+            return null;
+          }}
+        />
+        <Legend />
+        <Bar
+          dataKey="current"
+          fill={colors[0]}
+          name="Current Period"
+          radius={[4, 4, 0, 0]}
+          {...getBarAnimationProps(0)}
+        />
+        <Bar
+          dataKey="previous"
+          fill={colors[1]}
+          name="Previous Period"
+          radius={[4, 4, 0, 0]}
+          {...getBarAnimationProps(1)}
+        />
+        {data.some(item => item.target !== undefined) && (
+          <ReferenceLine
+            y={data[0]?.target}
+            stroke={colors[2]}
+            strokeDasharray="3 3"
+            label={{
+              value: 'Target',
+              fill: colors[2],
+              position: 'insideTopLeft'
             }}
           />
-          <Legend />
-          <Bar
-            dataKey="current"
-            fill={colors[0]}
-            name="Current Period"
-            radius={[4, 4, 0, 0]}
-            {...getBarAnimationProps(0)}
-          />
-          <Bar
-            dataKey="previous"
-            fill={colors[1]}
-            name="Previous Period"
-            radius={[4, 4, 0, 0]}
-            {...getBarAnimationProps(1)}
-          />
-          {data.some(item => item.target !== undefined) && (
-            <ReferenceLine
-              y={data[0]?.target}
-              stroke={colors[2]}
-              strokeDasharray="3 3"
-              label={{ 
-                value: 'Target', 
-                fill: colors[2],
-                position: 'insideTopLeft'
-              }}
-            />
-          )}
-        </BarChart>
-      </ResponsiveContainer>
+        )}
+      </BarChart>
     </ChartContainer>
   );
 };

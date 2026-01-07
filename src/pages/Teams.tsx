@@ -13,6 +13,13 @@ import CreateTeamDialog from '@/components/teams/CreateTeamDialog';
 import EditTeamDialog from '@/components/teams/EditTeamDialog';
 import { Globe, MapPin, Twitter, Github, Tag } from 'lucide-react';
 
+
+const ensureAbsoluteUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `https://${url}`;
+};
+
 // Type definition for team member
 interface TeamMember {
   id: number | string;
@@ -238,8 +245,20 @@ const Teams = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <EditTeamDialog team={currentTeam} />
-            <CreateTeamDialog />
+            {(currentTeam.role === 'admin' || currentTeam.role === 'owner') && (
+              <>
+                <EditTeamDialog team={currentTeam} />
+                <CreateTeamDialog />
+              </>
+            )}
+            {/* Allow creation if not in a team? Or sidebar handles that. Keeping CreateTeamDialog here restricted to admins might be weird if it means "Create NEW Team". 
+              Usually "Create Team" is a top-level action. But "Edit Team" is definitely admin only.
+              The UI shows these next to the current team title. 
+              Let's restrict Edit. Create might remain if it means "Create another team". 
+              However, the requirement is "letting members edit the group".
+              So we hide EditTeamDialog.
+           */}
+            {/* actually, re-reading: "the teams page is letting members also edit the group, the team settings" */}
           </div>
         </div>
       </div>
@@ -252,7 +271,7 @@ const Teams = () => {
           </div>
         )}
         {currentTeam.website_url && (
-          <a href={currentTeam.website_url} target="_blank" rel="noopener noreferrer"
+          <a href={ensureAbsoluteUrl(currentTeam.website_url)} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg hover:bg-muted hover:text-foreground transition-colors border border-border">
             <Globe size={14} /> Website
           </a>
@@ -264,7 +283,7 @@ const Teams = () => {
           </a>
         )}
         {currentTeam.github_url && (
-          <a href={currentTeam.github_url} target="_blank" rel="noopener noreferrer"
+          <a href={ensureAbsoluteUrl(currentTeam.github_url)} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg hover:bg-muted hover:text-foreground transition-colors border border-border">
             <Github size={14} /> GitHub
           </a>
@@ -401,17 +420,19 @@ const Teams = () => {
               </div>
             </div>
 
-            <div className="glass-panel p-6 rounded-2xl animate-fade-in animate-delay-2 flex flex-col justify-center items-center text-center bg-card">
-              <div className="p-4 rounded-full bg-muted mb-4 border border-border">
-                <UserPlus size={32} className="text-emerald-500" />
+            {(currentTeam.role === 'admin' || currentTeam.role === 'owner') && (
+              <div className="glass-panel p-6 rounded-2xl animate-fade-in animate-delay-2 flex flex-col justify-center items-center text-center bg-card">
+                <div className="p-4 rounded-full bg-muted mb-4 border border-border">
+                  <UserPlus size={32} className="text-emerald-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Grow Your Team</h3>
+                <p className="text-sm text-muted-foreground mb-6">Invite new members to collaborate on proposals.</p>
+                <AddTeamMemberDialog
+                  onAddMember={handleAddTeamMember}
+                  teamId={currentTeam?.id}
+                />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">Grow Your Team</h3>
-              <p className="text-sm text-muted-foreground mb-6">Invite new members to collaborate on proposals.</p>
-              <AddTeamMemberDialog
-                onAddMember={handleAddTeamMember}
-                teamId={currentTeam?.id}
-              />
-            </div>
+            )}
           </div>
 
           <div className="flex justify-between items-center mb-6 animate-fade-in animate-delay-3">
@@ -422,10 +443,12 @@ const Teams = () => {
 
             {/* Only show top add button on mobile or if list is long */}
             <div className="md:hidden">
-              <AddTeamMemberDialog
-                onAddMember={handleAddTeamMember}
-                teamId={currentTeam?.id}
-              />
+              {(currentTeam.role === 'admin' || currentTeam.role === 'owner') && (
+                <AddTeamMemberDialog
+                  onAddMember={handleAddTeamMember}
+                  teamId={currentTeam?.id}
+                />
+              )}
             </div>
           </div>
 

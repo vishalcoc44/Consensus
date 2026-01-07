@@ -135,10 +135,10 @@ const VisualizationDashboard = ({
     <div className="space-y-6 animate-fade-in">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex justify-between items-center mb-6">
-          <TabsList className="bg-black/40 p-1 rounded-xl border border-white/5">
-            <TabsTrigger value="insights" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">Data Insights</TabsTrigger>
-            <TabsTrigger value="recommendation" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">AI Recommendation</TabsTrigger>
-            <TabsTrigger value="consensus" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">Consensus Building</TabsTrigger>
+          <TabsList className="bg-muted p-1 rounded-xl border border-border">
+            <TabsTrigger value="insights" className="data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground rounded-lg">Data Insights</TabsTrigger>
+            <TabsTrigger value="recommendation" className="data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground rounded-lg">AI Recommendation</TabsTrigger>
+            <TabsTrigger value="consensus" className="data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground rounded-lg">Consensus Building</TabsTrigger>
           </TabsList>
         </div>
 
@@ -156,8 +156,8 @@ const VisualizationDashboard = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="glass-panel p-6 rounded-xl">
               <div className="mb-4">
-                <h3 className="text-lg font-bold text-white">Option Support</h3>
-                <p className="text-sm text-consensus-grey-400">Distribution of votes across options</p>
+                <h3 className="text-lg font-bold text-foreground">Option Support</h3>
+                <p className="text-sm text-muted-foreground">Distribution of votes across options</p>
               </div>
               <div className="h-80">
                 <OptionSupportChart data={mockAnalysis.optionSupport} />
@@ -166,8 +166,8 @@ const VisualizationDashboard = ({
 
             <div className="glass-panel p-6 rounded-xl">
               <div className="mb-4">
-                <h3 className="text-lg font-bold text-white">Sentiment Analysis</h3>
-                <p className="text-sm text-consensus-grey-400">Breakdown of comment sentiments</p>
+                <h3 className="text-lg font-bold text-foreground">Sentiment Analysis</h3>
+                <p className="text-sm text-muted-foreground">Breakdown of comment sentiments</p>
               </div>
               <div className="h-80">
                 <SentimentPieChart data={mockAnalysis.sentimentAnalysis} />
@@ -176,8 +176,8 @@ const VisualizationDashboard = ({
 
             <div className="glass-panel p-6 rounded-xl">
               <div className="mb-4">
-                <h3 className="text-lg font-bold text-white">Key Themes</h3>
-                <p className="text-sm text-consensus-grey-400">Common themes from comments</p>
+                <h3 className="text-lg font-bold text-foreground">Key Themes</h3>
+                <p className="text-sm text-muted-foreground">Common themes from comments</p>
               </div>
               <div className="h-80">
                 <ThemeWordCloud themes={mockAnalysis.keyThemes} />
@@ -186,8 +186,8 @@ const VisualizationDashboard = ({
 
             <div className="glass-panel p-6 rounded-xl">
               <div className="mb-4">
-                <h3 className="text-lg font-bold text-white">Criteria Ratings</h3>
-                <p className="text-sm text-consensus-grey-400">Average ratings for each criterion</p>
+                <h3 className="text-lg font-bold text-foreground">Criteria Ratings</h3>
+                <p className="text-sm text-muted-foreground">Average ratings for each criterion</p>
               </div>
               <div className="h-80">
                 <CriteriaRatingsChart data={mockAnalysis.criteriaAnalysis} />
@@ -198,8 +198,8 @@ const VisualizationDashboard = ({
           {/* Trend Analysis Chart */}
           <div className="glass-panel p-6 rounded-xl mb-6">
             <div className="mb-4">
-              <h3 className="text-lg font-bold text-white">Consensus & Sentiment Trends</h3>
-              <p className="text-sm text-consensus-grey-400">Tracking alignment over time</p>
+              <h3 className="text-lg font-bold text-foreground">Consensus & Sentiment Trends</h3>
+              <p className="text-sm text-muted-foreground">Tracking alignment over time</p>
             </div>
             <div className="h-80">
               <TrendAnalysisChart data={mockAnalysis.trendData} />
@@ -208,40 +208,40 @@ const VisualizationDashboard = ({
 
           <div className="glass-panel p-6 rounded-xl">
             <div className="mb-6">
-              <h3 className="text-lg font-bold text-white">Options Comparison</h3>
-              <p className="text-sm text-consensus-grey-400">Detailed comparison of all options</p>
+              <h3 className="text-lg font-bold text-foreground">Options Comparison</h3>
+              <p className="text-sm text-muted-foreground">Detailed comparison of all options</p>
             </div>
             <div>
               <Table>
-                <TableCaption className="text-consensus-grey-500">
+                <TableCaption className="text-muted-foreground">
                   Analysis results as of {new Date().toLocaleDateString()}
                 </TableCaption>
                 <TableHeader>
-                  <TableRow className="border-white/10 hover:bg-white/5">
-                    <TableHead className="text-consensus-grey-300">Option</TableHead>
-                    <TableHead className="text-right text-consensus-grey-300">Votes</TableHead>
-                    <TableHead className="text-right text-consensus-grey-300">Vote %</TableHead>
-                    <TableHead className="text-right text-consensus-grey-300">Sentiment</TableHead>
-                    <TableHead className="text-right text-consensus-grey-300">Support Score</TableHead>
-                    <TableHead className="text-center text-consensus-grey-300">Recommended</TableHead>
+                  <TableRow className="border-border hover:bg-muted/50">
+                    <TableHead className="text-muted-foreground">Option</TableHead>
+                    <TableHead className="text-right text-muted-foreground">Votes</TableHead>
+                    <TableHead className="text-right text-muted-foreground">Vote %</TableHead>
+                    <TableHead className="text-right text-muted-foreground">Sentiment</TableHead>
+                    <TableHead className="text-right text-muted-foreground">Support Score</TableHead>
+                    <TableHead className="text-center text-muted-foreground">Recommended</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {mockAnalysis.optionSupport
                     .filter((option: any) => option.option !== 'Abstained')
                     .map((option: any, index: number) => (
-                      <TableRow key={index} className="border-white/10 hover:bg-white/5 data-[state=selected]:bg-white/10">
-                        <TableCell className="font-medium text-white">{option.option}</TableCell>
-                        <TableCell className="text-right text-gray-300">{option.votes}</TableCell>
-                        <TableCell className="text-right text-gray-300">{option.percentage}%</TableCell>
-                        <TableCell className="text-right text-gray-300">{(option.sentiment * 100).toFixed(0)}%</TableCell>
-                        <TableCell className="text-right text-gray-300">{option.score}/100</TableCell>
+                      <TableRow key={index} className="border-border hover:bg-muted/50 data-[state=selected]:bg-muted">
+                        <TableCell className="font-medium text-foreground">{option.option}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{option.votes}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{option.percentage}%</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{(option.sentiment * 100).toFixed(0)}%</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{option.score}/100</TableCell>
                         <TableCell className="text-center">
                           {option.option === mockAnalysis.recommendedOption ?
-                            <span className="inline-flex items-center rounded-full bg-green-500/20 px-2.5 py-0.5 text-xs font-medium text-green-400 border border-green-500/30">
+                            <span className="inline-flex items-center rounded-full bg-green-500/20 px-2.5 py-0.5 text-xs font-medium text-green-600 border border-green-500/30">
                               Yes ({mockAnalysis.recommendationConfidence}%)
                             </span> :
-                            <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-gray-400">
+                            <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                               No
                             </span>
                           }

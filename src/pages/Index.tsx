@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Hero from '@/components/landing/Hero';
 import Features from '@/components/landing/Features';
-import Testimonials from '@/components/landing/Testimonials';
+
 import CTA from '@/components/landing/CTA';
 
 const Index = () => {
@@ -46,7 +46,7 @@ const Index = () => {
       <main className="flex-1">
         <Hero />
         <Features />
-        <Testimonials />
+
         <div className="animate-on-scroll">
           <CTA />
         </div>
@@ -72,7 +72,7 @@ const Index = () => {
                 <h4 className="font-medium text-foreground mb-4">Product</h4>
                 <ul className="space-y-2">
                   <li><a href="#features" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">Features</a></li>
-                  <li><a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">Pricing</a></li>
+
                   <li><a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">Integrations</a></li>
                   <li><a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">Changelog</a></li>
                 </ul>

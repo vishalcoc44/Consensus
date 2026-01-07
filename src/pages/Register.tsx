@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react';
 import AuthForm from '@/components/auth/AuthForm';
+import AuthLayout from '@/components/auth/AuthLayout';
 
 const Register = () => {
   useEffect(() => {
@@ -11,9 +12,13 @@ const Register = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background animate-fade-in">
+    <AuthLayout
+      imageSrc="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2940&q=80"
+      quote="The best decisions are made when everyone has a voice. Join us today."
+      author="Sarah Miller, VP of Engineering"
+    >
       <AuthForm type="register" />
-    </div>
+    </AuthLayout>
   );
 };
 

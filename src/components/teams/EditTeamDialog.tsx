@@ -21,7 +21,8 @@ import {
 	MapPin,
 	Tag,
 	Lock,
-	Unlock
+	Unlock,
+	X
 } from 'lucide-react';
 import { useTeams } from '@/hooks/useTeams';
 import { Switch } from '@/components/ui/switch';
@@ -33,6 +34,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { uploadFileToSupabase } from '@/utils/fileUpload';
+
 
 interface EditTeamDialogProps {
 	team: any;
@@ -83,6 +86,24 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 		setFormData(prev => ({ ...prev, [field]: value }));
 	};
 
+	const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'banner_url' | 'avatar_url') => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		setLoading(true);
+		try {
+			const publicUrl = await uploadFileToSupabase(file, 'team-media');
+			if (publicUrl) {
+				handleChange(field, publicUrl);
+			}
+		} catch (error) {
+			console.error('Upload failed', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setLoading(true);
@@ -102,6 +123,7 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 			const success = await updateTeam(team.id, updates);
 			if (success) {
 				setOpen(false);
+				window.location.reload();
 			}
 		} catch (error) {
 			console.error("Failed to update team", error);
@@ -220,25 +242,49 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 								<p className="text-xs text-muted-foreground">Public URL for your team logo.</p>
 							</div>
 
-							<div className="space-y-2">
+							<div className="space-y-3">
 								<Label htmlFor="banner" className="flex items-center gap-2">
-									<ImageIcon size={14} /> Banner URL
+									<ImageIcon size={14} /> Banner Image
 								</Label>
 								<div className="w-full h-24 rounded-lg overflow-hidden bg-muted border border-border mb-2 relative group">
 									{formData.banner_url ? (
-										<img src={formData.banner_url} alt="Banner Preview" className="w-full h-full object-cover" />
+										<>
+											<img src={formData.banner_url} alt="Banner Preview" className="w-full h-full object-cover" />
+											<Button
+												type="button"
+												variant="destructive"
+												size="icon"
+												className="absolute top-2 right-2 h-6 w-6 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+												onClick={() => handleChange('banner_url', '')}
+												title="Remove banner"
+											>
+												<X size={14} />
+											</Button>
+										</>
 									) : (
 										<div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">No Banner Image</div>
 									)}
 								</div>
-								<Input
-									id="banner"
-									placeholder="https://..."
-									value={formData.banner_url}
-									onChange={(e) => handleChange('banner_url', e.target.value)}
-									className="bg-background border-input"
-								/>
-								<p className="text-xs text-muted-foreground">Recommended size: 1200x300px.</p>
+								<div className="grid gap-2">
+									<Input
+										type="file"
+										accept="image/*"
+										onChange={(e) => handleFileUpload(e, 'banner_url')}
+										className="cursor-pointer bg-background border-input"
+										disabled={loading}
+									/>
+									<div className="relative">
+										<span className="absolute left-3 top-2.5 text-xs text-muted-foreground">URL</span>
+										<Input
+											id="banner"
+											placeholder="https://..."
+											value={formData.banner_url}
+											onChange={(e) => handleChange('banner_url', e.target.value)}
+											className="bg-background border-input pl-11"
+										/>
+									</div>
+								</div>
+								<p className="text-xs text-muted-foreground">Recommended size: 1200x300px. Upload from device or paste a URL.</p>
 							</div>
 						</TabsContent>
 

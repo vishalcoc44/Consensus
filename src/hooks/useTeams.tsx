@@ -23,6 +23,16 @@ interface Team {
   created_by: string | null;
   members: TeamMember[];
   pendingInvites?: any[];
+  role?: string;
+  avatar_url?: string | null;
+  banner_url?: string | null;
+  is_public?: boolean;
+  location?: string | null;
+  website_url?: string | null;
+  twitter_handle?: string | null;
+  github_url?: string | null;
+  mission_statement?: string | null;
+  tags?: string[] | null;
 }
 
 export function useTeams() {
@@ -142,22 +152,25 @@ export function useTeams() {
       if (invitesError) console.error("Error fetching invites:", invitesError);
 
       // 3. Merge data
-      const formattedTeams: Team[] = (teamsData || []).map(team => ({
-        id: team.id,
-        name: team.name,
-        description: team.description,
-        created_at: team.created_at,
-        created_by: team.created_by,
-        members: (team.members || []).map((m: any) => ({
-          id: m.id,
-          user_id: m.user_id,
-          team_id: m.team_id,
-          role: m.role,
-          joined_at: m.joined_at,
-          profile: m.profile
-        })),
-        pendingInvites: (invitesData || []).filter(invite => invite.team_id === team.id)
-      }));
+      const formattedTeams: Team[] = (teamsData || []).map(team => {
+        const userMember = (team.members || []).find((m: any) => m.user_id === user.id);
+        // Force 'owner' role for the team creator, regardless of the team_members table
+        const userRole = (team.created_by === user.id) ? 'owner' : (userMember?.role || 'member');
+
+        return {
+          ...team,
+          role: userRole,
+          members: (team.members || []).map((m: any) => ({
+            id: m.id,
+            user_id: m.user_id,
+            team_id: m.team_id,
+            role: m.role,
+            joined_at: m.joined_at,
+            profile: m.profile
+          })),
+          pendingInvites: (invitesData || []).filter(invite => invite.team_id === team.id)
+        };
+      });
 
       setTeams(formattedTeams);
     } catch (err) {

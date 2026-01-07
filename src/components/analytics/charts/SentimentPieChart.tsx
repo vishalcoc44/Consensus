@@ -1,9 +1,9 @@
 
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { 
-  ChartContainer, 
-  ChartTooltip, 
-  ChartTooltipContent 
+import { Cell, Legend, Pie, PieChart, Tooltip } from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent
 } from '@/components/ui/chart';
 
 interface SentimentPieChartProps {
@@ -21,7 +21,7 @@ const SentimentPieChart = ({ data }: SentimentPieChartProps) => {
     { name: 'Neutral', value: data.neutral, fill: '#f59e0b' },
     { name: 'Negative', value: data.negative, fill: '#ef4444' }
   ];
-  
+
   const config = {
     positive: {
       label: 'Positive',
@@ -40,28 +40,26 @@ const SentimentPieChart = ({ data }: SentimentPieChartProps) => {
   return (
     <ChartContainer
       config={config}
-      className="w-full aspect-[4/3]"
+      className="w-full h-full"
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={chartData}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            outerRadius={90}
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-            labelLine={false}
-          >
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.fill} />
-            ))}
-          </Pie>
-          <Tooltip content={<ChartTooltipContent />} />
-          <Legend verticalAlign="bottom" />
-        </PieChart>
-      </ResponsiveContainer>
+      <PieChart>
+        <Pie
+          data={chartData}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          outerRadius={90}
+          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+          labelLine={false}
+        >
+          {chartData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.fill} />
+          ))}
+        </Pie>
+        <Tooltip content={<ChartTooltipContent />} />
+        <Legend verticalAlign="bottom" />
+      </PieChart>
     </ChartContainer>
   );
 };

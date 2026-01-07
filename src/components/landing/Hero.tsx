@@ -143,25 +143,7 @@ const Hero = () => {
 					</p>
 
 					<div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in animate-delay-2">
-						<Link to="/register">
-							<Button
-								size="lg"
-								className="rounded-full px-8 py-6 bg-primary hover:bg-primary/90 hover:scale-105 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 text-primary-foreground font-semibold"
-								onMouseEnter={(e) => {
-									const btn = e.currentTarget;
-									btn.style.transform = 'translateY(-5px) scale(1.05)';
-									btn.style.boxShadow = '0 10px 25px -5px rgba(74, 222, 128, 0.4)';
-								}}
-								onMouseLeave={(e) => {
-									const btn = e.currentTarget;
-									btn.style.transform = '';
-									btn.style.boxShadow = '';
-								}}
-							>
-								Start for free
-								<ArrowRight className="ml-2 h-5 w-5 animate-pulse" />
-							</Button>
-						</Link>
+
 						<Link to="/#features">
 							<Button
 								size="lg"
