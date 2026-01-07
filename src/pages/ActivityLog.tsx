@@ -221,7 +221,7 @@ const ActivityLog = () => {
     <DashboardLayout>
       <div className="mb-8 animate-fade-in">
         <h1 className="text-3xl font-sf font-bold mb-2">Activity Log</h1>
-        <p className="text-consensus-grey-600">Track all activities across your organization's decisions</p>
+        <p className="text-muted-foreground">Track all activities across your organization's decisions</p>
       </div>
 
       <div className="flex flex-col md:flex-row flex-wrap gap-4 mb-6">
@@ -238,7 +238,7 @@ const ActivityLog = () => {
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-consensus-grey-500" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search activities..."
@@ -263,38 +263,38 @@ const ActivityLog = () => {
         </div>
       </div>
 
-      <div className="glass-panel overflow-hidden rounded-xl border border-consensus-green/20">
+      <div className="glass-panel overflow-hidden rounded-xl border border-primary/20 bg-card">
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-green"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           ) : filteredActivities.length === 0 ? (
-            <div className="p-8 text-center text-consensus-grey-400">
+            <div className="p-8 text-center text-muted-foreground">
               <p>No activities found matching your filters.</p>
             </div>
           ) : (
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-border">
               {filteredActivities.map((activity, index) => (
                 <div key={activity.id}
-                  className="p-4 hover:bg-white/5 transition-colors flex items-start gap-4 group"
+                  className="p-4 hover:bg-muted/50 transition-colors flex items-start gap-4 group"
                 >
-                  <div className="mt-1 p-2 rounded-full bg-consensus-dark-300 border border-white/10 group-hover:border-consensus-green/30 transition-colors">
+                  <div className="mt-1 p-2 rounded-full bg-muted border border-border group-hover:border-primary/30 transition-colors">
                     {getActivityIcon(activity.type)}
                   </div>
 
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-6 w-6 ring-2 ring-consensus-dark-300">
+                      <Avatar className="h-6 w-6 ring-2 ring-muted">
                         <AvatarImage src={activity.user.avatar} />
-                        <AvatarFallback className="bg-consensus-teal text-consensus-dark-900 font-bold">{getInitials(activity.user.name)}</AvatarFallback>
+                        <AvatarFallback className="bg-secondary text-secondary-foreground font-bold">{getInitials(activity.user.name)}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium text-white">{activity.user.name}</span>
+                      <span className="font-medium text-foreground">{activity.user.name}</span>
                     </div>
 
-                    <p className="mt-1 text-consensus-grey-300">{activity.description}</p>
+                    <p className="mt-1 text-muted-foreground">{activity.description}</p>
 
-                    <div className="mt-2 text-xs text-consensus-grey-500 flex items-center gap-1">
+                    <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
                       <Clock size={10} />
                       {format(new Date(activity.timestamp), 'PPpp')}
                     </div>
@@ -303,7 +303,7 @@ const ActivityLog = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-consensus-green/30 text-consensus-green hover:bg-consensus-green hover:text-black transition-colors"
+                    className="border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
                     onClick={() => window.location.href = `/dashboard/proposals/${activity.proposal_id}`}
                   >
                     View

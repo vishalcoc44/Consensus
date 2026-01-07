@@ -23,14 +23,14 @@ const testimonials = [
 
 const Testimonials = () => {
 	return (
-		<section className="py-24 bg-consensus-dark-500 relative overflow-hidden">
+		<section className="py-24 bg-background relative overflow-hidden">
 			{/* Background decoration */}
-			<div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-consensus-dark-300 to-transparent"></div>
+			<div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-border to-transparent"></div>
 
 			<div className="container mx-auto px-6">
 				<div className="text-center mb-16 animate-on-scroll">
-					<h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Trusted by innovative teams</h2>
-					<p className="text-consensus-grey-300 max-w-2xl mx-auto">
+					<h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">Trusted by innovative teams</h2>
+					<p className="text-muted-foreground max-w-2xl mx-auto">
 						See how leading organizations are using collective intelligence to make better decisions.
 					</p>
 				</div>
@@ -39,15 +39,15 @@ const Testimonials = () => {
 					{testimonials.map((testimonial, index) => (
 						<div
 							key={index}
-							className={`dark-card p-8 animate-on-scroll animate-delay-${index + 1}`}
+							className={`glass-panel p-8 animate-on-scroll animate-delay-${index + 1}`}
 						>
-							<div className="flex space-x-1 mb-6 text-consensus-green">
+							<div className="flex space-x-1 mb-6 text-primary">
 								{[...Array(5)].map((_, i) => (
 									<Star key={i} size={16} fill="currentColor" />
 								))}
 							</div>
 
-							<blockquote className="text-lg text-white mb-6 leading-relaxed">
+							<blockquote className="text-lg text-foreground mb-6 leading-relaxed">
 								"{testimonial.content}"
 							</blockquote>
 
@@ -55,11 +55,11 @@ const Testimonials = () => {
 								<img
 									src={testimonial.avatar}
 									alt={testimonial.author}
-									className="w-10 h-10 rounded-full mr-4 border border-consensus-dark-300"
+									className="w-10 h-10 rounded-full mr-4 border border-border"
 								/>
 								<div>
-									<div className="font-medium text-white">{testimonial.author}</div>
-									<div className="text-sm text-consensus-grey-400">{testimonial.role}</div>
+									<div className="font-medium text-foreground">{testimonial.author}</div>
+									<div className="text-sm text-muted-foreground">{testimonial.role}</div>
 								</div>
 							</div>
 						</div>

@@ -114,13 +114,13 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
 				{children || (
-					<Button variant="outline" size="sm" className="gap-2 border-consensus-grey-500 text-consensus-grey-300 hover:text-white hover:border-white">
+					<Button variant="outline" size="sm" className="gap-2 border-border text-muted-foreground hover:text-foreground hover:border-foreground hover:bg-muted">
 						<Settings size={16} />
 						Edit Team
 					</Button>
 				)}
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto glass-panel border-white/10 text-white">
+			<DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-background border-border text-foreground">
 				<DialogHeader>
 					<DialogTitle>Edit Team Settings</DialogTitle>
 					<DialogDescription>
@@ -130,7 +130,7 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 
 				<form onSubmit={handleSubmit} className="space-y-6 pt-4">
 					<Tabs defaultValue="general" className="w-full">
-						<TabsList className="grid w-full grid-cols-4 bg-consensus-dark-300">
+						<TabsList className="grid w-full grid-cols-4 bg-muted">
 							<TabsTrigger value="general">General</TabsTrigger>
 							<TabsTrigger value="branding">Branding</TabsTrigger>
 							<TabsTrigger value="social">Social</TabsTrigger>
@@ -145,7 +145,7 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 									id="name"
 									value={formData.name}
 									onChange={(e) => handleChange('name', e.target.value)}
-									className="bg-consensus-dark-300 border-white/10"
+									className="bg-background border-input"
 								/>
 							</div>
 							<div className="space-y-2">
@@ -154,7 +154,7 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 									id="description"
 									value={formData.description}
 									onChange={(e) => handleChange('description', e.target.value)}
-									className="bg-consensus-dark-300 border-white/10"
+									className="bg-background border-input"
 								/>
 							</div>
 							<div className="space-y-2">
@@ -164,7 +164,7 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 									placeholder="What is your team's core mission?"
 									value={formData.mission_statement}
 									onChange={(e) => handleChange('mission_statement', e.target.value)}
-									className="bg-consensus-dark-300 border-white/10 min-h-[100px]"
+									className="bg-background border-input min-h-[100px]"
 								/>
 							</div>
 							<div className="grid grid-cols-2 gap-4">
@@ -177,7 +177,7 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 										placeholder="e.g. San Francisco, CA"
 										value={formData.location}
 										onChange={(e) => handleChange('location', e.target.value)}
-										className="bg-consensus-dark-300 border-white/10"
+										className="bg-background border-input"
 									/>
 								</div>
 								<div className="space-y-2">
@@ -189,7 +189,7 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 										placeholder="DeFi, DAO, Governance (comma separated)"
 										value={formData.tags}
 										onChange={(e) => handleChange('tags', e.target.value)}
-										className="bg-consensus-dark-300 border-white/10"
+										className="bg-background border-input"
 									/>
 								</div>
 							</div>
@@ -202,11 +202,11 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 									<ImageIcon size={14} /> Avatar URL
 								</Label>
 								<div className="flex gap-4 items-center">
-									<div className="w-12 h-12 rounded-full overflow-hidden bg-consensus-dark-300 flex-shrink-0 border border-white/10">
+									<div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex-shrink-0 border border-border">
 										{formData.avatar_url ? (
 											<img src={formData.avatar_url} alt="Avatar Preview" className="w-full h-full object-cover" />
 										) : (
-											<div className="w-full h-full flex items-center justify-center text-xs text-consensus-grey-500">No Img</div>
+											<div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">No Img</div>
 										)}
 									</div>
 									<Input
@@ -214,21 +214,21 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 										placeholder="https://..."
 										value={formData.avatar_url}
 										onChange={(e) => handleChange('avatar_url', e.target.value)}
-										className="bg-consensus-dark-300 border-white/10 flex-1"
+										className="bg-background border-input flex-1"
 									/>
 								</div>
-								<p className="text-xs text-consensus-grey-400">Public URL for your team logo.</p>
+								<p className="text-xs text-muted-foreground">Public URL for your team logo.</p>
 							</div>
 
 							<div className="space-y-2">
 								<Label htmlFor="banner" className="flex items-center gap-2">
 									<ImageIcon size={14} /> Banner URL
 								</Label>
-								<div className="w-full h-24 rounded-lg overflow-hidden bg-consensus-dark-300 border border-white/10 mb-2 relative group">
+								<div className="w-full h-24 rounded-lg overflow-hidden bg-muted border border-border mb-2 relative group">
 									{formData.banner_url ? (
 										<img src={formData.banner_url} alt="Banner Preview" className="w-full h-full object-cover" />
 									) : (
-										<div className="w-full h-full flex items-center justify-center text-sm text-consensus-grey-500">No Banner Image</div>
+										<div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">No Banner Image</div>
 									)}
 								</div>
 								<Input
@@ -236,9 +236,9 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 									placeholder="https://..."
 									value={formData.banner_url}
 									onChange={(e) => handleChange('banner_url', e.target.value)}
-									className="bg-consensus-dark-300 border-white/10"
+									className="bg-background border-input"
 								/>
-								<p className="text-xs text-consensus-grey-400">Recommended size: 1200x300px.</p>
+								<p className="text-xs text-muted-foreground">Recommended size: 1200x300px.</p>
 							</div>
 						</TabsContent>
 
@@ -253,7 +253,7 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 									placeholder="https://yourteam.com"
 									value={formData.website_url}
 									onChange={(e) => handleChange('website_url', e.target.value)}
-									className="bg-consensus-dark-300 border-white/10"
+									className="bg-background border-input"
 								/>
 							</div>
 							<div className="space-y-2">
@@ -261,13 +261,13 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 									<Twitter size={14} /> Twitter Handle
 								</Label>
 								<div className="relative">
-									<span className="absolute left-3 top-2.5 text-consensus-grey-500">@</span>
+									<span className="absolute left-3 top-2.5 text-muted-foreground">@</span>
 									<Input
 										id="twitter"
 										placeholder="username"
 										value={formData.twitter_handle}
 										onChange={(e) => handleChange('twitter_handle', e.target.value)}
-										className="bg-consensus-dark-300 border-white/10 pl-7"
+										className="bg-background border-input pl-7"
 									/>
 								</div>
 							</div>
@@ -280,20 +280,20 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 									placeholder="https://github.com/org"
 									value={formData.github_url}
 									onChange={(e) => handleChange('github_url', e.target.value)}
-									className="bg-consensus-dark-300 border-white/10"
+									className="bg-background border-input"
 								/>
 							</div>
 						</TabsContent>
 
 						{/* Settings Tab */}
 						<TabsContent value="settings" className="space-y-4 pt-4">
-							<div className="flex items-center justify-between p-4 rounded-lg bg-consensus-dark-300 border border-white/5">
+							<div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border">
 								<div className="space-y-0.5">
 									<Label className="text-base flex items-center gap-2">
-										{formData.is_public ? <Unlock size={16} className="text-green-500" /> : <Lock size={16} className="text-amber-500" />}
+										{formData.is_public ? <Unlock size={16} className="text-emerald-500" /> : <Lock size={16} className="text-amber-500" />}
 										Public Visibility
 									</Label>
-									<p className="text-sm text-consensus-grey-400">
+									<p className="text-sm text-muted-foreground">
 										Allow anyone to view your team page and public proposals.
 									</p>
 								</div>
@@ -309,16 +309,16 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 									value={formData.join_policy}
 									onValueChange={(value) => handleChange('join_policy', value)}
 								>
-									<SelectTrigger className="bg-consensus-dark-300 border-white/10">
+									<SelectTrigger className="bg-background border-input">
 										<SelectValue placeholder="Select a policy" />
 									</SelectTrigger>
-									<SelectContent className="bg-consensus-dark-300 border-white/10 text-white">
+									<SelectContent className="bg-background border-border text-foreground">
 										<SelectItem value="open">Open (Anyone can join)</SelectItem>
 										<SelectItem value="application">Application (Requires approval)</SelectItem>
 										<SelectItem value="invite_only">Invite Only</SelectItem>
 									</SelectContent>
 								</Select>
-								<p className="text-xs text-consensus-grey-400">Control how new members can join your team.</p>
+								<p className="text-xs text-muted-foreground">Control how new members can join your team.</p>
 							</div>
 						</TabsContent>
 					</Tabs>
@@ -328,13 +328,13 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 							type="button"
 							variant="ghost"
 							onClick={() => setOpen(false)}
-							className="text-consensus-grey-300 hover:text-white"
+							className="text-muted-foreground hover:text-foreground"
 						>
 							Cancel
 						</Button>
 						<Button
 							type="submit"
-							className="bg-consensus-green text-black hover:bg-consensus-green/90"
+							className="bg-primary text-primary-foreground hover:bg-primary/90"
 							disabled={loading}
 						>
 							{loading ? 'Saving...' : 'Save Changes'}

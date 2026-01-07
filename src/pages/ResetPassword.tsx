@@ -104,25 +104,25 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-consensus-dark-400">
+    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background">
       <div className="w-full max-w-md mx-auto">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white hero-text-gradient">Set New Password</h2>
-          <p className="mt-2 text-consensus-grey-400">
+          <h2 className="text-3xl font-bold text-foreground hero-text-gradient">Set New Password</h2>
+          <p className="mt-2 text-muted-foreground">
             Enter your new password below
           </p>
         </div>
 
         <div className="glass-panel p-8 rounded-2xl animate-scale-in">
           {error && (
-            <div className="bg-red-900/20 border border-red-900/50 text-red-200 p-4 rounded-lg mb-6">
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-lg mb-6">
               {error}
               {!isAuthenticated && (
                 <div className="mt-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="mt-2 text-sm bg-transparent border-red-800 text-red-100 hover:bg-red-900/30 hover:text-white"
+                    className="mt-2 text-sm bg-transparent border-destructive/50 text-destructive hover:bg-destructive/10"
                     onClick={() => navigate('/forgot-password')}
                   >
                     Request a new reset link
@@ -134,24 +134,24 @@ const ResetPassword = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-white">
+              <label htmlFor="password" className="block text-sm font-medium text-foreground">
                 New Password
               </label>
               <div className="relative">
-                <LockIcon size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400" />
+                <LockIcon size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter new password"
-                  className="pl-10 py-6 pr-10 rounded-xl bg-consensus-dark-200 border-consensus-dark-100 text-white placeholder:text-consensus-grey-500 focus:border-consensus-green"
+                  className="pl-10 py-6 pr-10 rounded-xl bg-background border-input text-foreground border placeholder:text-muted-foreground focus:border-primary"
                   required
                 />
                 <button
                   type="button"
                   onClick={toggleShowPassword}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -159,24 +159,24 @@ const ResetPassword = () => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-white">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
                 Confirm New Password
               </label>
               <div className="relative">
-                <LockIcon size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400" />
+                <LockIcon size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="confirmPassword"
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
-                  className="pl-10 py-6 pr-10 rounded-xl bg-consensus-dark-200 border-consensus-dark-100 text-white placeholder:text-consensus-grey-500 focus:border-consensus-green"
+                  className="pl-10 py-6 pr-10 rounded-xl bg-background border-input text-foreground border placeholder:text-muted-foreground focus:border-primary"
                   required
                 />
                 <button
                   type="button"
                   onClick={toggleShowPassword}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -185,7 +185,7 @@ const ResetPassword = () => {
 
             <Button
               type="submit"
-              className="w-full bg-consensus-green hover:bg-consensus-teal text-consensus-dark-800 font-medium py-5 rounded-xl transition-all duration-300"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-5 rounded-xl transition-all duration-300"
               disabled={isSubmitting || !isAuthenticated}
             >
               {isSubmitting ? 'Updating Password...' : 'Update Password'}
@@ -193,11 +193,11 @@ const ResetPassword = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-consensus-grey-400">
+            <p className="text-sm text-muted-foreground">
               Remember your password?{' '}
               <Button
                 variant="link"
-                className="p-0 text-consensus-green hover:text-consensus-teal hover:underline transition-colors"
+                className="p-0 text-primary hover:text-primary/80 hover:underline transition-colors"
                 onClick={() => navigate('/login')}
               >
                 Sign in

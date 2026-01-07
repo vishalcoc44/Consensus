@@ -230,12 +230,12 @@ export default {
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
 				'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-				'grid-pattern': 'linear-gradient(to right, rgba(74, 222, 128, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(74, 222, 128, 0.1) 1px, transparent 1px)',
+				'grid-pattern': 'linear-gradient(to right, rgba(74, 222, 128, 0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(74, 222, 128, 0.2) 1px, transparent 1px)',
 				'mesh-gradient': 'radial-gradient(at 0% 0%, rgba(74, 222, 128, 0.15) 0, transparent 50%), radial-gradient(at 100% 0%, rgba(20, 184, 166, 0.15) 0, transparent 50%)',
-				'glass-gradient': 'linear-gradient(113deg, rgba(31, 41, 55, 0.7) 0%, rgba(17, 24, 39, 0.8) 100%)',
-				'dark-gradient': 'linear-gradient(to bottom, #1F2937, #111827)',
-				'green-glow': 'linear-gradient(to right, rgba(74, 222, 128, 0.1), rgba(20, 184, 166, 0.1))',
-				'card-gradient': 'linear-gradient(135deg, #1F2937 0%, #111827 100%)',
+				'glass-gradient': 'linear-gradient(113deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%)',
+				'dark-gradient': 'linear-gradient(to bottom, #ffffff, #f8fafc)',
+				'green-glow': 'linear-gradient(to right, rgba(74, 222, 128, 0.2), rgba(20, 184, 166, 0.6))',
+				'card-gradient': 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
 			}
 		}
 	},

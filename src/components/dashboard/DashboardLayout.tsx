@@ -167,20 +167,20 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   };
 
   return (
-    <div className="flex h-screen bg-consensus-dark-500">
+    <div className="flex h-screen bg-background">
       {/* Sidebar - Desktop */}
       <aside
-        className={`hidden md:flex flex-col bg-consensus-dark-400 border-r border-consensus-dark-300 transition-all duration-300 ease-in-out shadow-lg z-20 ${isSidebarHovered ? 'w-64' : 'w-20'
+        className={`hidden md:flex flex-col bg-card border-r border-border transition-all duration-300 ease-in-out shadow-lg z-20 ${isSidebarHovered ? 'w-64' : 'w-20'
           }`}
         onMouseEnter={() => setIsSidebarHovered(true)}
         onMouseLeave={() => setIsSidebarHovered(false)}
       >
-        <div className="p-5 border-b border-consensus-dark-300 h-20 flex items-center">
+        <div className="p-5 border-b border-border h-20 flex items-center">
           <Link to="/dashboard" className="flex items-center space-x-3 group w-full overflow-hidden">
             <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-consensus-green to-consensus-teal flex items-center justify-center group-hover:shadow-[0_0_15px_rgba(74,222,128,0.4)] transition-all duration-300">
-              <span className="text-consensus-dark-800 font-bold text-xl">C</span>
+              <span className="text-white font-bold text-xl">C</span>
             </div>
-            <span className={`font-sf font-bold text-lg text-white whitespace-nowrap transition-opacity duration-300 ${isSidebarHovered ? 'opacity-100 delay-100' : 'opacity-0 w-0'
+            <span className={`font-sf font-bold text-lg text-foreground whitespace-nowrap transition-opacity duration-300 ${isSidebarHovered ? 'opacity-100 delay-100' : 'opacity-0 w-0'
               }`}>
               ConsensusAI
             </span>
@@ -193,20 +193,20 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <li key={index}>
                 <Link
                   to={item.path}
-                  className={`flex items-center space-x-3 px-3 py-3 rounded-lg text-consensus-grey-300 hover:bg-consensus-dark-300 hover:text-consensus-green transition-all duration-200 group ${isPathActive(item.path) ? 'bg-consensus-dark-300 text-consensus-green font-medium' : ''
+                  className={`flex items-center space-x-3 px-3 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-primary transition-all duration-200 group ${isPathActive(item.path) ? 'bg-muted text-primary font-medium' : ''
                     }`}
                 >
                   <div className="flex-shrink-0 flex items-center justify-center w-6 relative">
-                    <item.icon size={22} className={isPathActive(item.path) ? 'text-consensus-green' : 'group-hover:text-consensus-green'} />
+                    <item.icon size={22} className={isPathActive(item.path) ? 'text-primary' : 'group-hover:text-primary'} />
                     {item.label === 'Teams' && pendingInvitesCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-consensus-dark-400"></span>
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-background"></span>
                     )}
                   </div>
                   <span className={`whitespace-nowrap transition-opacity duration-300 flex items-center justify-between flex-1 ${isSidebarHovered ? 'opacity-100 delay-75' : 'opacity-0 w-0 hidden'
                     }`}>
                     {item.label}
                     {item.label === 'Teams' && pendingInvitesCount > 0 && (
-                      <span className="ml-2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      <span className="ml-2 bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                         {pendingInvitesCount}
                       </span>
                     )}
@@ -217,30 +217,30 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </ul>
         </nav>
 
-        <div className="p-4 mt-auto border-t border-consensus-dark-300">
+        <div className="p-4 mt-auto border-t border-border">
           <div className={`flex items-center ${isSidebarHovered ? 'justify-start' : 'justify-center'} py-1 transition-all duration-300`}>
             <div
               className="flex items-center flex-1 min-w-0 cursor-pointer group/profile"
               onClick={() => navigate('/dashboard/settings')}
             >
               {loading ? (
-                <div className="w-10 h-10 rounded-full bg-consensus-dark-300 flex items-center justify-center text-consensus-grey-300 animate-pulse flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground animate-pulse flex-shrink-0">
                   <User size={16} />
                 </div>
               ) : (
-                <div className="w-10 h-10 rounded-full bg-consensus-dark-300 flex items-center justify-center text-consensus-grey-300 border border-consensus-green/30 flex-shrink-0 group-hover/profile:border-consensus-green transition-colors">
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground border border-primary/30 flex-shrink-0 group-hover/profile:border-primary transition-colors">
                   {user?.avatar_url ? (
                     <img src={user.avatar_url} alt={user.full_name || 'User'} className="w-10 h-10 rounded-full object-cover" />
                   ) : (
-                    <span className="font-medium text-consensus-green">{getUserInitials()}</span>
+                    <span className="font-medium text-primary">{getUserInitials()}</span>
                   )}
                 </div>
               )}
 
               <div className={`flex-1 ml-3 overflow-hidden transition-all duration-300 ${isSidebarHovered ? 'opacity-100 w-auto' : 'opacity-0 w-0'
                 }`}>
-                <h4 className="text-sm font-medium text-white truncate group-hover/profile:text-consensus-green transition-colors">{loading ? 'Loading...' : (user?.full_name || 'User')}</h4>
-                <p className="text-xs text-consensus-grey-400 truncate w-32">{loading ? '' : (user?.email || '')}</p>
+                <h4 className="text-sm font-medium text-foreground truncate group-hover/profile:text-primary transition-colors">{loading ? 'Loading...' : (user?.full_name || 'User')}</h4>
+                <p className="text-xs text-muted-foreground truncate w-32">{loading ? '' : (user?.email || '')}</p>
               </div>
             </div>
 
@@ -250,7 +250,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   e.stopPropagation();
                   handleSignOut();
                 }}
-                className="p-2 ml-1 text-consensus-grey-400 hover:text-red-400 rounded-full hover:bg-consensus-dark-300 transition-colors duration-200 flex-shrink-0 animate-fade-in"
+                className="p-2 ml-1 text-muted-foreground hover:text-destructive rounded-full hover:bg-muted transition-colors duration-200 flex-shrink-0 animate-fade-in"
                 title="Sign out"
               >
                 <LogOut size={18} />
@@ -263,18 +263,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Sidebar - Mobile */}
       {isSidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 animate-fade-in">
-          <div className="absolute inset-0 bg-consensus-dark-900/70 backdrop-blur-sm" onClick={toggleSidebar}></div>
-          <div className="absolute left-0 top-0 bottom-0 w-64 bg-consensus-dark-400 shadow-xl animate-slide-in-left border-r border-consensus-dark-300">
-            <div className="flex items-center justify-between p-5 border-b border-consensus-dark-300">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={toggleSidebar}></div>
+          <div className="absolute left-0 top-0 bottom-0 w-64 bg-card shadow-xl animate-slide-in-left border-r border-border">
+            <div className="flex items-center justify-between p-5 border-b border-border">
               <Link to="/dashboard" className="flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-consensus-green to-consensus-teal flex items-center justify-center">
-                  <span className="text-consensus-dark-800 font-bold text-base">C</span>
+                  <span className="text-white font-bold text-base">C</span>
                 </div>
-                <span className="font-sf font-bold text-lg text-white">ConsensusAI</span>
+                <span className="font-sf font-bold text-lg text-foreground">ConsensusAI</span>
               </Link>
               <button
                 onClick={toggleSidebar}
-                className="p-1 rounded-full text-consensus-grey-400 hover:text-consensus-green hover:bg-consensus-dark-300"
+                className="p-1 rounded-full text-muted-foreground hover:text-primary hover:bg-muted"
               >
                 <X size={20} />
               </button>
@@ -286,11 +286,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <li key={index}>
                     <Link
                       to={item.path}
-                      className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-consensus-grey-300 hover:bg-consensus-dark-300 hover:text-consensus-green transition-all duration-200 ${isPathActive(item.path) ? 'bg-consensus-dark-300 text-consensus-green font-medium' : ''
+                      className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-primary transition-all duration-200 ${isPathActive(item.path) ? 'bg-muted text-primary font-medium' : ''
                         }`}
                       onClick={toggleSidebar}
                     >
-                      <item.icon size={20} className={isPathActive(item.path) ? 'text-consensus-green' : ''} />
+                      <item.icon size={20} className={isPathActive(item.path) ? 'text-primary' : ''} />
                       <span>{item.label}</span>
                     </Link>
                   </li>
@@ -298,7 +298,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </ul>
             </nav>
 
-            <div className="p-4 mt-auto border-t border-consensus-dark-300">
+            <div className="p-4 mt-auto border-t border-border">
               <div
                 className="flex items-center px-3 py-2 cursor-pointer group/profile"
                 onClick={() => {
@@ -307,28 +307,28 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 }}
               >
                 {loading ? (
-                  <div className="w-10 h-10 rounded-full bg-consensus-dark-300 flex items-center justify-center text-consensus-grey-300 mr-3 animate-pulse">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground mr-3 animate-pulse">
                     <User size={16} />
                   </div>
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-consensus-dark-300 flex items-center justify-center text-consensus-grey-300 mr-3 border border-consensus-green/30 group-hover/profile:border-consensus-green transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground mr-3 border border-primary/30 group-hover/profile:border-primary transition-colors">
                     {user?.avatar_url ? (
                       <img src={user.avatar_url} alt={user.full_name || 'User'} className="w-10 h-10 rounded-full object-cover" />
                     ) : (
-                      <span className="text-sm font-medium text-consensus-green">{getUserInitials()}</span>
+                      <span className="text-sm font-medium text-primary">{getUserInitials()}</span>
                     )}
                   </div>
                 )}
                 <div className="flex-1">
-                  <h4 className="text-sm font-medium text-white group-hover/profile:text-consensus-green transition-colors">{loading ? 'Loading...' : (user?.full_name || 'User')}</h4>
-                  <p className="text-xs text-consensus-grey-400">{loading ? '' : (user?.email || '')}</p>
+                  <h4 className="text-sm font-medium text-foreground group-hover/profile:text-primary transition-colors">{loading ? 'Loading...' : (user?.full_name || 'User')}</h4>
+                  <p className="text-xs text-muted-foreground">{loading ? '' : (user?.email || '')}</p>
                 </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSignOut();
                   }}
-                  className="p-2 text-consensus-grey-400 hover:text-red-400 rounded-full hover:bg-consensus-dark-300 transition-colors duration-200"
+                  className="p-2 text-muted-foreground hover:text-destructive rounded-full hover:bg-muted transition-colors duration-200"
                 >
                   <LogOut size={18} />
                 </button>
@@ -341,10 +341,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="h-16 bg-consensus-dark-400 border-b border-consensus-dark-300 flex items-center px-4 lg:px-6 shadow-md">
+        <header className="h-16 bg-card border-b border-border flex items-center px-4 lg:px-6 shadow-sm">
           <button
             onClick={toggleSidebar}
-            className="p-2 rounded-full text-consensus-grey-400 hover:text-consensus-green hover:bg-consensus-dark-300 md:hidden transition-colors duration-200"
+            className="p-2 rounded-full text-muted-foreground hover:text-primary hover:bg-muted md:hidden transition-colors duration-200"
           >
             <Menu size={20} />
           </button>
@@ -353,28 +353,28 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <div className="relative">
               <button
                 onClick={toggleSearch}
-                className="md:hidden p-2 rounded-full text-consensus-grey-400 hover:text-consensus-green hover:bg-consensus-dark-300 transition-colors duration-200"
+                className="md:hidden p-2 rounded-full text-muted-foreground hover:text-primary hover:bg-muted transition-colors duration-200"
               >
                 <Search size={20} />
               </button>
 
-              <div className="hidden md:flex items-center bg-consensus-dark-300 rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-consensus-green/40 transition-all duration-200">
-                <Search size={18} className="text-consensus-grey-400" />
+              <div className="hidden md:flex items-center bg-muted/50 rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-primary/40 transition-all duration-200 border border-transparent focus-within:border-primary/20">
+                <Search size={18} className="text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="bg-transparent border-none focus:outline-none text-sm ml-2 w-44 lg:w-64 text-white placeholder:text-consensus-grey-500"
+                  className="bg-transparent border-none focus:outline-none text-sm ml-2 w-44 lg:w-64 text-foreground placeholder:text-muted-foreground"
                 />
               </div>
 
               {isSearchOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 p-2 bg-consensus-dark-300 rounded-lg shadow-lg animate-fade-in md:hidden border border-consensus-dark-200">
-                  <div className="flex items-center bg-consensus-dark-200 rounded-xl px-3 py-2">
-                    <Search size={18} className="text-consensus-grey-400" />
+                <div className="absolute top-full left-0 right-0 mt-1 p-2 bg-card rounded-lg shadow-lg animate-fade-in md:hidden border border-border">
+                  <div className="flex items-center bg-muted rounded-xl px-3 py-2">
+                    <Search size={18} className="text-muted-foreground" />
                     <input
                       type="text"
                       placeholder="Search..."
-                      className="bg-transparent border-none focus:outline-none text-sm ml-2 w-full text-white placeholder:text-consensus-grey-500"
+                      className="bg-transparent border-none focus:outline-none text-sm ml-2 w-full text-foreground placeholder:text-muted-foreground"
                       autoFocus
                     />
                   </div>
@@ -384,15 +384,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
 
           <div className="flex items-center space-x-3">
-            <button className="p-2 rounded-full text-consensus-grey-400 hover:text-consensus-green hover:bg-consensus-dark-300 relative transition-colors duration-200">
+            <button className="p-2 rounded-full text-muted-foreground hover:text-primary hover:bg-muted relative transition-colors duration-200">
               <Bell size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-consensus-green rounded-full animate-pulse"></span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full animate-pulse"></span>
             </button>
-            <button className="p-2 rounded-full text-consensus-grey-400 hover:text-consensus-green hover:bg-consensus-dark-300 transition-colors duration-200">
+            <button className="p-2 rounded-full text-muted-foreground hover:text-primary hover:bg-muted transition-colors duration-200">
               <HelpCircle size={20} />
             </button>
             {!loading && user && (
-              <div className="w-8 h-8 rounded-full bg-consensus-dark-300 md:hidden flex items-center justify-center text-consensus-grey-300 overflow-hidden border border-consensus-green/30">
+              <div className="w-8 h-8 rounded-full bg-muted md:hidden flex items-center justify-center text-muted-foreground overflow-hidden border border-primary/30">
                 {user.avatar_url ? (
                   <img src={user.avatar_url} alt={user.full_name || 'User'} className="w-full h-full object-cover" />
                 ) : (
@@ -404,7 +404,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </header>
 
         {/* Content area */}
-        <div className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 bg-consensus-dark-500">
+        <div className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 bg-background">
           {children}
         </div>
       </main>

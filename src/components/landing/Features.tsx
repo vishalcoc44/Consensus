@@ -36,13 +36,13 @@ const features = [
 
 const Features = () => {
 	return (
-		<section id="features" className="py-24 bg-consensus-dark-500 relative">
+		<section id="features" className="py-24 bg-background relative">
 			<div className="container mx-auto px-6">
 				<div className="mb-16 text-center animate-on-scroll">
-					<h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-						Intelligence built for <span className="text-consensus-green">modern teams</span>
+					<h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+						Intelligence built for <span className="text-primary">modern teams</span>
 					</h2>
-					<p className="text-consensus-grey-300 max-w-2xl mx-auto text-lg">
+					<p className="text-muted-foreground max-w-2xl mx-auto text-lg">
 						Reimagine how decisions happen. Move from clarity to consensus with tools designed for high-performance organizations.
 					</p>
 				</div>
@@ -51,17 +51,17 @@ const Features = () => {
 					{features.map((feature, index) => (
 						<div
 							key={index}
-							className={`dark-card p-8 group hover:border-consensus-green/30 animate-on-scroll animate-delay-${index % 3 + 1}`}
+							className={`glass-panel p-8 group hover:border-primary/30 animate-on-scroll animate-delay-${index % 3 + 1}`}
 						>
-							<div className="w-12 h-12 rounded-lg bg-consensus-dark-300 border border-consensus-dark-100 flex items-center justify-center mb-6 group-hover:bg-consensus-green/10 group-hover:border-consensus-green/30 transition-all duration-300">
-								<feature.icon className="text-consensus-green" size={24} />
+							<div className="w-12 h-12 rounded-lg bg-muted border border-border flex items-center justify-center mb-6 group-hover:bg-primary/10 group-hover:border-primary/30 transition-all duration-300">
+								<feature.icon className="text-primary" size={24} />
 							</div>
 
-							<h3 className="text-xl font-bold text-white mb-3 group-hover:text-consensus-green transition-colors duration-300">
+							<h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
 								{feature.title}
 							</h3>
 
-							<p className="text-consensus-grey-400 leading-relaxed">
+							<p className="text-muted-foreground leading-relaxed">
 								{feature.description}
 							</p>
 						</div>

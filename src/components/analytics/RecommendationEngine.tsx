@@ -193,23 +193,23 @@ const RecommendationEngine = ({
   };
 
   const getConfidenceColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500/20 text-green-300 border-green-500/30';
-    if (score >= 60) return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
-    if (score >= 40) return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
-    return 'bg-red-500/20 text-red-300 border-red-500/30';
+    if (score >= 80) return 'bg-green-500/10 text-green-700 border-green-200';
+    if (score >= 60) return 'bg-blue-500/10 text-blue-700 border-blue-200';
+    if (score >= 40) return 'bg-yellow-500/10 text-yellow-700 border-yellow-200';
+    return 'bg-red-500/10 text-red-700 border-red-200';
   };
 
   return (
-    <div className="w-full glass-panel p-6 rounded-2xl animate-fade-in">
+    <div className="w-full glass-panel p-6 rounded-2xl animate-fade-in bg-card border-border">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="flex items-center gap-2 text-xl font-bold text-white">
-            <div className="p-2 rounded-lg bg-consensus-blue/20 text-consensus-blue">
+          <h3 className="flex items-center gap-2 text-xl font-bold text-foreground">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
               <Brain className="h-5 w-5" />
             </div>
             AI Recommendation Engine
           </h3>
-          <p className="text-consensus-grey-400 mt-1 ml-11">
+          <p className="text-muted-foreground mt-1 ml-11">
             Machine learning analysis of all contributions
           </p>
         </div>
@@ -219,7 +219,7 @@ const RecommendationEngine = ({
             size="sm"
             onClick={() => generateMutation.mutate(weights)}
             disabled={generateMutation.isPending || !actualProposalId}
-            className="border-white/10 text-consensus-grey-300 hover:text-white hover:bg-white/5 bg-transparent"
+            className="border-border text-muted-foreground hover:text-foreground hover:bg-muted bg-transparent"
           >
             <RefreshCw
               className={`h-4 w-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`}
@@ -232,7 +232,7 @@ const RecommendationEngine = ({
               variant="ghost"
               size="sm"
               onClick={() => setShowParameters(!showParameters)}
-              className="text-consensus-grey-300 hover:text-white hover:bg-white/5"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               <Sliders className="h-4 w-4 mr-2" />
               Parameters
@@ -247,43 +247,43 @@ const RecommendationEngine = ({
 
       <div className="mt-2">
         {isLoading ? (
-          <div className="flex flex-col justify-center items-center py-12 text-consensus-grey-400">
-            <div className="animate-spin h-10 w-10 border-4 border-consensus-blue border-t-transparent rounded-full mb-4"></div>
+          <div className="flex flex-col justify-center items-center py-12 text-muted-foreground">
+            <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
             <p>Analyzing decision data...</p>
           </div>
         ) : isError ? (
-          <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-xl text-red-200">
+          <div className="bg-destructive/10 border border-destructive/20 p-6 rounded-xl text-destructive">
             <p className="flex items-center gap-2">
               <span className="font-semibold">Error loading recommendation:</span> {(error as Error).message}
             </p>
           </div>
         ) : !recommendation ? (
-          <div className="bg-consensus-blue/10 border border-consensus-blue/20 p-8 rounded-xl text-center">
-            <Bot className="h-12 w-12 text-consensus-blue mx-auto mb-4 opacity-50" />
-            <h4 className="text-lg font-medium text-blue-200 mb-2">No Recommendation Yet</h4>
-            <p className="text-consensus-grey-400 mb-6 max-w-md mx-auto">
+          <div className="bg-primary/5 border border-primary/20 p-8 rounded-xl text-center">
+            <Bot className="h-12 w-12 text-primary mx-auto mb-4 opacity-50" />
+            <h4 className="text-lg font-medium text-foreground mb-2">No Recommendation Yet</h4>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               Generate an AI recommendation to see actionable insights based on team contributions.
             </p>
             <Button
               onClick={() => generateMutation.mutate(weights)}
-              className="bg-consensus-blue hover:bg-consensus-blue/90 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               Generate Recommendation
             </Button>
           </div>
         ) : (
           <>
-            <div className="bg-gradient-to-br from-consensus-dark-800 to-consensus-dark-900 border border-white/5 p-6 rounded-xl mb-6 shadow-lg relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-consensus-blue/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+            <div className="bg-gradient-to-br from-card to-secondary border border-border p-6 rounded-xl mb-6 shadow-lg relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 relative z-10">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                  <div className="p-2 rounded-full bg-green-500/10 text-green-600 border border-green-200">
                     <ThumbsUp className="h-5 w-5" />
                   </div>
                   <div>
-                    <span className="text-xs text-consensus-grey-400 uppercase tracking-wider font-semibold">Recommended Option</span>
-                    <h3 className="text-xl font-bold text-white mt-0.5">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Recommended Option</span>
+                    <h3 className="text-xl font-bold text-foreground mt-0.5">
                       {recommendation.recommendedOptionTitle}
                     </h3>
                   </div>
@@ -293,45 +293,45 @@ const RecommendationEngine = ({
                 </Badge>
               </div>
 
-              <div className="bg-black/20 rounded-lg p-4 border border-white/5 mb-4 backdrop-blur-sm relative z-10">
-                <p className="text-gray-300 leading-relaxed">
+              <div className="bg-muted/30 rounded-lg p-4 border border-border mb-4 backdrop-blur-sm relative z-10">
+                <p className="text-foreground leading-relaxed">
                   {recommendation.explanation}
                 </p>
               </div>
 
-              <div className="text-xs text-consensus-grey-500 flex items-center justify-end">
-                <span className="w-2 h-2 rounded-full bg-consensus-green mr-2 animate-pulse"></span>
+              <div className="text-xs text-muted-foreground flex items-center justify-end">
+                <span className="w-2 h-2 rounded-full bg-primary mr-2 animate-pulse"></span>
                 Last updated: {lastUpdated}
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <h4 className="font-medium text-white mb-4 flex items-center gap-2">
-                  <span className="w-1 h-5 rounded-full bg-consensus-teal"></span>
+                <h4 className="font-medium text-foreground mb-4 flex items-center gap-2">
+                  <span className="w-1 h-5 rounded-full bg-emerald-500"></span>
                   Ranked Options Analysis
                 </h4>
                 <div className="space-y-3">
                   {recommendation.rankedOptions.map((option, index) => (
-                    <div key={option.id} className="bg-white/5 border border-white/5 p-4 rounded-xl hover:bg-white/10 transition-colors group">
+                    <div key={option.id} className="bg-card border border-border p-4 rounded-xl hover:bg-muted/50 transition-colors group">
                       <div className="flex justify-between items-center mb-2">
-                        <div className="font-medium text-gray-200 flex items-center">
-                          <span className="w-6 h-6 rounded-full bg-black/30 text-consensus-grey-400 flex items-center justify-center text-xs mr-3 font-mono border border-white/5 group-hover:border-consensus-blue/30 group-hover:text-consensus-blue transition-colors">
+                        <div className="font-medium text-foreground flex items-center">
+                          <span className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs mr-3 font-mono border border-border group-hover:border-primary/30 group-hover:text-primary transition-colors">
                             {index + 1}
                           </span>
                           {option.title}
                         </div>
-                        <div className="text-sm font-mono text-consensus-blue">
-                          {option.totalScore.toFixed(1)}<span className="text-consensus-grey-500 text-xs ml-1">/ 100</span>
+                        <div className="text-sm font-mono text-primary">
+                          {option.totalScore.toFixed(1)}<span className="text-muted-foreground text-xs ml-1">/ 100</span>
                         </div>
                       </div>
-                      <div className="relative h-2 w-full bg-black/40 rounded-full overflow-hidden">
+                      <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
                         <div
-                          className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${index === 0 ? 'bg-gradient-to-r from-consensus-green to-consensus-teal' : 'bg-consensus-blue/60'}`}
+                          className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${index === 0 ? 'bg-gradient-to-r from-primary to-emerald-500' : 'bg-primary/60'}`}
                           style={{ width: `${option.totalScore}%` }}
                         ></div>
                       </div>
-                      <div className="flex justify-between mt-2 text-xs text-consensus-grey-500">
+                      <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                         <span>Support: {(option.supportScore * 100).toFixed(0)}%</span>
                         <span>Sentiment: {(option.sentimentScore * 100).toFixed(0)}%</span>
                       </div>
@@ -340,33 +340,33 @@ const RecommendationEngine = ({
                 </div>
               </div>
 
-              <div className="bg-white/5 border border-white/5 rounded-xl p-5 h-fit">
-                <h4 className="font-medium text-white mb-4">Actions</h4>
+              <div className="bg-card border border-border rounded-xl p-5 h-fit">
+                <h4 className="font-medium text-foreground mb-4">Actions</h4>
 
                 {recommendation.rankedOptions.length > 0 && (
                   <div className="space-y-4">
                     <div>
-                      <label className="text-xs text-consensus-grey-400 mb-2 block">Share Recommendation</label>
+                      <label className="text-xs text-muted-foreground mb-2 block">Share Recommendation</label>
                       <div className="flex gap-2">
                         <Input
                           placeholder="Email address..."
                           value={emailRecipient}
                           onChange={(e) => setEmailRecipient(e.target.value)}
-                          className="bg-black/30 border-white/10 text-sm text-white focus:border-consensus-blue/50"
+                          className="bg-background border-input text-sm text-foreground focus:border-primary/50"
                         />
                         <Button
                           size="icon"
                           onClick={() => emailMutation.mutate()}
                           disabled={!emailRecipient || emailMutation.isPending}
-                          className="bg-consensus-blue hover:bg-consensus-blue/90 shrink-0"
+                          className="bg-primary hover:bg-primary/90 shrink-0"
                         >
                           <Send className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
 
-                    <div className="pt-4 border-t border-white/5">
-                      <p className="text-xs text-consensus-grey-500 mb-3">
+                    <div className="pt-4 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-3">
                         This analysis incorporates support votes, sentiment analysis, and criteria weighting.
                       </p>
                     </div>
@@ -376,14 +376,14 @@ const RecommendationEngine = ({
             </div>
 
             {isAdmin && showParameters && (
-              <div className="mt-8 bg-black/20 border border-white/5 rounded-xl p-6 animate-fade-in">
+              <div className="mt-8 bg-muted/20 border border-border rounded-xl p-6 animate-fade-in">
                 <div className="flex justify-between items-center mb-6">
-                  <h4 className="font-medium text-white">Analysis Parameters</h4>
+                  <h4 className="font-medium text-foreground">Analysis Parameters</h4>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={resetWeights}
-                    className="text-consensus-grey-400 hover:text-white hover:bg-white/5 h-8 text-xs"
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 text-xs"
                   >
                     Reset to Default
                   </Button>
@@ -393,8 +393,8 @@ const RecommendationEngine = ({
                   <div className="space-y-4">
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <label className="text-sm font-medium text-gray-300">Support Weight</label>
-                        <span className="text-xs font-mono bg-consensus-blue/20 text-consensus-blue px-2 py-0.5 rounded border border-consensus-blue/30">
+                        <label className="text-sm font-medium text-foreground">Support Weight</label>
+                        <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20">
                           {formatWeight(weights.supportWeight)}
                         </span>
                       </div>
@@ -405,15 +405,15 @@ const RecommendationEngine = ({
                         onValueChange={handleWeightChange('supportWeight')}
                         className="py-1"
                       />
-                      <p className="text-xs text-consensus-grey-500">
+                      <p className="text-xs text-muted-foreground">
                         Importance of raw vote count.
                       </p>
                     </div>
 
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <label className="text-sm font-medium text-gray-300">Sentiment Weight</label>
-                        <span className="text-xs font-mono bg-consensus-blue/20 text-consensus-blue px-2 py-0.5 rounded border border-consensus-blue/30">
+                        <label className="text-sm font-medium text-foreground">Sentiment Weight</label>
+                        <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20">
                           {formatWeight(weights.sentimentWeight)}
                         </span>
                       </div>
@@ -424,7 +424,7 @@ const RecommendationEngine = ({
                         onValueChange={handleWeightChange('sentimentWeight')}
                         className="py-1"
                       />
-                      <p className="text-xs text-consensus-grey-500">
+                      <p className="text-xs text-muted-foreground">
                         Importance of qualitative feedback tone.
                       </p>
                     </div>
@@ -433,8 +433,8 @@ const RecommendationEngine = ({
                   <div className="space-y-4">
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <label className="text-sm font-medium text-gray-300">Criteria Weight</label>
-                        <span className="text-xs font-mono bg-consensus-blue/20 text-consensus-blue px-2 py-0.5 rounded border border-consensus-blue/30">
+                        <label className="text-sm font-medium text-foreground">Criteria Weight</label>
+                        <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20">
                           {formatWeight(weights.criteriaWeight)}
                         </span>
                       </div>
@@ -445,15 +445,15 @@ const RecommendationEngine = ({
                         onValueChange={handleWeightChange('criteriaWeight')}
                         className="py-1"
                       />
-                      <p className="text-xs text-consensus-grey-500">
+                      <p className="text-xs text-muted-foreground">
                         Importance of structured criteria ratings.
                       </p>
                     </div>
 
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <label className="text-sm font-medium text-gray-300">Historical Weight</label>
-                        <span className="text-xs font-mono bg-consensus-blue/20 text-consensus-blue px-2 py-0.5 rounded border border-consensus-blue/30">
+                        <label className="text-sm font-medium text-foreground">Historical Weight</label>
+                        <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20">
                           {formatWeight(weights.historicalWeight)}
                         </span>
                       </div>
@@ -464,7 +464,7 @@ const RecommendationEngine = ({
                         onValueChange={handleWeightChange('historicalWeight')}
                         className="py-1"
                       />
-                      <p className="text-xs text-consensus-grey-500">
+                      <p className="text-xs text-muted-foreground">
                         Relevance of past successful decisions.
                       </p>
                     </div>
@@ -475,7 +475,7 @@ const RecommendationEngine = ({
                   <Button
                     onClick={() => generateMutation.mutate(weights)}
                     disabled={generateMutation.isPending}
-                    className="bg-consensus-blue hover:bg-consensus-blue/90 text-white"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   >
                     <Bot className="h-4 w-4 mr-2" />
                     Apply New Parameters

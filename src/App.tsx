@@ -108,8 +108,8 @@ const App = () => {
   const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     if (loading || isAuthenticated === null) {
       return (
-        <div className="flex justify-center items-center h-screen bg-consensus-dark-500">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-green"></div>
+        <div className="flex justify-center items-center h-screen bg-background">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       );
     }

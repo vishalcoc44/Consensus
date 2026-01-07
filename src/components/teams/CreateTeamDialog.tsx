@@ -49,25 +49,25 @@ const CreateTeamDialog = ({ children }: CreateTeamDialogProps) => {
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
 				{children || (
-					<Button className="bg-consensus-green text-black hover:bg-consensus-green/90 font-medium">
+					<Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium">
 						<Plus className="mr-2 h-4 w-4" />
 						Create Team
 					</Button>
 				)}
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-[425px] glass-panel border-white/10 text-white">
+			<DialogContent className="sm:max-w-[425px] bg-background border-border text-foreground">
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2">
-						<Users className="h-5 w-5 text-consensus-green" />
+						<Users className="h-5 w-5 text-primary" />
 						Create New Team
 					</DialogTitle>
-					<DialogDescription className="text-consensus-grey-400">
+					<DialogDescription className="text-muted-foreground">
 						Create a new team to collaborate with others. You will be the admin.
 					</DialogDescription>
 				</DialogHeader>
 				<form onSubmit={handleSubmit} className="space-y-4 py-4">
 					<div className="space-y-2">
-						<Label htmlFor="name" className="text-consensus-grey-300">
+						<Label htmlFor="name" className="text-foreground">
 							Team Name
 						</Label>
 						<Input
@@ -75,12 +75,12 @@ const CreateTeamDialog = ({ children }: CreateTeamDialogProps) => {
 							placeholder="e.g. Engineering, Marketing"
 							value={name}
 							onChange={(e) => setName(e.target.value)}
-							className="bg-consensus-dark-300 border-white/10 text-white placeholder:text-consensus-grey-500 focus-visible:ring-consensus-green"
+							className="bg-background border-input text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
 							required
 						/>
 					</div>
 					<div className="space-y-2">
-						<Label htmlFor="description" className="text-consensus-grey-300">
+						<Label htmlFor="description" className="text-foreground">
 							Description (Optional)
 						</Label>
 						<Textarea
@@ -88,7 +88,7 @@ const CreateTeamDialog = ({ children }: CreateTeamDialogProps) => {
 							placeholder="Briefly describe what this team is for..."
 							value={description}
 							onChange={(e) => setDescription(e.target.value)}
-							className="bg-consensus-dark-300 border-white/10 text-white placeholder:text-consensus-grey-500 focus-visible:ring-consensus-green resize-none"
+							className="bg-background border-input text-foreground placeholder:text-muted-foreground focus-visible:ring-primary resize-none"
 							rows={3}
 						/>
 					</div>
@@ -97,14 +97,14 @@ const CreateTeamDialog = ({ children }: CreateTeamDialogProps) => {
 							type="button"
 							variant="ghost"
 							onClick={() => setOpen(false)}
-							className="text-consensus-grey-300 hover:text-white hover:bg-white/10"
+							className="text-muted-foreground hover:text-foreground hover:bg-muted"
 							disabled={isSubmitting}
 						>
 							Cancel
 						</Button>
 						<Button
 							type="submit"
-							className="bg-consensus-green text-black hover:bg-consensus-green/90"
+							className="bg-primary text-primary-foreground hover:bg-primary/90"
 							disabled={isSubmitting || !name.trim()}
 						>
 							{isSubmitting ? 'Creating...' : 'Create Team'}

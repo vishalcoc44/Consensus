@@ -194,74 +194,74 @@ const Dashboard = () => {
   return (
     <DashboardLayout>
       <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-sf font-bold mb-2 text-white">Welcome back</h1>
-        <p className="text-consensus-grey-400">Here's an overview of your organization's decision-making activities</p>
+        <h1 className="text-3xl font-sf font-bold mb-2 text-foreground">Welcome back</h1>
+        <p className="text-muted-foreground">Here's an overview of your organization's decision-making activities</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-1 hover:shadow-2xl transition-all duration-300 hover:border-consensus-green/30 hover-green-glow group">
+        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-1 hover:shadow-2xl transition-all duration-300 hover:border-primary/30 hover-green-glow group bg-card">
           <CardHeader className="pb-2">
-            <CardDescription className="text-consensus-grey-400">Active Decisions</CardDescription>
-            <CardTitle className="text-2xl text-white">{stats.activeDecisions}</CardTitle>
+            <CardDescription className="text-muted-foreground">Active Decisions</CardDescription>
+            <CardTitle className="text-2xl text-foreground">{stats.activeDecisions}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
-              <div className="text-sm text-consensus-grey-400">
+              <div className="text-sm text-muted-foreground">
                 <span className="text-emerald-500">+{Math.floor(stats.activeDecisions * 0.2)}</span> from last month
               </div>
               <div className="p-2 rounded-full bg-blue-500/10 border border-blue-500/20">
-                <Brain size={18} className="text-blue-400" />
+                <Brain size={18} className="text-blue-500" />
               </div>
             </div>
           </CardContent>
         </div>
 
-        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-2 hover:shadow-2xl transition-all duration-300 hover:border-consensus-green/30 hover-green-glow group">
+        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-2 hover:shadow-2xl transition-all duration-300 hover:border-primary/30 hover-green-glow group bg-card">
           <CardHeader className="pb-2">
-            <CardDescription className="text-consensus-grey-400">Team Members</CardDescription>
-            <CardTitle className="text-2xl text-white">{stats.teamMembers}</CardTitle>
+            <CardDescription className="text-muted-foreground">Team Members</CardDescription>
+            <CardTitle className="text-2xl text-foreground">{stats.teamMembers}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
-              <div className="text-sm text-consensus-grey-400">
+              <div className="text-sm text-muted-foreground">
                 <span className="text-emerald-500">+{Math.floor(stats.teamMembers * 0.15)}</span> new this month
               </div>
               <div className="p-2 rounded-full bg-purple-500/10 border border-purple-500/20">
-                <Users size={18} className="text-purple-400" />
+                <Users size={18} className="text-purple-500" />
               </div>
             </div>
           </CardContent>
         </div>
 
-        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-3 hover:shadow-2xl transition-all duration-300 hover:border-consensus-green/30 hover-green-glow group">
+        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-3 hover:shadow-2xl transition-all duration-300 hover:border-primary/30 hover-green-glow group bg-card">
           <CardHeader className="pb-2">
-            <CardDescription className="text-consensus-grey-400">Avg. Consensus</CardDescription>
-            <CardTitle className="text-2xl text-white">{stats.avgConsensus}%</CardTitle>
+            <CardDescription className="text-muted-foreground">Avg. Consensus</CardDescription>
+            <CardTitle className="text-2xl text-foreground">{stats.avgConsensus}%</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
-              <div className="text-sm text-consensus-grey-400">
+              <div className="text-sm text-muted-foreground">
                 <span className="text-emerald-500">+5%</span> improvement
               </div>
               <div className="p-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                <LineChart size={18} className="text-emerald-400" />
+                <LineChart size={18} className="text-emerald-500" />
               </div>
             </div>
           </CardContent>
         </div>
 
-        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-4 hover:shadow-2xl transition-all duration-300 hover:border-consensus-green/30 hover-green-glow group">
+        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-4 hover:shadow-2xl transition-all duration-300 hover:border-primary/30 hover-green-glow group bg-card">
           <CardHeader className="pb-2">
-            <CardDescription className="text-consensus-grey-400">Decision Velocity</CardDescription>
-            <CardTitle className="text-2xl text-white">{stats.decisionVelocity} days</CardTitle>
+            <CardDescription className="text-muted-foreground">Decision Velocity</CardDescription>
+            <CardTitle className="text-2xl text-foreground">{stats.decisionVelocity} days</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center">
-              <div className="text-sm text-consensus-grey-400">
+              <div className="text-sm text-muted-foreground">
                 <span className="text-emerald-500">-1.3 days</span> faster
               </div>
               <div className="p-2 rounded-full bg-amber-500/10 border border-amber-500/20">
-                <BarChart size={18} className="text-amber-400" />
+                <BarChart size={18} className="text-amber-500" />
               </div>
             </div>
           </CardContent>
@@ -269,16 +269,16 @@ const Dashboard = () => {
       </div>
 
       <div className="flex justify-between items-center mb-6 animate-fade-in animate-delay-5">
-        <h2 className="text-xl font-sf font-bold text-white">Active Decisions</h2>
+        <h2 className="text-xl font-sf font-bold text-foreground">Active Decisions</h2>
         <CreateDecisionButton />
       </div>
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-green"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       ) : decisions.length === 0 ? (
-        <div className="p-8 text-center text-consensus-grey-400 border border-dashed border-consensus-dark-200 rounded-lg animate-fade-in bg-consensus-dark-300/50">
+        <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded-lg animate-fade-in bg-muted/30">
           No active decisions yet. Use the "New Decision" button to create one.
         </div>
       ) : (

@@ -11,10 +11,10 @@ interface PasswordInputProps {
   showForgotPassword?: boolean;
 }
 
-const PasswordInput = ({ 
-  password, 
-  setPassword, 
-  showForgotPassword = false 
+const PasswordInput = ({
+  password,
+  setPassword,
+  showForgotPassword = false
 }: PasswordInputProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -25,33 +25,33 @@ const PasswordInput = ({
   return (
     <div className="space-y-2">
       <div className="flex justify-between">
-        <Label htmlFor="password" className="text-sm font-medium text-white">
+        <Label htmlFor="password" className="text-sm font-medium text-foreground">
           Password
         </Label>
         {showForgotPassword && (
-          <Link 
-            to="/forgot-password" 
-            className="text-sm text-consensus-green hover:text-consensus-teal transition-colors hover:underline"
+          <Link
+            to="/forgot-password"
+            className="text-sm text-primary hover:text-primary/80 transition-colors hover:underline"
           >
             Forgot password?
           </Link>
         )}
       </div>
       <div className="relative">
-        <LockIcon size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400" />
+        <LockIcon size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
         <Input
           id="password"
           type={showPassword ? 'text' : 'password'}
           placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="pl-10 py-6 pr-10 rounded-xl bg-consensus-dark-200 border-consensus-dark-100 text-white"
+          className="pl-10 py-6 pr-10 rounded-xl bg-background border-input text-foreground"
           required
         />
         <button
           type="button"
           onClick={toggleShowPassword}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400 hover:text-white"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
         >
           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>

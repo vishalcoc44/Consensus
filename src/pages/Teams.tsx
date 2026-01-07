@@ -113,7 +113,7 @@ const Teams = () => {
     return (
       <DashboardLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-blue"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       </DashboardLayout>
     );
@@ -122,7 +122,7 @@ const Teams = () => {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="p-8 text-center text-red-500 border border-dashed border-red-300 rounded-lg">
+        <div className="p-8 text-center text-destructive border border-dashed border-destructive/50 rounded-lg">
           Error loading teams: {error}
         </div>
       </DashboardLayout>
@@ -137,16 +137,16 @@ const Teams = () => {
     return (
       <DashboardLayout>
         <div className="mb-8 animate-fade-in">
-          <h1 className="text-3xl font-sf font-bold mb-2 text-white">Team Management</h1>
-          <p className="text-consensus-grey-400">You don't have any teams yet</p>
+          <h1 className="text-3xl font-sf font-bold mb-2 text-foreground">Team Management</h1>
+          <p className="text-muted-foreground">You don't have any teams yet</p>
         </div>
-        <div className="p-8 text-center text-consensus-grey-500 border border-dashed border-consensus-grey-300 rounded-lg">
+        <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded-lg bg-muted/30">
           <div className="mb-6">
-            <UserPlus size={48} className="mx-auto text-consensus-grey-600 mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">Join or create a team</h3>
-            <p className="text-consensus-grey-400 mb-6">You are not a member of any team yet.</p>
+            <UserPlus size={48} className="mx-auto text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Join or create a team</h3>
+            <p className="text-muted-foreground mb-6">You are not a member of any team yet.</p>
             <CreateTeamDialog>
-              <button className="px-4 py-2 bg-consensus-green text-black font-semibold rounded-lg hover:bg-consensus-green/90 transition-colors">
+              <button className="px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors">
                 Create a New Team
               </button>
             </CreateTeamDialog>
@@ -164,28 +164,28 @@ const Teams = () => {
       <DashboardLayout>
         <div className="mb-8 animate-fade-in flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-sf font-bold mb-2 text-white">Team Management</h1>
-            <p className="text-consensus-grey-400">Select or create a team to get started</p>
+            <h1 className="text-3xl font-sf font-bold mb-2 text-foreground">Team Management</h1>
+            <p className="text-muted-foreground">Select or create a team to get started</p>
           </div>
           <CreateTeamDialog />
         </div>
         {/* Show invites if any */}
         {myInvites && myInvites.length > 0 && (
-          <div className="glass-panel p-6 rounded-xl border border-white/10 mb-6">
-            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              <Bell size={20} className="text-consensus-green" />
+          <div className="glass-panel p-6 rounded-xl border border-border mb-6 bg-card">
+            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Bell size={20} className="text-primary" />
               Your Invitations ({myInvites.length})
             </h2>
             <ul className="space-y-3">
               {myInvites.map((invite: any) => (
-                <li key={invite.id} className="flex items-center justify-between p-3 bg-consensus-dark-300 rounded-lg border border-white/5">
+                <li key={invite.id} className="flex items-center justify-between p-3 bg-muted rounded-lg border border-border">
                   <div>
-                    <span className="font-medium text-white">{invite.team?.name || 'Unknown Team'}</span>
-                    <span className="text-consensus-grey-400 text-sm ml-2">as {invite.role}</span>
+                    <span className="font-medium text-foreground">{invite.team?.name || 'Unknown Team'}</span>
+                    <span className="text-muted-foreground text-sm ml-2">as {invite.role}</span>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => handleAcceptInvite(invite)} className="px-3 py-1 bg-consensus-green text-black text-sm rounded-md font-medium hover:bg-consensus-green/90">Accept</button>
-                    <button onClick={() => handleDeclineInvite(invite.id)} className="px-3 py-1 bg-red-500/20 text-red-400 text-sm rounded-md font-medium hover:bg-red-500/30">Decline</button>
+                    <button onClick={() => handleAcceptInvite(invite)} className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-md font-medium hover:bg-primary/90">Accept</button>
+                    <button onClick={() => handleDeclineInvite(invite.id)} className="px-3 py-1 bg-destructive/10 text-destructive text-sm rounded-md font-medium hover:bg-destructive/20">Decline</button>
                   </div>
                 </li>
               ))}
@@ -201,24 +201,24 @@ const Teams = () => {
       {/* Clean Header Section */}
       <div className="mb-8">
         {/* Banner with overlay gradient */}
-        <div className="relative w-full h-40 rounded-2xl overflow-hidden border border-white/10">
+        <div className="relative w-full h-40 rounded-2xl overflow-hidden border border-border">
           {currentTeam.banner_url ? (
             <img src={currentTeam.banner_url} alt="Cover" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-consensus-green/20 via-consensus-dark-300 to-purple-900/20" />
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 via-background to-purple-900/20" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         </div>
 
         {/* Team Info Row */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 -mt-12 px-6 relative z-10">
           <div className="flex items-end gap-5">
             {/* Avatar */}
-            <div className="w-20 h-20 rounded-2xl border-4 border-[#121212] overflow-hidden bg-consensus-dark-200 shadow-2xl flex-shrink-0">
+            <div className="w-20 h-20 rounded-2xl border-4 border-background overflow-hidden bg-muted shadow-2xl flex-shrink-0">
               {currentTeam.avatar_url ? (
                 <img src={currentTeam.avatar_url} alt={currentTeam.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-consensus-green to-consensus-teal text-black text-xl font-bold">
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-emerald-400 text-primary-foreground text-xl font-bold">
                   {currentTeam.name.substring(0, 2).toUpperCase()}
                 </div>
               )}
@@ -226,12 +226,12 @@ const Teams = () => {
 
             <div className="pb-1">
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold text-white">{currentTeam.name}</h1>
+                <h1 className="text-2xl font-bold text-foreground">{currentTeam.name}</h1>
                 {currentTeam.is_public && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 uppercase tracking-wider font-medium">Public</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-600 border border-green-500/30 uppercase tracking-wider font-medium">Public</span>
                 )}
               </div>
-              <p className="text-sm text-consensus-grey-400 max-w-md line-clamp-1">
+              <p className="text-sm text-muted-foreground max-w-md line-clamp-1">
                 {currentTeam.description || `${teamMembers.length} members`}
               </p>
             </div>
@@ -247,81 +247,81 @@ const Teams = () => {
       {/* Quick Info Bar */}
       <div className="flex flex-wrap gap-4 mb-6 px-2">
         {currentTeam.location && (
-          <div className="flex items-center gap-2 text-sm text-consensus-grey-400 bg-white/5 px-3 py-1.5 rounded-lg">
-            <MapPin size={14} className="text-consensus-grey-500" /> {currentTeam.location}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg border border-border">
+            <MapPin size={14} className="text-muted-foreground" /> {currentTeam.location}
           </div>
         )}
         {currentTeam.website_url && (
           <a href={currentTeam.website_url} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-consensus-grey-400 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors">
+            className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg hover:bg-muted hover:text-foreground transition-colors border border-border">
             <Globe size={14} /> Website
           </a>
         )}
         {currentTeam.twitter_handle && (
           <a href={`https://twitter.com/${currentTeam.twitter_handle}`} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-consensus-grey-400 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 hover:text-blue-400 transition-colors">
+            className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg hover:bg-muted hover:text-blue-500 transition-colors border border-border">
             <Twitter size={14} /> @{currentTeam.twitter_handle}
           </a>
         )}
         {currentTeam.github_url && (
           <a href={currentTeam.github_url} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-consensus-grey-400 bg-white/5 px-3 py-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors">
+            className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg hover:bg-muted hover:text-foreground transition-colors border border-border">
             <Github size={14} /> GitHub
           </a>
         )}
         {currentTeam.tags && currentTeam.tags.length > 0 && currentTeam.tags.map((tag: string, i: number) => (
-          <span key={i} className="flex items-center gap-1.5 text-xs text-consensus-grey-300 bg-consensus-dark-300/80 px-2.5 py-1.5 rounded-lg border border-white/5">
-            <Tag size={10} className="text-consensus-grey-500" /> {tag}
+          <span key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1.5 rounded-lg border border-border">
+            <Tag size={10} className="text-muted-foreground" /> {tag}
           </span>
         ))}
       </div>
 
       {/* Mission Statement */}
       {currentTeam.mission_statement && (
-        <div className="glass-panel p-5 rounded-xl border border-white/5 mb-6 max-w-3xl">
-          <h4 className="text-xs uppercase tracking-wider text-consensus-grey-500 font-semibold mb-2 flex items-center gap-2">
-            <span className="w-1 h-4 bg-consensus-green rounded-full"></span>
+        <div className="glass-panel p-5 rounded-xl border border-border mb-6 max-w-3xl bg-card">
+          <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 flex items-center gap-2">
+            <span className="w-1 h-4 bg-primary rounded-full"></span>
             Our Mission
           </h4>
-          <p className="text-consensus-grey-300 leading-relaxed">"{currentTeam.mission_statement}"</p>
+          <p className="text-muted-foreground leading-relaxed">"{currentTeam.mission_statement}"</p>
         </div>
       )}
 
       {/* Received Invitations Section */}
       {myInvites && myInvites.length > 0 && (
         <div className="mb-8 animate-fade-in">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-4">
-            <Bell size={20} className="text-consensus-green" />
+          <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-4">
+            <Bell size={20} className="text-primary" />
             Your Invitations
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {myInvites.map((invite: any) => (
-              <div key={invite.id} className="glass-panel p-5 rounded-xl border border-consensus-green/30 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-2 bg-consensus-green/10 rounded-bl-xl text-xs text-consensus-green font-bold">
+              <div key={invite.id} className="glass-panel p-5 rounded-xl border border-primary/30 relative overflow-hidden bg-card">
+                <div className="absolute top-0 right-0 p-2 bg-primary/10 rounded-bl-xl text-xs text-primary font-bold">
                   PENDING
                 </div>
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-white">{invite.team?.name || 'Unknown Team'}</h3>
-                  <p className="text-consensus-grey-400 text-sm">{invite.team?.description || 'No description provided'}</p>
+                  <h3 className="text-lg font-semibold text-foreground">{invite.team?.name || 'Unknown Team'}</h3>
+                  <p className="text-muted-foreground text-sm">{invite.team?.description || 'No description provided'}</p>
                 </div>
                 <div className="flex items-center gap-2 mb-6">
-                  <div className="w-6 h-6 rounded-full bg-consensus-dark-300 flex items-center justify-center text-[10px] text-white">
+                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] text-foreground">
                     {invite.inviter?.full_name?.charAt(0) || '?'}
                   </div>
-                  <span className="text-sm text-consensus-grey-300">
-                    Invited by <span className="text-white">{invite.inviter?.full_name || 'Admin'}</span> as <span className="text-consensus-teal capitalize font-medium">{invite.role}</span>
+                  <span className="text-sm text-muted-foreground">
+                    Invited by <span className="text-foreground">{invite.inviter?.full_name || 'Admin'}</span> as <span className="text-emerald-500 capitalize font-medium">{invite.role}</span>
                   </span>
                 </div>
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleAcceptInvite(invite)}
-                    className="flex-1 py-2 bg-consensus-green text-black font-semibold rounded-lg hover:bg-consensus-green/90 transition-colors"
+                    className="flex-1 py-2 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors"
                   >
                     Accept
                   </button>
                   <button
                     onClick={() => handleDeclineInvite(invite.id)}
-                    className="flex-1 py-2 bg-transparent border border-white/20 text-white font-medium rounded-lg hover:bg-white/10 transition-colors"
+                    className="flex-1 py-2 bg-transparent border border-border text-foreground font-medium rounded-lg hover:bg-muted transition-colors"
                   >
                     Decline
                   </button>
@@ -336,35 +336,35 @@ const Teams = () => {
       {teams.length > 0 && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="glass-panel p-6 rounded-2xl animate-fade-in">
-              <div className="pb-2 mb-4 border-b border-white/5">
-                <h3 className="text-xl font-semibold text-white">Team Members</h3>
+            <div className="glass-panel p-6 rounded-2xl animate-fade-in bg-card">
+              <div className="pb-2 mb-4 border-b border-border">
+                <h3 className="text-xl font-semibold text-foreground">Team Members</h3>
               </div>
               <div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-3xl font-bold text-white">{teamMembers.length}</p>
-                    <p className="text-sm text-consensus-grey-400">Total members</p>
+                    <p className="text-3xl font-bold text-foreground">{teamMembers.length}</p>
+                    <p className="text-sm text-muted-foreground">Total members</p>
                   </div>
-                  <div className="p-3 rounded-full bg-consensus-green/20 border border-consensus-green/30">
-                    <Users size={24} className="text-consensus-green" />
+                  <div className="p-3 rounded-full bg-primary/10 border border-primary/20">
+                    <Users size={24} className="text-primary" />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="glass-panel p-6 rounded-2xl animate-fade-in animate-delay-1">
-              <div className="pb-2 mb-4 border-b border-white/5">
-                <h3 className="text-xl font-semibold text-white">Role Distribution</h3>
+            <div className="glass-panel p-6 rounded-2xl animate-fade-in animate-delay-1 bg-card">
+              <div className="pb-2 mb-4 border-b border-border">
+                <h3 className="text-xl font-semibold text-foreground">Role Distribution</h3>
               </div>
               <div>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-consensus-grey-300">Admins</span>
-                      <span className="text-sm font-medium text-white">{roleStats.admin}</span>
+                      <span className="text-sm text-muted-foreground">Admins</span>
+                      <span className="text-sm font-medium text-foreground">{roleStats.admin}</span>
                     </div>
-                    <div className="h-2 bg-consensus-dark-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.4)]"
                         style={{ width: `${teamMembers.length ? (roleStats.admin / teamMembers.length) * 100 : 0}%` }}
@@ -374,10 +374,10 @@ const Teams = () => {
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-consensus-grey-300">Proposers</span>
-                      <span className="text-sm font-medium text-white">{roleStats.proposer}</span>
+                      <span className="text-sm text-muted-foreground">Proposers</span>
+                      <span className="text-sm font-medium text-foreground">{roleStats.proposer}</span>
                     </div>
-                    <div className="h-2 bg-consensus-dark-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.4)]"
                         style={{ width: `${teamMembers.length ? (roleStats.proposer / teamMembers.length) * 100 : 0}%` }}
@@ -387,12 +387,12 @@ const Teams = () => {
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-consensus-grey-300">Contributors</span>
-                      <span className="text-sm font-medium text-white">{roleStats.contributor}</span>
+                      <span className="text-sm text-muted-foreground">Contributors</span>
+                      <span className="text-sm font-medium text-foreground">{roleStats.contributor}</span>
                     </div>
-                    <div className="h-2 bg-consensus-dark-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-consensus-green shadow-[0_0_10px_rgba(74,222,128,0.4)]"
+                        className="h-full bg-primary shadow-[0_0_10px_rgba(74,222,128,0.4)]"
                         style={{ width: `${teamMembers.length ? (roleStats.contributor / teamMembers.length) * 100 : 0}%` }}
                       ></div>
                     </div>
@@ -401,12 +401,12 @@ const Teams = () => {
               </div>
             </div>
 
-            <div className="glass-panel p-6 rounded-2xl animate-fade-in animate-delay-2 flex flex-col justify-center items-center text-center">
-              <div className="p-4 rounded-full bg-consensus-dark-200 mb-4 border border-white/5">
-                <UserPlus size={32} className="text-consensus-teal" />
+            <div className="glass-panel p-6 rounded-2xl animate-fade-in animate-delay-2 flex flex-col justify-center items-center text-center bg-card">
+              <div className="p-4 rounded-full bg-muted mb-4 border border-border">
+                <UserPlus size={32} className="text-emerald-500" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Grow Your Team</h3>
-              <p className="text-sm text-consensus-grey-400 mb-6">Invite new members to collaborate on proposals.</p>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Grow Your Team</h3>
+              <p className="text-sm text-muted-foreground mb-6">Invite new members to collaborate on proposals.</p>
               <AddTeamMemberDialog
                 onAddMember={handleAddTeamMember}
                 teamId={currentTeam?.id}
@@ -415,8 +415,8 @@ const Teams = () => {
           </div>
 
           <div className="flex justify-between items-center mb-6 animate-fade-in animate-delay-3">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Users size={20} className="text-consensus-green" />
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Users size={20} className="text-primary" />
               All Team Members
             </h2>
 
@@ -432,28 +432,28 @@ const Teams = () => {
           {/* Pending Invites Section - Only visible to admins */}
           {currentTeam?.role === 'admin' && currentTeam?.pendingInvites && currentTeam.pendingInvites.length > 0 && (
             <div className="mb-8 animate-fade-in animate-delay-2">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-4">
-                <UserPlus size={20} className="text-consensus-teal" />
+              <h2 className="text-xl font-bold text-foreground flex items-center gap-2 mb-4">
+                <UserPlus size={20} className="text-emerald-500" />
                 Pending Invitations
               </h2>
               <div className="grid grid-cols-1 gap-4">
                 {currentTeam.pendingInvites.map((invite: any) => (
-                  <div key={invite.id} className="glass-panel p-4 rounded-xl flex items-center justify-between border border-white/5">
+                  <div key={invite.id} className="glass-panel p-4 rounded-xl flex items-center justify-between border border-border bg-card">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-consensus-teal/20 flex items-center justify-center text-consensus-teal border border-consensus-teal/30">
+                      <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 border border-emerald-500/30">
                         <Users size={18} />
                       </div>
                       <div>
-                        <p className="text-white font-medium">{invite.email}</p>
+                        <p className="text-foreground font-medium">{invite.email}</p>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-consensus-grey-400 capitalize">{invite.role}</span>
-                          <span className="w-1 h-1 rounded-full bg-consensus-grey-600"></span>
-                          <span className="text-xs text-consensus-teal">Pending</span>
+                          <span className="text-xs text-muted-foreground capitalize">{invite.role}</span>
+                          <span className="w-1 h-1 rounded-full bg-muted-foreground"></span>
+                          <span className="text-xs text-emerald-500">Pending</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-consensus-grey-500">
+                      <span className="text-xs text-muted-foreground">
                         Sent {new Date(invite.created_at).toLocaleDateString()}
                       </span>
                       {/* Future: Add Cancel/Resend buttons here */}
@@ -466,12 +466,12 @@ const Teams = () => {
 
           <div className="grid grid-cols-1 gap-4 animate-fade-in animate-delay-3 pb-8">
             {teamMembers.length === 0 ? (
-              <div className="p-12 text-center border border-dashed border-consensus-dark-100 rounded-2xl bg-consensus-dark-300/50">
-                <div className="mx-auto w-16 h-16 bg-consensus-dark-200 rounded-full flex items-center justify-center mb-4">
-                  <Users size={32} className="text-consensus-grey-500" />
+              <div className="p-12 text-center border border-dashed border-border rounded-2xl bg-muted/30">
+                <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                  <Users size={32} className="text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-medium text-white mb-2">No team members yet</h3>
-                <p className="text-consensus-grey-400 mb-6">Add your first team member to get started.</p>
+                <h3 className="text-lg font-medium text-foreground mb-2">No team members yet</h3>
+                <p className="text-muted-foreground mb-6">Add your first team member to get started.</p>
                 <AddTeamMemberDialog
                   onAddMember={handleAddTeamMember}
                   teamId={currentTeam?.id}

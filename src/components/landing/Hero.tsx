@@ -63,7 +63,7 @@ const Hero = () => {
 	return (
 		<section
 			ref={containerRef}
-			className="relative pt-32 pb-24 md:pt-40 md:pb-32 overflow-hidden bg-consensus-dark-500"
+			className="relative pt-32 pb-24 md:pt-40 md:pb-32 overflow-hidden bg-background"
 			style={{
 				perspective: "1000px"
 			}}
@@ -74,7 +74,7 @@ const Hero = () => {
 
 			{/* Decorative Elements with improved animation */}
 			<div
-				className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-consensus-green/10 rounded-full blur-3xl parallax-element"
+				className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl parallax-element"
 				data-speed-x="0.5"
 				data-speed-y="0.7"
 				style={{
@@ -83,7 +83,7 @@ const Hero = () => {
 				}}
 			></div>
 			<div
-				className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-consensus-teal/10 rounded-full blur-3xl parallax-element"
+				className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-3xl parallax-element"
 				data-speed-x="0.7"
 				data-speed-y="0.5"
 				style={{
@@ -94,7 +94,7 @@ const Hero = () => {
 
 			{/* Floating Elements with improved animation */}
 			<div
-				className="hidden lg:block absolute top-1/3 right-[10%] w-20 h-20 bg-consensus-dark-200/50 backdrop-blur-md rounded-xl shadow-lg rotate-12 parallax-element animate-float border border-consensus-green/20"
+				className="hidden lg:block absolute top-1/3 right-[10%] w-20 h-20 bg-muted/50 backdrop-blur-md rounded-xl shadow-lg rotate-12 parallax-element animate-float border border-primary/20"
 				data-speed-x="1.5"
 				data-speed-y="1.2"
 				style={{
@@ -102,7 +102,7 @@ const Hero = () => {
 				}}
 			></div>
 			<div
-				className="hidden lg:block absolute bottom-1/4 left-[20%] w-14 h-14 bg-consensus-dark-200/50 backdrop-blur-md rounded-xl shadow-lg -rotate-12 parallax-element animate-float border border-consensus-teal/20"
+				className="hidden lg:block absolute bottom-1/4 left-[20%] w-14 h-14 bg-muted/50 backdrop-blur-md rounded-xl shadow-lg -rotate-12 parallax-element animate-float border border-emerald-500/20"
 				style={{
 					animationDelay: '1s',
 					transform: `rotate(${-12 + Math.cos(Date.now() / 2000) * 5}deg)`,
@@ -120,12 +120,12 @@ const Hero = () => {
 			>
 				<div className="max-w-4xl mx-auto text-center">
 					<div
-						className="inline-block px-4 py-1.5 bg-consensus-dark-200/80 backdrop-blur-sm rounded-full shadow-sm mb-6 animate-fade-in border border-consensus-dark-100 transform transition-transform hover:scale-105"
+						className="inline-block px-4 py-1.5 bg-muted/80 backdrop-blur-sm rounded-full shadow-sm mb-6 animate-fade-in border border-border transform transition-transform hover:scale-105"
 					>
-						<span className="text-sm font-medium text-consensus-grey-300">Revolutionizing Decision-Making</span>
+						<span className="text-sm font-medium text-muted-foreground">Revolutionizing Decision-Making</span>
 					</div>
 
-					<h1 className="font-sf text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight animate-fade-in text-white">
+					<h1 className="font-sf text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight animate-fade-in text-foreground">
 						<span>Make Better Decisions with </span>
 						<span
 							className="hero-text-gradient"
@@ -138,7 +138,7 @@ const Hero = () => {
 						</span>
 					</h1>
 
-					<p className="text-xl md:text-2xl text-consensus-grey-300 mb-8 max-w-3xl mx-auto animate-fade-in animate-delay-1">
+					<p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto animate-fade-in animate-delay-1">
 						ConsensusAI combines human wisdom and artificial intelligence to help teams make smarter, faster, and more inclusive decisions.
 					</p>
 
@@ -146,7 +146,7 @@ const Hero = () => {
 						<Link to="/register">
 							<Button
 								size="lg"
-								className="rounded-full px-8 py-6 bg-consensus-green hover:bg-consensus-green/90 hover:scale-105 transition-all shadow-lg shadow-consensus-green/20 hover:shadow-consensus-green/40 text-consensus-dark-800 font-semibold"
+								className="rounded-full px-8 py-6 bg-primary hover:bg-primary/90 hover:scale-105 transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 text-primary-foreground font-semibold"
 								onMouseEnter={(e) => {
 									const btn = e.currentTarget;
 									btn.style.transform = 'translateY(-5px) scale(1.05)';
@@ -166,7 +166,7 @@ const Hero = () => {
 							<Button
 								size="lg"
 								variant="outline"
-								className="rounded-full px-8 py-6 border-consensus-grey-600 text-white hover:bg-consensus-green/10 hover:border-consensus-green/50 transition-all"
+								className="rounded-full px-8 py-6 border-input text-foreground hover:bg-primary/10 hover:border-primary/50 transition-all"
 								onMouseEnter={(e) => {
 									const btn = e.currentTarget;
 									btn.style.borderColor = 'rgba(74, 222, 128, 0.5)';
@@ -192,7 +192,7 @@ const Hero = () => {
 					}}
 				>
 					<div
-						className="glass-panel rounded-xl overflow-hidden border border-consensus-dark-100 shadow-[0_0_30px_rgba(74,222,128,0.1)] transition-all duration-300 hover:shadow-[0_0_50px_rgba(74,222,128,0.2)]"
+						className="glass-panel rounded-xl overflow-hidden border border-border shadow-[0_0_30px_rgba(74,222,128,0.1)] transition-all duration-300 hover:shadow-[0_0_50px_rgba(74,222,128,0.2)]"
 						onMouseEnter={(e) => {
 							const panel = e.currentTarget;
 							panel.style.transform = 'scale(1.02)';
@@ -207,7 +207,7 @@ const Hero = () => {
 						<img
 							src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2940&q=80"
 							alt="Team using ConsensusAI to make decisions"
-							className="w-full h-auto object-cover shadow-lg transform hover:scale-[1.01] transition-transform duration-500 brightness-[0.85] contrast-[1.1]"
+							className="w-full h-auto object-cover shadow-lg transform hover:scale-[1.01] transition-transform duration-500 brightness-[0.9] contrast-[1.05]"
 						/>
 					</div>
 				</div>
@@ -220,9 +220,9 @@ const Hero = () => {
 						transition: 'opacity 0.5s ease-out'
 					}}
 				>
-					<div className="w-8 h-12 border-2 border-consensus-green/40 rounded-full flex justify-center">
+					<div className="w-8 h-12 border-2 border-primary/40 rounded-full flex justify-center">
 						<div
-							className="w-1.5 h-3 bg-consensus-green/70 rounded-full mt-2"
+							className="w-1.5 h-3 bg-primary/70 rounded-full mt-2"
 							style={{
 								animation: 'float 1.5s ease-in-out infinite',
 								opacity: 0.7 + Math.sin(Date.now() / 500) * 0.3

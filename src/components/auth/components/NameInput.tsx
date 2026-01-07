@@ -11,18 +11,18 @@ interface NameInputProps {
 const NameInput = ({ name, setName }: NameInputProps) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="name" className="text-sm font-medium text-white">
+      <Label htmlFor="name" className="text-sm font-medium text-foreground">
         Full Name
       </Label>
       <div className="relative">
-        <User size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-consensus-grey-400" />
+        <User size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
         <Input
           id="name"
           type="text"
           placeholder="Enter your name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="pl-10 py-6 rounded-xl bg-consensus-dark-200 border-consensus-dark-100 text-white"
+          className="pl-10 py-6 rounded-xl bg-background border-input text-foreground"
           required
         />
       </div>

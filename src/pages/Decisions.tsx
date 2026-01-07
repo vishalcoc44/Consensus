@@ -208,17 +208,17 @@ const Decisions = () => {
     <DashboardLayout>
       <div className="mb-8 animate-fade-in">
         <h1 className="text-3xl font-sf font-bold mb-2">Decision Management</h1>
-        <p className="text-consensus-grey-600">View and manage all your organization's decisions</p>
+        <p className="text-muted-foreground">View and manage all your organization's decisions</p>
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 animate-fade-in">
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative flex-grow">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-consensus-grey-500" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search decisions..."
-              className="pl-9 pr-4 py-2 bg-consensus-dark-300 border-white/10 text-white placeholder:text-consensus-grey-500 focus-visible:ring-consensus-green/50"
+              className="pl-9 pr-4 py-2 bg-background border-input text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/50"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -226,7 +226,7 @@ const Decisions = () => {
 
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-2 border-white/10 bg-consensus-dark-300 hover:bg-consensus-dark-100 text-white hover:text-white">
+              <Button variant="outline" size="sm" className="flex items-center gap-2 border-border bg-background hover:bg-muted text-foreground hover:text-foreground">
                 <SlidersHorizontal size={16} />
                 <span>Filters</span>
               </Button>
@@ -275,15 +275,15 @@ const Decisions = () => {
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-consensus-green"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       ) : filteredDecisions.length === 0 ? (
         searchQuery || statusFilter !== 'all' ? (
-          <div className="p-8 text-center text-consensus-grey-500 border border-dashed border-consensus-grey-300 rounded-lg animate-fade-in">
+          <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded-lg animate-fade-in">
             No decisions match your filters. Try adjusting your search criteria.
           </div>
         ) : (
-          <div className="p-8 text-center text-consensus-grey-500 border border-dashed border-consensus-grey-300 rounded-lg animate-fade-in">
+          <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded-lg animate-fade-in">
             No decisions yet. Use the "New Decision" button to create one.
           </div>
         )
