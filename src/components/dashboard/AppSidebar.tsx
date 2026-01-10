@@ -97,18 +97,19 @@ export function AppSidebar() {
 			<button
 				onClick={() => handleNavigate(item.href)}
 				className={cn(
-					"w-full flex items-center gap-3 px-2 py-2 rounded-lg transition-all duration-200 group relative justify-start",
+					"w-full flex items-center gap-0 px-0 py-2 rounded-lg transition-all duration-200 group relative justify-start",
 					isActive
 						? "bg-primary/10 text-primary font-medium"
 						: "text-muted-foreground hover:bg-muted hover:text-primary",
-					isDisplayCollapsed ? "justify-center px-2" : ""
 				)}
 				title={isDisplayCollapsed ? item.label : undefined}
 			>
-				<Icon className={cn("h-5 w-5 flex-shrink-0 transition-colors", isActive ? "text-primary" : "group-hover:text-primary")} />
+				<div className="w-16 flex items-center justify-center shrink-0">
+					<Icon className={cn("h-5 w-5 flex-shrink-0 transition-colors", isActive ? "text-primary" : "group-hover:text-primary")} />
+				</div>
 
 				<span className={cn(
-					"flex-1 text-left text-sm transition-all duration-300 overflow-hidden whitespace-nowrap",
+					"flex-1 text-left text-sm transition-all duration-300 overflow-hidden whitespace-nowrap pl-2",
 					isDisplayCollapsed ? "w-0 opacity-0 min-w-0 hidden" : "w-auto opacity-100 min-w-auto block"
 				)}>
 					{item.label}
@@ -117,7 +118,7 @@ export function AppSidebar() {
 				{(badgeCount || 0) > 0 && (
 					<div className={cn(
 						"transition-all duration-300",
-						isDisplayCollapsed ? "absolute top-1 right-1" : ""
+						isDisplayCollapsed ? "absolute top-1 right-2" : "mr-3"
 					)}>
 						<Badge
 							className="h-5 min-w-[1.25rem] flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] p-0.5 px-1.5 shadow-sm"
@@ -141,27 +142,28 @@ export function AppSidebar() {
 		>
 			{/* Logo */}
 			<div className={cn(
-				"flex items-center gap-3 h-20 mb-2 transition-all duration-300 ease-in-out border-b border-border/50",
-				isDisplayCollapsed ? "justify-center px-0" : "px-6"
+				"flex items-center gap-0 h-20 mb-2 transition-all duration-300 ease-in-out border-b border-border/50 px-2",
 			)}>
-				<div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-consensus-green to-consensus-teal shrink-0 shadow-md">
-					<span className="text-white font-bold text-xl">C</span>
+				<div className="w-16 flex items-center justify-center shrink-0">
+					<div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-consensus-green to-consensus-teal shrink-0 shadow-md">
+						<span className="text-white font-bold text-xl">C</span>
+					</div>
 				</div>
 				<div className={cn(
 					"flex flex-col transition-all duration-300 overflow-hidden whitespace-nowrap",
 					isDisplayCollapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100 block"
 				)}>
-					<span className="inline-block font-bold text-lg text-foreground tracking-tight">
+					<span className="inline-block font-bold text-lg text-foreground tracking-tight pl-2">
 						ConsensusAI
 					</span>
 				</div>
 			</div>
 
 			{/* Main Navigation */}
-			<nav className="flex-1 overflow-y-auto px-4 py-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+			<nav className="flex-1 overflow-y-auto px-2 py-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 				<div>
 					{!isDisplayCollapsed && (
-						<h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 animate-fade-in">
+						<h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 animate-fade-in whitespace-nowrap overflow-hidden">
 							Menu
 						</h3>
 					)}
@@ -181,22 +183,24 @@ export function AppSidebar() {
 			</button>
 
 			{/* User Profile */}
-			<div className="border-t border-border p-3 mt-auto">
+			<div className="border-t border-border p-2 mt-auto">
 				<div
 					onClick={() => handleNavigate('/dashboard/settings')}
 					className={cn(
-						"flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer group",
-						isDisplayCollapsed && "justify-center"
+						"flex items-center gap-0 p-0 py-2 rounded-lg hover:bg-muted transition-colors cursor-pointer group",
 					)}
 				>
-					<Avatar className="h-9 w-9 border border-border group-hover:border-primary/50 transition-colors">
-						<AvatarImage src={profile?.avatarUrl} />
-						<AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-							{profile?.fullName?.charAt(0) || "U"}
-						</AvatarFallback>
-					</Avatar>
+					<div className="w-16 flex items-center justify-center shrink-0">
+						<Avatar className="h-9 w-9 border border-border group-hover:border-primary/50 transition-colors">
+							<AvatarImage src={profile?.avatarUrl} />
+							<AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+								{profile?.fullName?.charAt(0) || "U"}
+							</AvatarFallback>
+						</Avatar>
+					</div>
+
 					<div className={cn(
-						"flex-1 min-w-0 transition-all duration-300 overflow-hidden whitespace-nowrap",
+						"flex-1 min-w-0 transition-all duration-300 overflow-hidden whitespace-nowrap pl-2",
 						isDisplayCollapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100 block"
 					)}>
 						<p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">

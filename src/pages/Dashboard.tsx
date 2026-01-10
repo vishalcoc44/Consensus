@@ -5,6 +5,16 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DecisionCard from '@/components/dashboard/DecisionCard';
 import CreateDecisionButton from '@/components/dashboard/CreateDecisionButton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { LineChart, BarChart, Users, Brain } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -25,7 +35,12 @@ interface Decision {
   comments: number;
   progress: number;
   status: 'active' | 'completed' | 'archived';
+  status: 'active' | 'completed' | 'archived';
   consensus: number;
+  created_by_profile?: {
+    full_name: string | null;
+    avatar_url: string | null;
+  };
 }
 
 const Dashboard = () => {
@@ -37,6 +52,8 @@ const Dashboard = () => {
     decisionVelocity: 4.2,
   });
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [teamRoles, setTeamRoles] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -45,9 +62,42 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
+  // Helper functions defined before usage in fetchDashboardData
+  const getActiveDecisionsCount = async (): Promise<number> => {
+    try {
+      const { count, error } = await supabase
+        .from('proposals')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
+
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error('Error counting active decisions:', error);
+      return 0;
+    }
+  };
+
   const fetchDashboardData = async () => {
     try {
-      console.log("Fetching dashboard data with auth status:", await supabase.auth.getSession());
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setCurrentUserId(session.user.id);
+
+        // Fetch user's team roles for permission checks
+        const { data: teamMembersData } = await supabase
+          .from('team_members')
+          .select('team_id, role')
+          .eq('user_id', session.user.id);
+
+        if (teamMembersData) {
+          const rolesMap: Record<string, string> = {};
+          teamMembersData.forEach(tm => {
+            if (tm.team_id) rolesMap[tm.team_id] = tm.role;
+          });
+          setTeamRoles(rolesMap);
+        }
+      }
 
       // Get active decisions
       const { data: decisionsData, error: decisionsError } = await supabase
@@ -59,6 +109,8 @@ const Dashboard = () => {
           deadline, 
           status, 
           created_at,
+          created_by,
+          team_id,
           contributions(count),
           proposal_analysis(analysis_data)
         `)
@@ -82,7 +134,7 @@ const Dashboard = () => {
       // Count unique members to avoid double counting users who are in multiple teams
       const teamMembersCount = new Set(teamMembersData?.map(m => m.user_id)).size;
 
-      const activeDecisionsCount = await getActiveDecisionsCount();
+      const activeCount = await getActiveDecisionsCount();
 
       if (decisionsData) {
         const formattedDecisions: Decision[] = decisionsData.map(item => {
@@ -149,8 +201,28 @@ const Dashboard = () => {
             progress: progress,
             status: (item.status as 'active' | 'completed' | 'archived') || 'active',
             consensus: consensusScore,
-          };
+            created_by: item.created_by,
+            team_id: item.team_id
+          } as Decision & { created_by?: string; team_id?: string };
         });
+
+        // Fetch creator profiles
+        const creatorIds = [...new Set(formattedDecisions.map(d => d.created_by).filter(Boolean))];
+        if (creatorIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .in('id', creatorIds);
+
+          if (profiles) {
+            const profilesMap = Object.fromEntries(profiles.map(p => [p.id, p]));
+            formattedDecisions.forEach(d => {
+              if (d.created_by && profilesMap[d.created_by]) {
+                d.created_by_profile = profilesMap[d.created_by];
+              }
+            });
+          }
+        }
 
         const totalConsensus = formattedDecisions.reduce((sum, decision) => sum + decision.consensus, 0);
         const avgConsensus = formattedDecisions.length > 0 ?
@@ -158,7 +230,7 @@ const Dashboard = () => {
 
         setDecisions(formattedDecisions);
         setStats({
-          activeDecisions: activeDecisionsCount,
+          activeDecisions: activeCount,
           teamMembers: teamMembersCount || 0,
           avgConsensus: avgConsensus,
           decisionVelocity: 4.2,
@@ -176,23 +248,102 @@ const Dashboard = () => {
     }
   };
 
-  const getActiveDecisionsCount = async (): Promise<number> => {
-    try {
-      const { count, error } = await supabase
-        .from('proposals')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active');
+  const getCanDelete = (decision: Decision & { created_by?: string; team_id?: string }) => {
+    if (!currentUserId) return false;
+    // Creator can always delete
+    if (decision.created_by === currentUserId) return true;
 
-      if (error) throw error;
-      return count || 0;
-    } catch (error) {
-      console.error('Error counting active decisions:', error);
-      return 0;
+    // Team admins/owners can delete
+    if (decision.team_id && teamRoles[decision.team_id]) {
+      const role = teamRoles[decision.team_id];
+      if (role === 'admin' || role === 'owner' || role === 'Admin' || role === 'Owner') return true;
     }
+    return false;
   };
 
   const handleDecisionClick = (decisionId: string | number) => {
     navigate(`/dashboard/proposals/${decisionId}`);
+  };
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [decisionToDelete, setDecisionToDelete] = useState<Decision | null>(null);
+
+  const confirmDelete = (decision: Decision) => {
+    setDecisionToDelete(decision);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const executeDelete = async () => {
+    if (!decisionToDelete) return;
+
+    try {
+      console.log(`Attempting to delete decision ${decisionToDelete.id} from Dashboard...`);
+
+      // 1. Fetch contributions to find their IDs for deleting ratings
+      const { data: contributions } = await supabase
+        .from('contributions')
+        .select('id')
+        .eq('proposal_id', decisionToDelete.id);
+
+      // 2. Delete dependent data manually (safe fallback)
+      const deletePromises = [
+        supabase.from('proposal_options').delete().eq('proposal_id', decisionToDelete.id),
+        supabase.from('proposal_criteria').delete().eq('proposal_id', decisionToDelete.id),
+        supabase.from('proposal_analysis').delete().eq('proposal_id', decisionToDelete.id)
+      ];
+
+      // If there are contributions, delete their ratings first, then the contributions
+      if (contributions && contributions.length > 0) {
+        const contributionIds = contributions.map(c => c.id);
+        await supabase.from('contribution_ratings').delete().in('contribution_id', contributionIds);
+        deletePromises.push(supabase.from('contributions').delete().eq('proposal_id', decisionToDelete.id));
+      } else {
+        deletePromises.push(supabase.from('contributions').delete().eq('proposal_id', decisionToDelete.id));
+      }
+
+      await Promise.allSettled(deletePromises);
+
+      // 3. Delete the proposal
+      const { data, error } = await supabase
+        .from('proposals')
+        .delete()
+        .eq('id', decisionToDelete.id)
+        .select(); // Select to verify it was actually deleted
+
+      if (error) {
+        console.error("Supabase delete error:", error);
+        throw error;
+      }
+
+      // Check if any row was actually deleted
+      if (!data || data.length === 0) {
+        throw new Error("Deletion failed. You may not have permission to delete this decision, or it doesn't exist.");
+      }
+
+      toast({
+        title: "Decision deleted",
+        description: "The decision has been permanently removed.",
+      });
+
+      // 3. Optimistic update
+      setDecisions(prev => prev.filter(d => d.id !== decisionToDelete.id));
+      setStats(prev => ({
+        ...prev,
+        activeDecisions: Math.max(0, prev.activeDecisions - 1)
+      }));
+
+      fetchDashboardData();
+    } catch (error: any) {
+      console.error('Error deleting decision:', error);
+      toast({
+        title: "Error deleting decision",
+        description: error.message || "Failed to delete decision",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setDecisionToDelete(null);
+    }
   };
 
   return (
@@ -302,11 +453,34 @@ const Dashboard = () => {
                 progress={decision.progress}
                 status={decision.status}
                 consensus={decision.consensus}
+                onDelete={getCanDelete(decision as any) ? () => confirmDelete(decision) : undefined}
+                createdBy={decision.created_by_profile ? {
+                  name: decision.created_by_profile.full_name,
+                  avatarUrl: decision.created_by_profile.avatar_url
+                } : undefined}
               />
             </div>
           ))}
         </div>
       )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the decision
+              "{decisionToDelete?.title}" and remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={executeDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };

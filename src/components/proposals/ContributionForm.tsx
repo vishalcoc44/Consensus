@@ -14,13 +14,13 @@ import { useForm } from 'react-hook-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Option {
-  id: number;
+  id: string | number;
   title: string;
   description: string;
 }
 
 interface Criterion {
-  id: number;
+  id: string | number;
   name: string;
   weight: number;
   description: string;
@@ -46,7 +46,8 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [comment, setComment] = useState('');
   const [fileUpload, setFileUpload] = useState<File | null>(null);
-  const [criteriaRatings, setCriteriaRatings] = useState<Record<number, number>>(
+  // Use string | number for keys to handle both UUIDs and legacy numeric IDs
+  const [criteriaRatings, setCriteriaRatings] = useState<Record<string | number, number>>(
     proposal.criteria.reduce((acc, criterion) => ({
       ...acc,
       [criterion.id]: 0
@@ -56,7 +57,7 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
-    
+
     if (file) {
       // Check file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
@@ -67,12 +68,12 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
         });
         return;
       }
-      
+
       setFileUpload(file);
     }
   };
 
-  const updateRating = (criterionId: number, rating: number) => {
+  const updateRating = (criterionId: string | number, rating: number) => {
     setCriteriaRatings(prev => ({
       ...prev,
       [criterionId]: rating
@@ -81,53 +82,53 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
-    
+
     if (!selectedOption && selectedOption !== '0') {
       errors.option = 'Please select an option or choose to abstain';
     }
-    
+
     if (comment.length > 500) {
       errors.comment = 'Comment must be 500 characters or less';
     }
-    
+
     // Check if at least one criterion has been rated
     const hasRating = Object.values(criteriaRatings).some(rating => rating > 0);
     if (!hasRating) {
       errors.criteria = 'Please rate at least one criterion';
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     // Compile all data
     const contributionData = {
       proposalId: proposal.id,
       selectedOption,
       comment,
       fileUpload, // In a real app, this would be uploaded to storage
-      criteriaRatings,
+      ratings: criteriaRatings, // Fixed: Renamed from criteriaRatings to ratings to match ProposalDetails expectation
       timestamp: new Date().toISOString()
     };
-    
+
     // Simulate API delay
     setTimeout(() => {
       onSubmit(contributionData);
-      
+
       toast({
         title: "Contribution submitted",
         description: "Your input has been recorded successfully",
       });
-      
+
       setIsSubmitting(false);
     }, 1500);
   };
@@ -136,12 +137,12 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
     <form onSubmit={handleSubmit} className="space-y-8 animate-fade-in">
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <p className="text-sm text-blue-800">
-          You are providing input for <strong>{proposal.title}</strong>. Your contribution will help 
-          inform the final decision. Please vote for one option, rate the criteria, and optionally add 
+          You are providing input for <strong>{proposal.title}</strong>. Your contribution will help
+          inform the final decision. Please vote for one option, rate the criteria, and optionally add
           a comment or supporting document.
         </p>
       </div>
-      
+
       {Object.keys(formErrors).length > 0 && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -151,25 +152,25 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
           </AlertDescription>
         </Alert>
       )}
-      
+
       <Card>
         <CardContent className="p-6">
           <h3 className="text-lg font-medium mb-4">1. Select an Option</h3>
-          
-          <RadioGroup 
-            value={selectedOption ?? ''} 
+
+          <RadioGroup
+            value={selectedOption ?? ''}
             onValueChange={setSelectedOption}
             className="space-y-4"
           >
             {proposal.options.map((option) => (
               <div key={option.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-slate-50">
-                <RadioGroupItem 
-                  value={option.id.toString()} 
-                  id={`option-${option.id}`} 
+                <RadioGroupItem
+                  value={option.id.toString()}
+                  id={`option-${option.id}`}
                   className="mt-1"
                 />
                 <div className="flex-1">
-                  <Label 
+                  <Label
                     htmlFor={`option-${option.id}`}
                     className="text-base font-medium cursor-pointer"
                   >
@@ -183,11 +184,11 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
                 </div>
               </div>
             ))}
-            
+
             <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-slate-50">
               <RadioGroupItem value="0" id="option-abstain" className="mt-1" />
               <div className="flex-1">
-                <Label 
+                <Label
                   htmlFor="option-abstain"
                   className="text-base font-medium cursor-pointer"
                 >
@@ -199,17 +200,17 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
               </div>
             </div>
           </RadioGroup>
-          
+
           {formErrors.option && (
             <p className="text-sm text-red-500 mt-2">{formErrors.option}</p>
           )}
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardContent className="p-6">
           <h3 className="text-lg font-medium mb-4">2. Rate the Criteria</h3>
-          
+
           <div className="space-y-6">
             {proposal.criteria.map((criterion) => (
               <div key={criterion.id} className="space-y-2">
@@ -221,13 +222,13 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
                     </span>
                   </Label>
                 </div>
-                
+
                 {criterion.description && (
                   <p className="text-sm text-consensus-grey-600 mb-2">
                     {criterion.description}
                   </p>
                 )}
-                
+
                 <StarRating
                   value={criteriaRatings[criterion.id]}
                   onChange={(rating) => updateRating(criterion.id, rating)}
@@ -235,18 +236,18 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
               </div>
             ))}
           </div>
-          
+
           {formErrors.criteria && (
             <p className="text-sm text-red-500 mt-2">{formErrors.criteria}</p>
           )}
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardContent className="p-6 space-y-6">
           <div>
             <h3 className="text-lg font-medium mb-4">3. Add Your Comment (Optional)</h3>
-            
+
             <Textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -254,22 +255,22 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
               className="min-h-[120px]"
               maxLength={500}
             />
-            
+
             <div className="flex justify-end mt-2">
               <span className={`text-xs ${comment.length > 450 ? 'text-amber-600' : 'text-consensus-grey-500'}`}>
                 {comment.length}/500 characters
               </span>
             </div>
-            
+
             {formErrors.comment && (
               <p className="text-sm text-red-500 mt-1">{formErrors.comment}</p>
             )}
           </div>
-          
+
           <div>
             <h3 className="text-lg font-medium mb-4">4. Upload Supporting Document (Optional)</h3>
-            
-            <div 
+
+            <div
               className={`border-2 border-dashed ${fileUpload ? 'border-green-300 bg-green-50' : 'border-gray-300'} rounded-lg p-6 text-center`}
             >
               {fileUpload ? (
@@ -303,7 +304,7 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
                   </p>
                 </Label>
               )}
-              
+
               <Input
                 id="file-upload"
                 type="file"
@@ -315,7 +316,7 @@ const ContributionForm = ({ proposal, onSubmit }: ContributionFormProps) => {
           </div>
         </CardContent>
       </Card>
-      
+
       <div className="flex justify-end pt-4">
         <Button
           type="submit"

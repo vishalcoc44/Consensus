@@ -9,7 +9,6 @@ import { Lightbulb, Scale, RefreshCw, AlertTriangle, CheckCircle2, Sparkles, Che
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { generateConsensusAnalysis } from '@/utils/consensusBuilder';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from "@/components/ui/accordion";
 
@@ -17,30 +16,29 @@ interface ConsensusBuilderProps {
   proposalId?: string;
 }
 
+interface RankedOption {
+  id: string;
+  title: string;
+  description?: string;
+  supportScore: number;
+  sentimentScore: number;
+  criteriaScores: Record<string, number>;
+  weightedCriteriaScore: number;
+  totalScore: number;
+}
+
 interface ConsensusData {
-  broadSupportOptions: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    supportPercentage: number;
-    isContentious: boolean;
-    criteriaScores: Record<string, number>;
-  }>;
-  contentiousOptions: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    supportPercentage: number;
-    isContentious: boolean;
-    criteriaScores: Record<string, number>;
-  }>;
+  score: number;
+  analysis: string;
+  broadSupportIds: string[];
+  contentiousOptionIds: string[];
   suggestedCompromises: Array<{
     title: string;
     description: string;
-    baseOptionId: string;
+    reasoning: string;
     targetIssue: string;
     estimatedApproval: number;
-    reductionInDisagreement: number;
+    reductionInDisagreement?: number;
   }>;
   proposedNewOptions: Array<{
     title: string;
@@ -53,6 +51,8 @@ interface ConsensusData {
 interface AnalysisData {
   consensus?: ConsensusData;
   recommendation?: any;
+  rankedOptions?: RankedOption[];
+  mediator?: any;
 }
 
 interface AnalysisResponse {
@@ -80,7 +80,9 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
         .from('proposal_analysis')
         .select('analysis_data, updated_at')
         .eq('proposal_id', actualProposalId)
-        .single();
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -93,21 +95,30 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
   // Safely access the consensus data with proper type assertions
   const getAnalysisData = (): AnalysisData | undefined => {
     if (!consensusData?.analysis_data) return undefined;
+    const analysisData = consensusData.analysis_data as unknown as any;
 
-    // Handle different types the Json can be
-    const analysisData = consensusData.analysis_data;
-    if (typeof analysisData === 'object' && analysisData !== null) {
-      // Cast to AnalysisData to ensure TypeScript knows the structure
-      return analysisData as unknown as AnalysisData;
+    if (analysisData) {
+      return {
+        consensus: analysisData.consensus,
+        recommendation: analysisData.recommendation,
+        rankedOptions: analysisData.rankedOptions || [],
+        mediator: analysisData.mediator
+      };
     }
-
     return undefined;
   };
 
-  // Get analysis data and consensus data using the helper function
   const analysisData = getAnalysisData();
-  // Use optional chaining to safely access consensus, defaulting to null if not found
   const consensus = analysisData?.consensus || null;
+  const rankedOptions = analysisData?.rankedOptions || [];
+
+  // Helper to map IDs to Option Objects for display
+  const getOptionsByIds = (ids: string[] = []) => {
+    return ids.map(id => rankedOptions.find(opt => opt.id === id)).filter(Boolean) as RankedOption[];
+  };
+
+  const broadSupportOptions = getOptionsByIds(consensus?.broadSupportIds);
+  const contentiousOptions = getOptionsByIds(consensus?.contentiousOptionIds);
 
   const lastUpdated = consensusData?.updated_at
     ? new Date(consensusData.updated_at).toLocaleString()
@@ -116,52 +127,12 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
   // Mutation to generate consensus analysis
   const generateMutation = useMutation({
     mutationFn: async () => {
-      // Generate consensus analysis
-      const consensusResult = await generateConsensusAnalysis(actualProposalId as string);
+      const { data, error } = await supabase.functions.invoke('generate-recommendation', {
+        body: { proposalId: actualProposalId }
+      });
 
-      if (!consensusResult) {
-        throw new Error('Failed to generate consensus analysis');
-      }
-
-      // Get existing analysis data
-      const { data: existingAnalysis, error: fetchError } = await supabase
-        .from('proposal_analysis')
-        .select('analysis_data')
-        .eq('proposal_id', actualProposalId)
-        .single();
-
-      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "row not found" error
-        throw fetchError;
-      }
-
-      // Prepare the merged data object
-      let mergedData: Record<string, unknown> = {};
-
-      // Handle existing data (if any)
-      if (existingAnalysis && existingAnalysis.analysis_data) {
-        if (typeof existingAnalysis.analysis_data === 'object' && existingAnalysis.analysis_data !== null && !Array.isArray(existingAnalysis.analysis_data)) {
-          // If it's a non-null object (and not an array), spread its properties
-          mergedData = { ...existingAnalysis.analysis_data as Record<string, unknown> };
-        }
-      }
-
-      // Add the consensus result
-      mergedData.consensus = consensusResult;
-
-      // Save to database
-      const { error: saveError } = await supabase
-        .from('proposal_analysis')
-        .upsert({
-          proposal_id: actualProposalId,
-          analysis_data: mergedData as unknown as Json,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'proposal_id' });
-
-      if (saveError) {
-        throw saveError;
-      }
-
-      return consensusResult;
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['consensus', actualProposalId] });
@@ -182,14 +153,14 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
   // Render loading state
   if (isLoading) {
     return (
-      <div className="w-full glass-panel p-6 rounded-2xl animate-pulse">
+      <div className="w-full glass-panel p-4 rounded-xl animate-pulse">
         <div className="flex items-center gap-2 mb-2">
-          <Lightbulb className="h-5 w-5 text-consensus-blue" />
-          <h3 className="text-xl font-bold text-white">AI Consensus Builder</h3>
+          <Lightbulb className="h-4 w-4 text-primary" />
+          <h3 className="text-base font-bold text-foreground">AI Consensus Builder</h3>
         </div>
-        <p className="text-consensus-grey-400 mb-8 ml-7">Analyzing contributions to build consensus</p>
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin h-10 w-10 border-4 border-consensus-blue border-t-transparent rounded-full"></div>
+        <p className="text-[10px] text-muted-foreground mb-4 ml-6">Analyzing contributions...</p>
+        <div className="flex justify-center items-center py-6">
+          <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
         </div>
       </div>
     );
@@ -198,24 +169,25 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
   // Render error state
   if (isError) {
     return (
-      <div className="w-full glass-panel p-6 rounded-2xl border-red-500/20">
+      <div className="w-full glass-panel p-4 rounded-xl border-red-200">
         <div className="flex items-center gap-2 mb-2">
-          <Lightbulb className="h-5 w-5 text-consensus-blue" />
-          <h3 className="text-xl font-bold text-white">AI Consensus Builder</h3>
+          <Lightbulb className="h-4 w-4 text-primary" />
+          <h3 className="text-base font-bold text-foreground">AI Consensus Builder</h3>
         </div>
-        <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-xl text-red-200 mt-6">
+        <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-600 mt-2 text-xs">
           <p className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
+            <AlertTriangle className="h-3.5 w-3.5" />
             {(error as Error).message}
           </p>
         </div>
         <Button
           onClick={() => generateMutation.mutate()}
-          className="mt-6 bg-consensus-blue hover:bg-consensus-blue/90"
+          className="mt-3 h-7 text-xs"
+          size="sm"
           disabled={generateMutation.isPending}
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`} />
-          Retry Analysis
+          <RefreshCw className={`h-3 w-3 mr-1.5 ${generateMutation.isPending ? 'animate-spin' : ''}`} />
+          Retry
         </Button>
       </div>
     );
@@ -224,28 +196,28 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
   // If no consensus data exists yet, render a button to generate it
   if (!consensus) {
     return (
-      <div className="w-full glass-panel p-8 rounded-2xl flex flex-col items-center text-center">
-        <div className="w-16 h-16 bg-consensus-blue/10 rounded-full flex items-center justify-center mb-6">
-          <Lightbulb className="h-8 w-8 text-consensus-blue" />
+      <div className="w-full glass-panel p-6 rounded-xl flex flex-col items-center text-center">
+        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+          <Lightbulb className="h-5 w-5 text-primary" />
         </div>
-        <h3 className="text-2xl font-bold text-white mb-2">Build Consensus with AI</h3>
-        <p className="text-consensus-grey-400 max-w-md mb-8">
-          Generate AI-driven suggestions to find common ground, identify friction points, and discover new compromise options.
+        <h3 className="text-lg font-bold text-foreground mb-1">Build Consensus</h3>
+        <p className="text-xs text-muted-foreground max-w-xs mb-4">
+          Generate suggestions to find common ground.
         </p>
         <Button
           onClick={() => generateMutation.mutate()}
           disabled={generateMutation.isPending}
-          className="bg-consensus-blue hover:bg-consensus-blue/90 text-white px-8 py-6 rounded-xl text-lg shadow-lg shadow-consensus-blue/20"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg text-sm shadow-sm"
         >
           {generateMutation.isPending ? (
             <>
-              <RefreshCw className="h-5 w-5 mr-3 animate-spin" />
-              Analyzing Data...
+              <RefreshCw className="h-3.5 w-3.5 mr-2 animate-spin" />
+              Analyzing...
             </>
           ) : (
             <>
-              <Sparkles className="h-5 w-5 mr-3" />
-              Generate Analysis
+              <Sparkles className="h-3.5 w-3.5 mr-2" />
+              Generate
             </>
           )}
         </Button>
@@ -254,16 +226,16 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
   }
 
   return (
-    <div className="w-full glass-panel p-6 rounded-2xl animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full glass-panel p-4 rounded-xl animate-fade-in bg-card border-border">
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <h3 className="flex items-center gap-2 text-xl font-bold text-white">
-            <div className="p-2 rounded-lg bg-consensus-blue/20 text-consensus-blue">
-              <Lightbulb className="h-5 w-5" />
+          <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
+            <div className="p-1 rounded bg-primary/10 text-primary">
+              <Lightbulb className="h-3.5 w-3.5" />
             </div>
             AI Consensus Builder
           </h3>
-          <p className="text-consensus-grey-400 mt-1 ml-11">
+          <p className="text-[10px] text-muted-foreground mt-0.5 ml-7">
             AI-driven tools to help build consensus
           </p>
         </div>
@@ -272,228 +244,269 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
           size="sm"
           onClick={() => generateMutation.mutate()}
           disabled={generateMutation.isPending}
-          className="border-white/10 text-consensus-grey-300 hover:text-white hover:bg-white/5 bg-transparent"
+          className="border-border text-muted-foreground hover:text-foreground hover:bg-muted bg-transparent h-7 text-[10px] px-2.5"
         >
           <RefreshCw
-            className={`h-4 w-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`}
+            className={`h-3 w-3 mr-1.5 ${generateMutation.isPending ? 'animate-spin' : ''}`}
           />
-          Regenerate
+          {generateMutation.isPending ? 'Analyzing...' : 'Regenerate'}
         </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-3 mb-6 bg-black/40 p-1 rounded-xl border border-white/5">
-          <TabsTrigger value="consensus" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">Consensus Overview</TabsTrigger>
-          <TabsTrigger value="compromises" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">Compromise Suggestions</TabsTrigger>
-          <TabsTrigger value="new-options" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-consensus-grey-400 rounded-lg">Proposed Options</TabsTrigger>
+        <TabsList className="grid grid-cols-3 mb-4 bg-muted/40 p-0.5 rounded-lg border border-border/50 h-auto">
+          <TabsTrigger
+            value="consensus"
+            className="data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm text-muted-foreground rounded py-1.5 text-[10px] transition-all"
+          >
+            Overview
+          </TabsTrigger>
+          <TabsTrigger
+            value="compromises"
+            className="data-[state=active]:bg-background data-[state=active]:text-amber-600 data-[state=active]:shadow-sm text-muted-foreground rounded py-1.5 text-[10px] transition-all"
+          >
+            Compromises
+          </TabsTrigger>
+          <TabsTrigger
+            value="new-options"
+            className="data-[state=active]:bg-background data-[state=active]:text-purple-600 data-[state=active]:shadow-sm text-muted-foreground rounded py-1.5 text-[10px] transition-all"
+          >
+            <Sparkles className="w-3 h-3 mr-1.5" />
+            Magic
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="consensus" className="mt-0">
-          <div className="space-y-6">
+        <TabsContent value="consensus" className="mt-0 focus-visible:outline-none">
+          <div className="space-y-4">
             {/* Broad Support Options */}
             <div>
-              <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                <CheckCircle2 className="h-5 w-5 mr-2 text-green-400" />
-                Options with Broad Support
+              <h3 className="text-xs font-semibold text-foreground mb-2 flex items-center">
+                <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-green-600" />
+                Areas of Agreement
               </h3>
 
-              {consensus.broadSupportOptions.length > 0 ? (
-                <div className="space-y-3">
-                  {consensus.broadSupportOptions.map((option) => (
-                    <div key={option.id} className="bg-green-500/10 p-5 rounded-xl border border-green-500/20 backdrop-blur-sm">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-medium text-green-100">{option.title}</h4>
-                        <Badge className="bg-green-500/20 text-green-300 border-green-500/30 hover:bg-green-500/30 border">
-                          {option.supportPercentage.toFixed(0)}% Support
+              {broadSupportOptions.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {broadSupportOptions.map((option) => (
+                    <div key={option.id} className="bg-green-500/5 hover:bg-green-500/10 p-3 rounded-lg border border-green-200/50 backdrop-blur-sm transition-colors cursor-default">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium text-foreground text-xs leading-tight truncate pr-2">{option.title}</h4>
+                        <Badge className="bg-green-100/50 text-green-700 border-green-200 shrink-0 text-[9px] px-1.5 py-0">
+                          {(option.supportScore * 100).toFixed(0)}%
                         </Badge>
                       </div>
-                      {option.description && (
-                        <p className="text-sm text-green-200/70 mb-3">{option.description}</p>
-                      )}
-                      <Progress
-                        value={option.supportPercentage}
-                        className="h-1.5 bg-green-950/50"
-                      // Note: Progress component needs to handle bar color via helper or class inside it usually, or standard theme. Assuming standard theme or utility override.
-                      />
+
+                      <div>
+                        <div className="flex justify-between text-[9px] mb-1">
+                          <span className="text-green-700 font-medium">Consensus Strength</span>
+                        </div>
+                        <Progress
+                          value={option.supportScore * 100}
+                          className="h-1 bg-green-200/50"
+                          indicatorClassName="bg-green-600"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-sm text-consensus-grey-400 italic bg-white/5 p-4 rounded-lg border border-white/5">
-                  No options have broad support yet. Consider using compromise suggestions to bridge the gap.
+                <div className="text-[10px] text-muted-foreground italic bg-muted/30 p-4 rounded-lg border border-dashed border-border text-center">
+                  No options have broad support yet.
                 </div>
               )}
             </div>
 
             {/* Contentious Options */}
             <div>
-              <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2 text-amber-400" />
-                Contentious Areas
+              <h3 className="text-xs font-semibold text-foreground mb-2 flex items-center">
+                <AlertTriangle className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+                Contentious Topics
               </h3>
 
-              {consensus.contentiousOptions.length > 0 ? (
-                <div className="space-y-3">
-                  {consensus.contentiousOptions.map((option) => (
-                    <div key={option.id} className="bg-amber-500/10 p-5 rounded-xl border border-amber-500/20 backdrop-blur-sm">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-medium text-amber-100">{option.title}</h4>
-                        <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30 border">
-                          {option.supportPercentage.toFixed(0)}% Support
+              {contentiousOptions.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {contentiousOptions.map((option) => (
+                    <div key={option.id} className="bg-amber-500/5 hover:bg-amber-500/10 p-3 rounded-lg border border-amber-200/50 backdrop-blur-sm transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium text-foreground text-xs leading-tight truncate pr-2">{option.title}</h4>
+                        <Badge className="bg-amber-100/50 text-amber-700 border-amber-200 shrink-0 text-[10px] px-1.5 py-0">
+                          {(option.supportScore * 100).toFixed(0)}%
                         </Badge>
                       </div>
-                      {option.description && (
-                        <p className="text-sm text-amber-200/70 mb-3">{option.description}</p>
-                      )}
                       <Progress
-                        value={option.supportPercentage}
-                        className="h-1.5 bg-amber-950/50"
+                        value={option.supportScore * 100}
+                        className="h-1 bg-amber-200/50"
+                        indicatorClassName="bg-amber-500"
                       />
-                      <div className="mt-3 text-xs text-amber-300/80 flex items-center">
-                        <Scale className="h-3 w-3 mr-1.5" />
-                        Significant support but lacks consensus. Needs compromise.
+                      <div className="mt-2 text-[9px] text-amber-700/80 flex items-center bg-amber-500/10 p-1.5 rounded">
+                        <Scale className="h-3 w-3 mr-1.5 shrink-0" />
+                        High split in voting.
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-sm text-consensus-grey-400 italic bg-white/5 p-4 rounded-lg border border-white/5">
-                  No contentious options identified. The team appears to be reasonably aligned.
+                <div className="text-[10px] text-muted-foreground italic bg-muted/30 p-4 rounded-lg border border-dashed border-border text-center">
+                  No highly contentious options identified.
                 </div>
               )}
             </div>
 
-            <div className="text-xs text-consensus-grey-500 flex justify-end">
-              Last updated: {lastUpdated}
+            <div className="border-t border-border pt-2 flex justify-end">
+              <span className="text-[9px] text-muted-foreground">Analysis based on latest voting data</span>
             </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="compromises" className="mt-0">
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-              <Lightbulb className="h-5 w-5 mr-2 text-amber-400" />
-              Suggested Compromises
-            </h3>
+        <TabsContent value="compromises" className="mt-0 focus-visible:outline-none">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold text-foreground flex items-center">
+                <Lightbulb className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+                Smart Compromises
+              </h3>
+              <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">AI Generated</span>
+            </div>
 
-            {consensus.suggestedCompromises.length > 0 ? (
-              <Accordion type="single" collapsible className="space-y-3">
+
+            {consensus.suggestedCompromises && consensus.suggestedCompromises.length > 0 ? (
+              <Accordion type="single" collapsible className="space-y-2">
                 {consensus.suggestedCompromises.map((compromise, index) => (
                   <AccordionItem
                     key={index}
                     value={`compromise-${index}`}
-                    className="bg-consensus-blue/5 rounded-xl border border-consensus-blue/10 px-4 data-[state=open]:bg-consensus-blue/10 transition-colors"
+                    className="bg-card border border-border/60 rounded-lg px-0 shadow-sm data-[state=open]:ring-1 data-[state=open]:ring-primary/20 transition-all"
                   >
-                    <AccordionTrigger className="py-4 hover:no-underline text-white">
-                      <div className="flex justify-between items-center w-full pr-4">
-                        <h4 className="font-medium text-left">{compromise.title}</h4>
-                        <Badge className="bg-blue-500/20 text-blue-300 border border-blue-500/30 ml-2">
-                          {compromise.estimatedApproval.toFixed(0)}% Est. Approval
+                    <AccordionTrigger className="py-2.5 hover:no-underline px-3 text-foreground hover:bg-muted/30 rounded-t-lg group">
+                      <div className="flex justify-between items-center w-full pr-2">
+                        <div className="flex items-center gap-2 text-left w-full overflow-hidden">
+                          <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold text-[10px] border border-blue-200">
+                            {String.fromCharCode(65 + index)}
+                          </div>
+                          <span className="font-medium text-xs truncate group-hover:text-primary transition-colors flex-1">{compromise.title}</span>
+                        </div>
+                        <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-100 ml-2 shrink-0 text-[9px] px-1.5 h-5">
+                          {compromise.estimatedApproval ? compromise.estimatedApproval.toFixed(0) : 0}% Appr.
                         </Badge>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="pt-0 pb-4">
-                      <div className="bg-black/20 p-4 rounded-lg mb-4 border border-white/5">
-                        <p className="text-sm text-gray-300 mb-0">
+                    <AccordionContent className="px-3 pb-3 pt-1">
+                      <div className="pl-8">
+                        <div className="bg-muted/30 p-2.5 rounded-md mb-3 border border-border/50 text-foreground/90 text-[10px] leading-relaxed">
                           {compromise.description}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-3 mb-4">
-                        <div className="flex items-center bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/10">
-                          <span className="text-xs font-medium text-amber-200">Addresses:</span>
-                          <span className="text-xs text-amber-100 ml-1.5">
-                            {compromise.targetIssue}
-                          </span>
                         </div>
 
-                        <div className="flex items-center bg-green-500/10 px-3 py-1.5 rounded-lg border border-green-500/10">
-                          <span className="text-xs font-medium text-green-200">Disagreement Redux:</span>
-                          <span className="text-xs text-green-100 ml-1.5">
-                            {compromise.reductionInDisagreement}%
-                          </span>
-                        </div>
-                      </div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <div className="flex items-center bg-amber-50/50 px-2 py-1 rounded border border-amber-100/50">
+                            <span className="text-[9px] font-semibold text-amber-800 uppercase tracking-wide mr-1.5">Solves:</span>
+                            <span className="text-[9px] text-foreground/80 truncate max-w-[120px]">
+                              {compromise.targetIssue}
+                            </span>
+                          </div>
 
-                      <Button size="sm" className="w-full bg-consensus-blue hover:bg-consensus-blue/90 text-white">
-                        <Scale className="h-4 w-4 mr-2" />
-                        Propose This Compromise
-                      </Button>
+                          <div className="flex items-center bg-green-50/50 px-2 py-1 rounded border border-green-100/50">
+                            <span className="text-[9px] font-semibold text-green-800 uppercase tracking-wide mr-1.5">Impact:</span>
+                            <span className="text-[9px] text-foreground/80">
+                              -{compromise.reductionInDisagreement}% Disagreement
+                            </span>
+                          </div>
+                        </div>
+
+                        <Button size="sm" className="w-full h-7 text-[10px] bg-foreground text-background hover:bg-foreground/90">
+                          <Scale className="h-3 w-3 mr-1.5" />
+                          Formalize as New Option
+                        </Button>
+                      </div>
                     </AccordionContent>
                   </AccordionItem>
                 ))}
               </Accordion>
             ) : (
-              <div className="text-sm text-consensus-grey-400 italic bg-white/5 p-4 rounded-lg border border-white/5">
-                No compromise suggestions available. This may indicate strong consensus or insufficient data.
+              <div className="text-[10px] text-muted-foreground italic bg-muted/30 p-6 rounded-lg border border-dashed border-border text-center">
+                card
+                No obvious compromises found.
               </div>
             )}
-
-            <div className="text-xs text-consensus-grey-500 flex justify-end">
-              Last updated: {lastUpdated}
-            </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="new-options" className="mt-0">
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-              <Sparkles className="h-5 w-5 mr-2 text-purple-400" />
-              AI-Generated New Options
-            </h3>
+        <TabsContent value="new-options" className="mt-0 focus-visible:outline-none">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-xs font-semibold text-foreground flex items-center">
+                <Sparkles className="h-3.5 w-3.5 mr-1.5 text-purple-600" />
+                Synthesized Options
+              </h3>
+              <span className="text-[9px] text-purple-600 bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded font-medium">Experimental</span>
+            </div>
 
-            {consensus.proposedNewOptions.length > 0 ? (
-              <div className="space-y-4">
+            <p className="text-[10px] text-muted-foreground mb-3">
+              New solutions generated by combining features.
+            </p>
+
+            {consensus.proposedNewOptions && consensus.proposedNewOptions.length > 0 ? (
+              <div className="grid grid-cols-1 gap-3">
                 {consensus.proposedNewOptions.map((option, index) => (
-                  <div key={index} className="bg-purple-900/10 p-5 rounded-xl border border-purple-500/20 backdrop-blur-sm relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl -mr-16 -mt-16 pointer-events-none"></div>
+                  <div key={index} className="bg-gradient-to-br from-purple-50 via-white to-white border border-purple-100 p-3 rounded-lg shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                    {/* Magical glow effect */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200/20 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none group-hover:bg-purple-300/30 transition-colors duration-700"></div>
 
-                    <div className="flex justify-between items-center mb-3 relative z-10">
-                      <h4 className="font-bold text-lg text-purple-100">{option.title}</h4>
-                      <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                        {option.estimatedApproval.toFixed(0)}% Est. Approval
-                      </Badge>
-                    </div>
-
-                    <p className="text-sm text-purple-200/80 mb-4 leading-relaxed relative z-10">
-                      {option.description}
-                    </p>
-
-                    <div className="bg-black/30 p-3 rounded-lg mb-4 border border-white/5 relative z-10">
-                      <div className="text-xs font-medium text-purple-300 mb-2 uppercase tracking-wide">Combines elements from:</div>
-                      <div className="flex flex-wrap gap-2">
-                        {option.baseOptions.map((baseId) => {
-                          const baseOption = [
-                            ...consensus.broadSupportOptions,
-                            ...consensus.contentiousOptions
-                          ].find(opt => opt.id === baseId);
-
-                          return baseOption ? (
-                            <Badge key={baseId} variant="outline" className="border-purple-500/30 text-purple-200 bg-purple-500/10 hover:bg-purple-500/20">
-                              {baseOption.title}
-                            </Badge>
-                          ) : null;
-                        })}
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex gap-2">
+                          <div className="h-8 w-8 bg-gradient-to-br from-purple-100 to-purple-50 rounded-md flex items-center justify-center border border-purple-200 text-purple-600 shadow-sm shrink-0">
+                            <Sparkles className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-sm text-purple-950 leading-tight">{option.title}</h4>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <Badge variant="outline" className="border-purple-200 text-purple-700 bg-purple-50/50 text-[9px] h-4 px-1.5">
+                                {option.estimatedApproval ? option.estimatedApproval.toFixed(0) : 0}% Approx. Support
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex space-x-2 mt-2 relative z-10">
-                      <Button size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white border-0 shadow-lg shadow-purple-600/20">
-                        <ArrowRight className="h-4 w-4 mr-2" />
-                        Add as New Option
+                      <p className="text-foreground/80 mb-3 leading-relaxed text-[10px] line-clamp-3">
+                        {option.description}
+                      </p>
+
+                      <div className="bg-purple-50/80 p-2 rounded border border-purple-100/60 mb-3">
+                        <div className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mb-1.5 flex items-center">
+                          <RefreshCw className="h-2.5 w-2.5 mr-1" />
+                          Source DNA
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {option.baseOptions && option.baseOptions.map((baseId) => {
+                            const baseOption = rankedOptions.find(opt => opt.id === baseId);
+                            return baseOption ? (
+                              <Badge key={baseId} variant="secondary" className="bg-white/80 border-purple-100 text-purple-800 hover:bg-white shadow-sm text-[9px] h-5 px-1.5">
+                                {baseOption.title}
+                              </Badge>
+                            ) : null;
+                          })}
+                        </div>
+                      </div>
+
+                      <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-lg shadow-purple-500/20 h-8 text-[10px]">
+                        Add to Proposal
+                        <ArrowRight className="h-3 w-3 ml-1.5" />
                       </Button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-consensus-grey-400 italic bg-white/5 p-4 rounded-lg border border-white/5">
-                No new options have been generated.
+              <div className="text-[10px] text-muted-foreground italic bg-muted/30 p-6 rounded-lg border border-dashed border-border text-center">
+                <Sparkles className="h-6 w-6 text-muted-foreground/30 mx-auto mb-2" />
+                No synthesized options generated.
               </div>
             )}
 
-            <div className="text-xs text-consensus-grey-500 flex justify-end">
-              Last updated: {lastUpdated}
+            <div className="border-t border-border pt-2 flex justify-between items-center text-[9px] text-muted-foreground">
+              <span>Model: Gemini Pro</span>
+              <span>Updated: {lastUpdated}</span>
             </div>
           </div>
         </TabsContent>
@@ -503,4 +516,3 @@ const ConsensusBuilder = ({ proposalId }: ConsensusBuilderProps) => {
 };
 
 export default ConsensusBuilder;
-

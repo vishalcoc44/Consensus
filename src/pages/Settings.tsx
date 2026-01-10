@@ -10,14 +10,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { Loader2, RefreshCw, User, Lock, Shield } from 'lucide-react';
+import { Loader2, RefreshCw, User, Lock, Shield, Upload } from 'lucide-react';
 import { getUserProfile } from '@/components/auth/services/authService';
 import PrivacySettings from '@/components/settings/PrivacySettings';
+import { uploadFileToSupabase } from '@/utils/fileUpload';
 
 interface Profile {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
+  email: string;
 }
 
 const Settings = () => {
@@ -35,22 +37,22 @@ const Settings = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // First, check that we have a valid session
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         console.log("No session found, redirecting to login");
         navigate('/login');
         return;
       }
-      
+
       console.log("Current user ID:", session.user.id);
-      
+
       try {
         // Use the getUserProfile function from our auth service
         const profileData = await getUserProfile(session.user.id);
-        
+
         if (profileData) {
           console.log("Profile loaded successfully:", profileData);
           setProfile(profileData as Profile);
@@ -64,16 +66,17 @@ const Settings = () => {
             .upsert({
               id: session.user.id,
               full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '',
+              email: session.user.email,
               created_at: new Date().toISOString()
             })
             .select('*')
             .single();
-              
+
           if (createError) {
             console.error("Error creating profile:", createError);
             throw createError;
           }
-          
+
           setProfile(newProfile as Profile);
           setFullName(newProfile.full_name || '');
           setAvatarUrl(newProfile.avatar_url || '');
@@ -81,7 +84,7 @@ const Settings = () => {
       } catch (profileError) {
         console.error('Error loading profile:', profileError);
         setError('There was a problem loading your profile. Please try again later.');
-        
+
         // Show toast notification for the error
         toast({
           variant: "destructive",
@@ -92,7 +95,7 @@ const Settings = () => {
     } catch (error) {
       console.error('Error in getProfile:', error);
       setError('Unable to load your profile. Please try again later.');
-      
+
       toast({
         variant: "destructive",
         title: "Error loading profile",
@@ -102,7 +105,7 @@ const Settings = () => {
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     getProfile();
   }, [navigate, toast, retryCount]);
@@ -111,57 +114,58 @@ const Settings = () => {
     try {
       setUpdating(true);
       setError(null);
-      
+
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         console.log("No session found, redirecting to login");
         navigate('/login');
         return;
       }
-      
+
       console.log("Updating profile for user:", session.user.id);
-      
+
       const updates = {
         id: session.user.id,
         full_name: fullName,
         avatar_url: avatarUrl,
+        email: session.user.email,
         updated_at: new Date().toISOString(),
       };
-      
+
       const { error: updateError } = await supabase
         .from('profiles')
         .upsert(updates);
-      
+
       if (updateError) {
         console.error('Error updating profile:', updateError);
         throw updateError;
       }
-      
+
       console.log("Profile updated successfully");
-      
+
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully."
       });
-      
+
       // Refresh the profile data
       const { data: refreshedProfile, error: refreshError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .single();
-        
+
       if (refreshError) {
         console.error('Error refreshing profile:', refreshError);
       } else {
         setProfile(refreshedProfile as Profile);
       }
-      
+
     } catch (error) {
       console.error('Error updating profile:', error);
       setError('There was a problem updating your profile.');
-      
+
       toast({
         variant: "destructive",
         title: "Update failed",
@@ -198,12 +202,12 @@ const Settings = () => {
     <DashboardLayout>
       <div className="container max-w-5xl py-8">
         <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
-        
+
         {error && (
           <div className="bg-red-50 text-red-800 p-4 rounded-lg mb-6 flex items-center justify-between">
             <div>{error}</div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               className="ml-4 text-sm flex items-center"
               onClick={handleRetryProfileLoad}
@@ -213,7 +217,7 @@ const Settings = () => {
             </Button>
           </div>
         )}
-        
+
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
@@ -249,31 +253,92 @@ const Settings = () => {
                         <AvatarFallback>{fullName ? fullName.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
                       </Avatar>
                     </div>
-                    
+
                     <div className="flex-1 space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="fullName">Full Name</Label>
-                        <Input 
-                          id="fullName" 
-                          value={fullName} 
-                          onChange={(e) => setFullName(e.target.value)} 
-                          placeholder="Enter your full name" 
+                        <Input
+                          id="fullName"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="Enter your full name"
                         />
                       </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="avatarUrl">Avatar URL</Label>
-                        <Input 
-                          id="avatarUrl" 
-                          value={avatarUrl || ''} 
-                          onChange={(e) => setAvatarUrl(e.target.value)} 
-                          placeholder="Enter avatar URL (optional)" 
+
+                      <div className="space-y-4">
+                        <Label htmlFor="fullName">Full Name</Label>
+                        <Input
+                          id="fullName"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="Enter your full name"
                         />
                       </div>
-                      
+
+                      <div className="space-y-4">
+                        <Label>Profile Picture</Label>
+                        <div className="flex flex-col gap-4">
+                          <div className="flex items-center gap-4">
+                            <Button
+                              variant="outline"
+                              className="relative overflow-hidden"
+                              type="button"
+                              disabled={updating}
+                            >
+                              <input
+                                type="file"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+
+                                  try {
+                                    setUpdating(true);
+                                    const url = await uploadFileToSupabase(file, 'avatars');
+                                    if (url) {
+                                      setAvatarUrl(url);
+                                      toast({
+                                        title: "Image uploaded",
+                                        description: "Don't forget to save your changes.",
+                                      });
+                                    } else {
+                                      throw new Error("Upload failed");
+                                    }
+                                  } catch (error) {
+                                    toast({
+                                      variant: "destructive",
+                                      title: "Upload failed",
+                                      description: "Could not upload image. Please try again.",
+                                    });
+                                  } finally {
+                                    setUpdating(false);
+                                  }
+                                }}
+                              />
+                              <Upload className="mr-2 h-4 w-4" />
+                              Upload New Picture
+                            </Button>
+                            {avatarUrl && (
+                              <Button
+                                variant="ghost"
+                                type="button"
+                                onClick={() => setAvatarUrl('')}
+                                className="text-destructive hover:text-destructive/90"
+                              >
+                                Remove
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">
+                            Recommended: Square image, max 2MB.
+                          </p>
+                        </div>
+                      </div>
+
                       <div className="flex justify-end">
-                        <Button 
-                          onClick={updateProfile} 
+                        <Button
+                          onClick={updateProfile}
                           disabled={updating}
                         >
                           {updating ? (
@@ -288,7 +353,7 @@ const Settings = () => {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="mt-6">
                 <CardHeader>
                   <CardTitle>Account Actions</CardTitle>
@@ -296,8 +361,8 @@ const Settings = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={signOut}
                     >
                       Sign Out
@@ -306,11 +371,11 @@ const Settings = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="privacy">
               <PrivacySettings />
             </TabsContent>
-            
+
             <TabsContent value="security">
               <Card>
                 <CardHeader>
@@ -326,7 +391,7 @@ const Settings = () => {
                       </p>
                       <Button variant="outline">Change Password</Button>
                     </div>
-                    
+
                     <div>
                       <h3 className="text-lg font-medium mb-2">Two-Factor Authentication</h3>
                       <p className="text-sm text-gray-500 mb-4">
@@ -334,7 +399,7 @@ const Settings = () => {
                       </p>
                       <Button variant="outline">Enable 2FA</Button>
                     </div>
-                    
+
                     <div>
                       <h3 className="text-lg font-medium mb-2">Login Sessions</h3>
                       <p className="text-sm text-gray-500 mb-4">

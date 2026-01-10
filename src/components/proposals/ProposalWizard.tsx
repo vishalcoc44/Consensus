@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,11 +17,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { proposalService } from '@/services/proposalService';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProposalData {
   title: string;
   description: string;
   deadline: string;
+  team_id: string;
   options: Array<{
     id: number;
     title: string;
@@ -65,12 +67,44 @@ const ProposalWizard = () => {
     title: '',
     description: '',
     deadline: '',
+    team_id: '',
     options: [{ id: 1, title: '', description: '' }],
     criteria: [{ id: 1, name: '', weight: 5, description: '' }],
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchTeams();
+  }, []);
+
+  const fetchTeams = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('team:teams(id, name)')
+        .eq('user_id', session.user.id);
+
+      if (error) throw error;
+
+      if (data) {
+        // @ts-ignore - Supabase types are tricky with nested joins
+        const formattedTeams = data.map(item => Array.isArray(item.team) ? item.team[0] : item.team).filter(Boolean) as any[];
+        setTeams(formattedTeams);
+        // Pre-select first team if available
+        if (formattedTeams.length > 0 && !proposalData.team_id) {
+          setProposalData(prev => ({ ...prev, team_id: formattedTeams[0].id }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    }
+  };
 
   // Calculate current step index
   const currentStepIndex = steps.findIndex(step => step.id === activeTab);
@@ -92,6 +126,10 @@ const ProposalWizard = () => {
 
     if (!proposalData.deadline) {
       errors.deadline = 'Deadline is required';
+    }
+
+    if (!proposalData.team_id) {
+      errors.team_id = 'Team is required';
     }
 
     setFormErrors(errors);
@@ -180,6 +218,7 @@ const ProposalWizard = () => {
         title: proposalData.title,
         description: proposalData.description,
         deadline: proposalData.deadline,
+        team_id: proposalData.team_id,
         options: proposalData.options.map((opt, index) => ({
           title: opt.title,
           description: opt.description,
@@ -260,6 +299,7 @@ const ProposalWizard = () => {
             proposalData={proposalData}
             updateProposalData={updateProposalData}
             errors={formErrors}
+            teams={teams}
           />
         </TabsContent>
 

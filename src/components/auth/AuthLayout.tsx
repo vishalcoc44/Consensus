@@ -20,8 +20,8 @@ const AuthLayout = ({
 			<div className="flex flex-col gap-4 p-6 md:p-10">
 				<div className="flex justify-center gap-2 md:justify-start">
 					<Link to="/" className="flex items-center gap-2 font-medium text-foreground">
-						<div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-							<GalleryVerticalEnd className="size-4" />
+						<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-emerald-400 text-primary-foreground shadow-lg">
+							<span className="text-xl font-bold">C</span>
 						</div>
 						ConsensusAI
 					</Link>
@@ -38,16 +38,7 @@ const AuthLayout = ({
 					alt="Authentication background"
 					className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
 				/>
-				<div className="absolute bottom-10 left-10 right-10 z-20">
-					<div className="bg-background/80 backdrop-blur-sm p-6 rounded-xl border border-border shadow-lg">
-						<blockquote className="space-y-2">
-							<p className="text-lg text-foreground">
-								&ldquo;{quote}&rdquo;
-							</p>
-							<footer className="text-sm text-muted-foreground">{author}</footer>
-						</blockquote>
-					</div>
-				</div>
+
 			</div>
 		</div>
 	);

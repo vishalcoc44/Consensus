@@ -3,23 +3,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProposalData {
   title: string;
   description: string;
   deadline: string;
+  team_id?: string;
 }
 
 interface ProposalBasicInfoProps {
   proposalData: ProposalData;
   updateProposalData: (data: Partial<ProposalData>) => void;
   errors: Record<string, string>;
+  teams: { id: string; name: string }[];
 }
 
-const ProposalBasicInfo = ({ 
-  proposalData, 
+const ProposalBasicInfo = ({
+  proposalData,
   updateProposalData,
-  errors
+  errors,
+  teams
 }: ProposalBasicInfoProps) => {
   return (
     <div className="space-y-6">
@@ -29,8 +39,34 @@ const ProposalBasicInfo = ({
           Provide the fundamental details about your decision proposal.
         </p>
       </div>
-      
+
       <div className="space-y-4">
+        <FormItem className="space-y-2">
+          <FormLabel>
+            Team <span className="text-red-500">*</span>
+          </FormLabel>
+          <FormControl>
+            <Select
+              value={proposalData.team_id}
+              onValueChange={(value) => updateProposalData({ team_id: value })}
+            >
+              <SelectTrigger className="rounded-lg">
+                <SelectValue placeholder="Select a team" />
+              </SelectTrigger>
+              <SelectContent>
+                {teams.length === 0 ? (
+                  <SelectItem value="disabled" disabled>No teams found</SelectItem>
+                ) : (
+                  teams.map(team => (
+                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </FormControl>
+          {errors.team_id && <FormMessage>{errors.team_id}</FormMessage>}
+        </FormItem>
+
         <FormItem className="space-y-2">
           <FormLabel>
             Proposal Title <span className="text-red-500">*</span>
@@ -45,7 +81,7 @@ const ProposalBasicInfo = ({
           </FormControl>
           {errors.title && <FormMessage>{errors.title}</FormMessage>}
         </FormItem>
-        
+
         <FormItem className="space-y-2">
           <FormLabel>
             Description <span className="text-red-500">*</span>
@@ -60,7 +96,7 @@ const ProposalBasicInfo = ({
           </FormControl>
           {errors.description && <FormMessage>{errors.description}</FormMessage>}
         </FormItem>
-        
+
         <FormItem className="space-y-2">
           <FormLabel>
             Decision Deadline <span className="text-red-500">*</span>

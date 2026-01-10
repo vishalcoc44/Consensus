@@ -40,9 +40,10 @@ import { uploadFileToSupabase } from '@/utils/fileUpload';
 interface EditTeamDialogProps {
 	team: any;
 	children?: React.ReactNode;
+	onUpdate?: () => void;
 }
 
-const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
+const EditTeamDialog = ({ team, children, onUpdate }: EditTeamDialogProps) => {
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const { updateTeam } = useTeams();
@@ -123,7 +124,7 @@ const EditTeamDialog = ({ team, children }: EditTeamDialogProps) => {
 			const success = await updateTeam(team.id, updates);
 			if (success) {
 				setOpen(false);
-				window.location.reload();
+				if (onUpdate) onUpdate();
 			}
 		} catch (error) {
 			console.error("Failed to update team", error);

@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.0";
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.1.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,31 +18,15 @@ interface RecommendationRequest {
   };
 }
 
-interface Option {
-  id: string;
-  title: string;
-  supportScore: number;
-  sentimentScore: number;
-  criteriaScores: Record<string, number>;
-}
-
-interface Criterion {
-  id: string;
-  name: string;
-  weight: number;
-}
-
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the proposal ID from the request
     const { proposalId, parameters } = await req.json() as RecommendationRequest;
 
-    // Default weights if not provided
+    // Default weights
     const weights = {
       supportWeight: parameters?.supportWeight ?? 0.4,
       sentimentWeight: parameters?.sentimentWeight ?? 0.2,
@@ -49,84 +34,58 @@ serve(async (req) => {
       historicalWeight: parameters?.historicalWeight ?? 0.1,
     };
 
-    // Create a Supabase client
+    // 1. Initialize Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get the proposal details
-    const { data: proposal, error: proposalError } = await supabase
-      .from("proposals")
-      .select("*")
-      .eq("id", proposalId)
-      .single();
-
-    if (proposalError) {
-      throw new Error(`Error fetching proposal: ${proposalError.message}`);
+    // 2. Initialize Gemini
+    const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!geminiApiKey) {
+      throw new Error("GEMINI_API_KEY is not set");
     }
+    const genAI = new GoogleGenerativeAI(geminiApiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // Get the options for this proposal
-    const { data: options, error: optionsError } = await supabase
-      .from("proposal_options")
-      .select("*")
-      .eq("proposal_id", proposalId)
-      .order("order_index");
+    // 3. Fetch all context data
+    const [
+      { data: proposal },
+      { data: options },
+      { data: criteria },
+      { data: contributions }
+    ] = await Promise.all([
+      supabase.from("proposals").select("*").eq("id", proposalId).single(),
+      supabase.from("proposal_options").select("*").eq("proposal_id", proposalId),
+      supabase.from("proposal_criteria").select("*").eq("proposal_id", proposalId),
+      supabase.from("contributions").select("*, contribution_ratings(*)").eq("proposal_id", proposalId)
+    ]);
 
-    if (optionsError) {
-      throw new Error(`Error fetching options: ${optionsError.message}`);
-    }
+    if (!proposal || !options) throw new Error("Proposal data not found");
 
-    // Get the criteria for this proposal
-    const { data: criteria, error: criteriaError } = await supabase
-      .from("proposal_criteria")
-      .select("*")
-      .eq("proposal_id", proposalId)
-      .order("order_index");
-
-    if (criteriaError) {
-      throw new Error(`Error fetching criteria: ${criteriaError.message}`);
-    }
-
-    // Get all contributions for this proposal
-    const { data: contributions, error: contributionsError } = await supabase
-      .from("contributions")
-      .select(`
-        *,
-        contribution_ratings(*)
-      `)
-      .eq("proposal_id", proposalId);
-
-    if (contributionsError) {
-      throw new Error(`Error fetching contributions: ${contributionsError.message}`);
-    }
-
-    // Calculate scores for each option
-    const optionScores = options.map(option => {
-      // Calculate support score (percentage of votes)
-      const totalVotes = contributions.length;
-      const optionVotes = contributions.filter(c => c.selected_option_id === option.id).length;
+    // 4. Calculate Heuristic Scores (Needed for Charts)
+    const optionScores = options.map((option: any) => {
+      // Support Score
+      const totalVotes = contributions?.length || 0;
+      const optionVotes = contributions?.filter((c: any) => c.selected_option_id === option.id).length || 0;
       const supportScore = totalVotes > 0 ? optionVotes / totalVotes : 0;
 
-      // Calculate sentiment score (average sentiment for this option)
-      const optionContributions = contributions.filter(c => c.selected_option_id === option.id);
-      const totalSentiment = optionContributions.reduce((sum, c) => sum + (c.sentiment_score || 0), 0);
+      // Sentiment Score
+      const optionContributions = contributions?.filter((c: any) => c.selected_option_id === option.id) || [];
+      const totalSentiment = optionContributions.reduce((sum: number, c: any) => sum + (c.sentiment_score || 0), 0);
       const sentimentScore = optionContributions.length > 0 ? totalSentiment / optionContributions.length : 0;
 
-      // Calculate criteria scores
+      // Criteria Scores
       const criteriaScores: Record<string, number> = {};
-      
-      criteria.forEach(criterion => {
+      criteria?.forEach((criterion: any) => {
         let totalRating = 0;
         let ratingCount = 0;
-        
-        optionContributions.forEach(contribution => {
-          const rating = contribution.contribution_ratings?.find(r => r.criterion_id === criterion.id);
+        optionContributions.forEach((contribution: any) => {
+          const rating = contribution.contribution_ratings?.find((r: any) => r.criterion_id === criterion.id);
           if (rating) {
             totalRating += rating.rating;
             ratingCount++;
           }
         });
-        
         criteriaScores[criterion.id] = ratingCount > 0 ? totalRating / ratingCount : 0;
       });
 
@@ -139,105 +98,125 @@ serve(async (req) => {
       };
     });
 
-    // Apply the machine learning model (random forest simulation)
-    // In a real implementation, this would use an actual ML model
-    const rankedOptions = optionScores.map(option => {
-      // Calculate the weighted criteria score
-      const totalCriteriaWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
+    // Rank Options
+    const rankedOptions = optionScores.map((option: any) => {
+      const totalCriteriaWeight = criteria?.reduce((sum: number, c: any) => sum + c.weight, 0) || 1;
       let weightedCriteriaScore = 0;
-      
-      criteria.forEach(criterion => {
+
+      criteria?.forEach((criterion: any) => {
         const criterionWeight = criterion.weight / totalCriteriaWeight;
         weightedCriteriaScore += (option.criteriaScores[criterion.id] || 0) * criterionWeight;
       });
-      
-      // Normalize to 0-1 scale
-      weightedCriteriaScore = weightedCriteriaScore / 5; // Ratings are 1-5
-      
-      // Calculate the total score using the weights
-      const totalScore = 
+      weightedCriteriaScore = weightedCriteriaScore / 5; // Normalize 0-1
+
+      const totalScore =
         weights.supportWeight * option.supportScore +
         weights.sentimentWeight * option.sentimentScore +
         weights.criteriaWeight * weightedCriteriaScore +
-        weights.historicalWeight * 0.5; // Placeholder for historical data (0.5 is neutral)
-      
+        weights.historicalWeight * 0.5;
+
       return {
         ...option,
         weightedCriteriaScore,
-        totalScore,
+        totalScore: totalScore * 100 // Scale to 0-100 for display
       };
-    }).sort((a, b) => b.totalScore - a.totalScore);
+    }).sort((a: any, b: any) => b.totalScore - a.totalScore);
 
-    // Generate explanation for the top recommendation
-    let explanation = "";
-    const topOption = rankedOptions[0];
-    
-    if (topOption) {
-      const supportPercent = Math.round(topOption.supportScore * 100);
-      const sentimentPercent = Math.round(topOption.sentimentScore * 100);
-      
-      // Find the highest rated criteria for this option
-      const topCriteriaId = Object.entries(topOption.criteriaScores)
-        .sort(([, a], [, b]) => b - a)[0]?.[0];
-      
-      const topCriterion = criteria.find(c => c.id === topCriteriaId);
-      
-      explanation = `"${topOption.title}" is recommended because it has ${supportPercent}% support`;
-      
-      if (topCriterion) {
-        explanation += `, aligns well with the "${topCriterion.name}" criterion`;
+
+    // 5. Construct Prompt with Calculated Data
+    const prompt = `
+      Act as an expert AI Mediator and Decision Analyst.
+      Analyze the following proposal, calculated scores, and voting data to provide recommendations, consensus analysis, and mediation insights.
+
+      PROPOSAL: ${proposal.title}
+      DESCRIPTION: ${proposal.description}
+
+      CALCULATED SCORES (0-100):
+      ${rankedOptions.map((o: any) => `- ${o.title}: ${o.totalScore.toFixed(1)} (Support: ${(o.supportScore * 100).toFixed(0)}%, Sentiment: ${(o.sentimentScore * 100).toFixed(0)}%)`).join('\n')}
+
+      OPTIONS:
+      ${options.map((o: any) => `- ID ${o.id}: ${o.title} (${o.description || ''})`).join('\n')}
+
+      CRITERIA:
+      ${criteria?.map((c: any) => `- ${c.name} (Weight: ${c.weight})`).join('\n') || 'None'}
+
+      COMMENTS:
+      ${contributions?.map((c: any) => c.comment ? `- "${c.comment}" (Sentiment: ${c.sentiment_score})` : '').filter(Boolean).join('\n')}
+
+      TASK:
+      Generate a JSON response with the following structure:
+      {
+        "recommendation": {
+          "optionId": "id of the best option",
+          "confidence": 0-100,
+          "reasoning": "broad explanation citing specific data points"
+        },
+        "consensus": {
+          "score": 0-100 (overall agreement level),
+          "analysis": "summary of the group dynamic",
+          "broadSupportIds": ["list of option IDs with >50% support"],
+          "contentiousOptionIds": ["list of option IDs effectively splitting the vote"],
+          "suggestedCompromises": [
+            {
+               "title": "Title for a compromise",
+               "description": "Description of the compromise blending top options",
+               "reasoning": "Why this bridges the gap",
+               "targetIssue": "The specific conflict being resolved",
+               "estimatedApproval": 0-100
+            }
+          ],
+          "proposedNewOptions": [
+            {
+               "title": "Title for a completely new creative option",
+               "description": "Description of the new direction",
+               "baseOptions": ["ids of options this draws inspiration from"],
+               "estimatedApproval": 0-100
+            }
+          ]
+        },
+        "mediator": {
+          "devilsAdvocate": "Critique of the recommended option to prevent groupthink. Be provocative but constructive.",
+          "biasCheck": "Note on any detected bias (e.g. sunk cost, emotional, recency bias). If none, say 'No significant bias detected.'"
+        }
       }
       
-      if (sentimentPercent > 50) {
-        explanation += `, and has positive sentiment (${sentimentPercent}%)`;
-      }
-      
-      explanation += `. This option received the highest overall score of ${topOption.totalScore.toFixed(2)}.`;
-    }
+      Return ONLY valid JSON.
+    `;
 
-    // Generate the confidence score (0-100)
-    // In a real implementation, this would be based on model certainty
-    const confidenceScore = rankedOptions.length > 1 
-      ? Math.min(100, Math.round(((rankedOptions[0].totalScore - rankedOptions[1].totalScore) / rankedOptions[0].totalScore) * 200) + 50)
-      : 50;
+    // 6. Generate Content
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-    // Create the recommendation result
-    const recommendation = {
-      proposalId,
-      recommendedOptionId: rankedOptions[0]?.id,
-      recommendedOptionTitle: rankedOptions[0]?.title,
-      confidenceScore,
-      explanation,
-      rankedOptions,
-      generatedAt: new Date().toISOString(),
-      parameters: weights,
+    // Clean code fences if present
+    const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const geminiAnalysis = JSON.parse(jsonStr);
+
+    // 7. Merge Results
+    const finalAnalysis = {
+      ...geminiAnalysis,
+      rankedOptions, // Include the calculated scores for UI charts
+      parameters: weights
     };
 
-    // Save the recommendation to the database
+    // 8. Save to Database
     const { error: saveError } = await supabase
       .from("proposal_analysis")
       .upsert({
         proposal_id: proposalId,
-        analysis_data: {
-          recommendation,
-          optionScores: rankedOptions,
-        },
+        analysis_data: finalAnalysis,
         updated_at: new Date().toISOString(),
       }, { onConflict: "proposal_id" });
 
-    if (saveError) {
-      throw new Error(`Error saving recommendation: ${saveError.message}`);
-    }
+    if (saveError) throw saveError;
 
-    // Return the recommendation
-    return new Response(JSON.stringify(recommendation), {
+    return new Response(JSON.stringify(finalAnalysis), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-    
+
   } catch (error) {
-    console.error("Error generating recommendation:", error);
-    
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("Error:", error);
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

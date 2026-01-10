@@ -33,6 +33,7 @@ interface Team {
   github_url?: string | null;
   mission_statement?: string | null;
   tags?: string[] | null;
+  total_decisions?: number;
 }
 
 export function useTeams() {
@@ -105,20 +106,6 @@ export function useTeams() {
       // Extract unique team IDs
       const teamIds = memberTeams.map(mt => mt.team_id);
 
-      // Fetch full details for these teams including all members and their profiles
-      // Using Promise.all to fetch members and invites in parallel for better Control/Granularity
-
-      const teamsWithDetails = await Promise.all(teamIds.map(async (teamId) => {
-        // Get Team Info (we have it from memberTeams but need to match ID, easier to just re-fetch or find from array. 
-        // Actually best to query 'teams' list with IDs as before, but then we need to iterate that list.
-        // Let's keep the single query for teams if possible? 
-        // No, to fetch invites per team efficiently we might want to just do one big query or parallel queries.
-        // Let's stick to the previous pattern of fetching teams first, then enriching them.
-
-        // Let's fetch the base team data for all IDs first (as before) to ensure we have valid objects
-        // inner logic changed to mapping
-      }));
-
       // Re-implementing:
       // 1. Get Team Data & Members
       const { data: teamsData, error: teamsError } = await supabase
@@ -136,7 +123,8 @@ export function useTeams() {
               full_name,
               avatar_url
             )
-          )
+          ),
+          proposals(count)
         `)
         .in('id', teamIds);
 
@@ -157,9 +145,13 @@ export function useTeams() {
         // Force 'owner' role for the team creator, regardless of the team_members table
         const userRole = (team.created_by === user.id) ? 'owner' : (userMember?.role || 'member');
 
+        // Extract count from proposals relation
+        const proposalCount = team.proposals && team.proposals[0] ? team.proposals[0].count : 0;
+
         return {
           ...team,
           role: userRole,
+          total_decisions: proposalCount,
           members: (team.members || []).map((m: any) => ({
             id: m.id,
             user_id: m.user_id,

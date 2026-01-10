@@ -110,7 +110,6 @@ export const proposalService = {
         criteria:proposal_criteria(*),
         contributions(
             *,
-            user:profiles(full_name, avatar_url),
             ratings:contribution_ratings(*)
         ),
         analysis:proposal_analysis(*)
@@ -118,18 +117,24 @@ export const proposalService = {
 			.eq('id', id)
 			.single();
 
+
 		if (error) throw error;
 
 		// Transform specifically to match expected frontend structure if needed, 
 		// but returning raw data + relations is usually best.
-		return data;
+		// Ensure options/criteria are arrays to avoid null checks on frontend
+		return {
+			...data,
+			options: data.options || [],
+			criteria: data.criteria || []
+		};
 	},
 
 	async addContribution(
 		proposalId: string,
 		optionId: string | null,
 		comment: string,
-		ratings: Record<string, number>
+		ratings: Record<string, number> = {}
 	) {
 		const { data: { session } } = await supabase.auth.getSession();
 		if (!session) throw new Error('Not authenticated');
@@ -149,7 +154,9 @@ export const proposalService = {
 		if (contribError) throw contribError;
 
 		// 2. Insert Ratings
-		const ratingEntries = Object.entries(ratings);
+		// Ensure ratings is an object before calling entries
+		const safeRatings = ratings || {};
+		const ratingEntries = Object.entries(safeRatings);
 		if (ratingEntries.length > 0) {
 			const ratingsToInsert = ratingEntries.map(([criterionId, rating]) => ({
 				contribution_id: contribution.id,

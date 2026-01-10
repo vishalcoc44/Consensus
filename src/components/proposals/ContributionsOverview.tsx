@@ -8,6 +8,12 @@ import { Button } from '@/components/ui/button';
 import VisualizationDashboard from '@/components/analytics/VisualizationDashboard';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 // Interface for the detailed proposal structure
 interface DetailedProposal {
@@ -55,7 +61,10 @@ const Star = ({ size, className }: { size: number, className: string }) => (
   </svg>
 );
 
+import { useRealtimeAnalytics } from '@/hooks/useRealtimeAnalytics';
+
 const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
+  const { data: realtimeAnalytics } = useRealtimeAnalytics(proposal.id);
   const [activeTab, setActiveTab] = useState('summary');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -140,10 +149,8 @@ const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
     const date = new Date(dateStr);
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     }).format(date);
   };
 
@@ -404,69 +411,68 @@ const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
         <TabsContent value="contributions">
           <div className="space-y-4">
             {proposal.contributions && proposal.contributions.length > 0 ? (
-              proposal.contributions.map((contribution: any) => (
-                <Card key={contribution.id} className="overflow-hidden">
-                  <CardContent className="p-5">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-medium">{contribution.user?.full_name || 'Anonymous User'}</h3>
-                        <p className="text-xs text-consensus-grey-500">
-                          {formatDate(contribution.created_at || contribution.timestamp)}
-                        </p>
-                      </div>
-                      <Badge
-                        className={`${!contribution.selected_option_id ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-800'}`}
-                      >
-                        {getOptionTitle(contribution.selected_option_id)}
-                      </Badge>
-                    </div>
-
-                    {contribution.comment && (
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-sm font-medium">Comment</h4>
-                          {/* Sentiment not yet integrated per contribution in this demo */}
+              <Accordion type="single" collapsible className="w-full">
+                {proposal.contributions.map((contribution: any) => (
+                  <AccordionItem key={contribution.id} value={contribution.id} className="border rounded-lg mb-4 px-4 bg-card">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex justify-between items-center w-full pr-4">
+                        <div className="text-left">
+                          <h3 className="font-medium text-base">{contribution.user?.full_name || 'Anonymous User'}</h3>
+                          <p className="text-xs text-consensus-grey-500 font-normal mt-1">
+                            {formatDate(contribution.created_at || contribution.timestamp)}
+                          </p>
                         </div>
-                        <p className="text-sm text-consensus-grey-700 bg-slate-50 p-3 rounded-lg">
-                          "{contribution.comment}"
-                        </p>
+                        <Badge
+                          className={`${!contribution.selected_option_id ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-800'}`}
+                        >
+                          {getOptionTitle(contribution.selected_option_id)}
+                        </Badge>
                       </div>
-                    )}
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4 pb-4 border-t mt-2">
+                      {contribution.comment && (
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-sm font-medium">Comment</h4>
+                          </div>
+                          <p className="text-sm text-consensus-grey-700 bg-slate-50 p-3 rounded-lg">
+                            "{contribution.comment}"
+                          </p>
+                        </div>
+                      )}
 
-                    {/* File uploads would go here when implemented */}
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Criteria Ratings</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {proposal.criteria.map((criterion: any) => {
+                            const userRating = contribution.ratings?.find((r: any) => r.criterion_id === criterion.id)?.rating || 0;
 
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Criteria Ratings</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {proposal.criteria.map((criterion: any) => {
-                          // Find rating for this criterion in the contribution's ratings array
-                          const userRating = contribution.ratings?.find((r: any) => r.criterion_id === criterion.id)?.rating || 0;
-
-                          return (
-                            <div key={criterion.id} className="bg-slate-50 p-2 rounded-lg">
-                              <div className="text-xs text-consensus-grey-600 mb-1">
-                                {criterion.name}
-                              </div>
-                              <div className="flex">
-                                {[...Array(5)].map((_, index) => (
-                                  <Star
-                                    key={index}
-                                    size={14}
-                                    className={`${index < userRating
+                            return (
+                              <div key={criterion.id} className="bg-slate-50 p-2 rounded-lg">
+                                <div className="text-xs text-consensus-grey-600 mb-1">
+                                  {criterion.name}
+                                </div>
+                                <div className="flex">
+                                  {[...Array(5)].map((_, index) => (
+                                    <Star
+                                      key={index}
+                                      size={14}
+                                      className={`${index < userRating
                                         ? 'fill-yellow-400 text-yellow-400'
                                         : 'text-gray-300'
-                                      }`}
-                                  />
-                                ))}
+                                        }`}
+                                    />
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             ) : (
               <div className="text-center py-12 bg-slate-50 rounded-lg">
                 <p className="text-consensus-grey-600">No contributions yet.</p>
@@ -476,7 +482,11 @@ const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
         </TabsContent>
 
         <TabsContent value="analysis">
-          <VisualizationDashboard proposalId={proposal.id} isAdmin={true} />
+          <VisualizationDashboard
+            proposalId={proposal.id}
+            isAdmin={true}
+            analysisData={realtimeAnalytics}
+          />
         </TabsContent>
       </Tabs>
     </div>
