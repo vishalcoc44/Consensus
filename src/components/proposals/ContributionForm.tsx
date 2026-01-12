@@ -6,11 +6,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { StarRating } from '@/components/proposals/StarRating';
 import { UploadCloud, AlertCircle, Check } from 'lucide-react';
-import { useForm } from 'react-hook-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface Option {

@@ -39,9 +39,7 @@ const Navbar = () => {
           className="flex items-center space-x-2 group"
           aria-label="ConsensusAI Home"
         >
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_15px_rgba(74,222,128,0.5)]">
-            <span className="text-primary-foreground font-bold text-lg">C</span>
-          </div>
+          <img src="/logo.png" alt="ConsensusAI Logo" className="w-10 h-10 rounded-lg transition-all duration-300 group-hover:scale-105 object-cover" />
           <span className="font-sf font-bold text-xl text-foreground">ConsensusAI</span>
         </Link>
 

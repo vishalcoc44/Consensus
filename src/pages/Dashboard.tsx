@@ -15,9 +15,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { LineChart, BarChart, Users, Brain } from 'lucide-react';
+import { LineChart, BarChart, Users, Brain, LayoutDashboard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { useTeam } from '@/contexts/TeamContext';
+import ShimmerText from '@/components/ui/effects/ShimmerText';
+import PageTransition from '@/components/animations/PageTransition';
+import MotionCard from '@/components/animations/MotionCard';
+import StaggerContainer, { StaggerItem } from '@/components/animations/StaggerContainer';
 
 interface DashboardStats {
   activeDecisions: number;
@@ -34,9 +39,11 @@ interface Decision {
   participants: number;
   comments: number;
   progress: number;
-  status: 'active' | 'completed' | 'archived';
-  status: 'active' | 'completed' | 'archived';
+  status: 'draft' | 'active' | 'paused' | 'closed' | 'archived';
   consensus: number;
+  image_url?: string | null;
+  created_by?: string;
+  team_id?: string;
   created_by_profile?: {
     full_name: string | null;
     avatar_url: string | null;
@@ -56,19 +63,34 @@ const Dashboard = () => {
   const [teamRoles, setTeamRoles] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { currentTeam } = useTeam();
 
   useEffect(() => {
     document.title = 'Dashboard - ConsensusAI';
-    fetchDashboardData();
-  }, []);
+    if (currentTeam) {
+      fetchDashboardData();
+    } else {
+      // Clear data if no team selected
+      setDecisions([]);
+      setStats({
+        activeDecisions: 0,
+        teamMembers: 0,
+        avgConsensus: 0,
+        decisionVelocity: 0
+      });
+      setLoading(false);
+    }
+  }, [currentTeam]); // Re-fetch when team changes
 
   // Helper functions defined before usage in fetchDashboardData
   const getActiveDecisionsCount = async (): Promise<number> => {
+    if (!currentTeam) return 0;
     try {
       const { count, error } = await supabase
         .from('proposals')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .eq('team_id', currentTeam.id);
 
       if (error) throw error;
       return count || 0;
@@ -111,10 +133,12 @@ const Dashboard = () => {
           created_at,
           created_by,
           team_id,
+          image_url,
           contributions(count),
           proposal_analysis(analysis_data)
         `)
         .eq('status', 'active')
+        .eq('team_id', currentTeam?.id) // Filter by current team
         .order('created_at', { ascending: false })
         .limit(6);
 
@@ -124,14 +148,15 @@ const Dashboard = () => {
       }
 
       // Get team members count
-      // Get team members count (unique users across all teams)
+      // Get team members count for current team
       const { data: teamMembersData, error: teamMembersError } = await supabase
         .from('team_members')
-        .select('user_id');
+        .select('user_id')
+        .eq('team_id', currentTeam?.id);
 
       if (teamMembersError && teamMembersError.code !== '42P17') throw teamMembersError;
 
-      // Count unique members to avoid double counting users who are in multiple teams
+      // Count unique members
       const teamMembersCount = new Set(teamMembersData?.map(m => m.user_id)).size;
 
       const activeCount = await getActiveDecisionsCount();
@@ -171,7 +196,7 @@ const Dashboard = () => {
           commentsCount = participantsCount * 2;
 
           let progress = 0;
-          if (item.status === 'completed' || item.status === 'archived') {
+          if (item.status === 'closed' || item.status === 'archived') {
             progress = 100;
           } else if (item.status === 'active') {
             if (item.deadline) {
@@ -199,11 +224,12 @@ const Dashboard = () => {
             participants: participantsCount,
             comments: commentsCount,
             progress: progress,
-            status: (item.status as 'active' | 'completed' | 'archived') || 'active',
+            status: (item.status as 'draft' | 'active' | 'paused' | 'closed' | 'archived') || 'draft',
             consensus: consensusScore,
             created_by: item.created_by,
-            team_id: item.team_id
-          } as Decision & { created_by?: string; team_id?: string };
+            team_id: item.team_id,
+            image_url: item.image_url
+          } as Decision & { created_by?: string; team_id?: string; image_url?: string };
         });
 
         // Fetch creator profiles
@@ -347,81 +373,96 @@ const Dashboard = () => {
   };
 
   return (
-    <DashboardLayout>
+    <PageTransition>
       <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-sf font-bold mb-2 text-foreground">Welcome back</h1>
-        <p className="text-muted-foreground">Here's an overview of your organization's decision-making activities</p>
+        <h1 className="text-3xl font-sf font-bold mb-2 text-foreground flex items-center gap-3">
+          <LayoutDashboard className="h-8 w-8 text-primary" />
+          <ShimmerText className="inline-block" shimmerColor="rgba(0, 0, 0, 0.2)">Welcome back</ShimmerText>
+        </h1>
+        <p className="text-muted-foreground">Here's an overview of {currentTeam?.name ? `${currentTeam.name}'s` : "your team's"} decision-making activities</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-1 hover:shadow-2xl transition-all duration-300 hover:border-primary/30 hover-green-glow group bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-muted-foreground">Active Decisions</CardDescription>
-            <CardTitle className="text-2xl text-foreground">{stats.activeDecisions}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                <span className="text-emerald-500">+{Math.floor(stats.activeDecisions * 0.2)}</span> from last month
+      <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" delay={0.2}>
+        {/* Active Decisions Card */}
+        <MotionCard delay={0.1} className="group relative overflow-hidden bg-card/50 border-border hover:border-blue-500/30">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div className="relative z-10">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Active Decisions</p>
+                <h3 className="text-3xl font-bold text-foreground">{stats.activeDecisions}</h3>
               </div>
-              <div className="p-2 rounded-full bg-blue-500/10 border border-blue-500/20">
-                <Brain size={18} className="text-blue-500" />
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 group-hover:scale-110 transition-transform duration-300">
+                <Brain size={20} className="text-blue-500" />
               </div>
             </div>
-          </CardContent>
-        </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="text-emerald-500 font-semibold">+{Math.floor(stats.activeDecisions * 0.2)}</span>
+              <span className="text-muted-foreground">from last month</span>
+            </div>
+          </div>
+        </MotionCard>
 
-        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-2 hover:shadow-2xl transition-all duration-300 hover:border-primary/30 hover-green-glow group bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-muted-foreground">Team Members</CardDescription>
-            <CardTitle className="text-2xl text-foreground">{stats.teamMembers}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                <span className="text-emerald-500">+{Math.floor(stats.teamMembers * 0.15)}</span> new this month
+        {/* Team Members Card */}
+        <MotionCard delay={0.2} className="group relative overflow-hidden bg-card/50 border-border hover:border-purple-500/30">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div className="relative z-10">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Team Members</p>
+                <h3 className="text-3xl font-bold text-foreground">{stats.teamMembers}</h3>
               </div>
-              <div className="p-2 rounded-full bg-purple-500/10 border border-purple-500/20">
-                <Users size={18} className="text-purple-500" />
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/20 group-hover:scale-110 transition-transform duration-300">
+                <Users size={20} className="text-purple-500" />
               </div>
             </div>
-          </CardContent>
-        </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="text-emerald-500 font-semibold">+{Math.floor(stats.teamMembers * 0.15)}</span>
+              <span className="text-muted-foreground">new this month</span>
+            </div>
+          </div>
+        </MotionCard>
 
-        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-3 hover:shadow-2xl transition-all duration-300 hover:border-primary/30 hover-green-glow group bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-muted-foreground">Avg. Consensus</CardDescription>
-            <CardTitle className="text-2xl text-foreground">{stats.avgConsensus}%</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                <span className="text-emerald-500">+5%</span> improvement
+        {/* Avg Consensus Card */}
+        <MotionCard delay={0.3} className="group relative overflow-hidden bg-card/50 border-border hover:border-emerald-500/30">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div className="relative z-10">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Avg. Consensus</p>
+                <h3 className="text-3xl font-bold text-foreground">{stats.avgConsensus}%</h3>
               </div>
-              <div className="p-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                <LineChart size={18} className="text-emerald-500" />
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
+                <LineChart size={20} className="text-emerald-500" />
               </div>
             </div>
-          </CardContent>
-        </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="text-emerald-500 font-semibold">+5%</span>
+              <span className="text-muted-foreground">improvement</span>
+            </div>
+          </div>
+        </MotionCard>
 
-        <div className="glass-panel p-0 rounded-xl overflow-hidden animate-fade-in animate-delay-4 hover:shadow-2xl transition-all duration-300 hover:border-primary/30 hover-green-glow group bg-card">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-muted-foreground">Decision Velocity</CardDescription>
-            <CardTitle className="text-2xl text-foreground">{stats.decisionVelocity} days</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                <span className="text-emerald-500">-1.3 days</span> faster
+        {/* Decision Velocity Card */}
+        <MotionCard delay={0.4} className="group relative overflow-hidden bg-card/50 border-border hover:border-amber-500/30">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div className="relative z-10">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Decision Velocity</p>
+                <h3 className="text-3xl font-bold text-foreground">{stats.decisionVelocity} <span className="text-lg text-muted-foreground font-normal">days</span></h3>
               </div>
-              <div className="p-2 rounded-full bg-amber-500/10 border border-amber-500/20">
-                <BarChart size={18} className="text-amber-500" />
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20 group-hover:scale-110 transition-transform duration-300">
+                <BarChart size={20} className="text-amber-500" />
               </div>
             </div>
-          </CardContent>
-        </div>
-      </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <span className="text-emerald-500 font-semibold">-1.3 days</span>
+              <span className="text-muted-foreground">faster</span>
+            </div>
+          </div>
+        </MotionCard>
+      </StaggerContainer>
 
       <div className="flex justify-between items-center mb-6 animate-fade-in animate-delay-5">
         <h2 className="text-xl font-sf font-bold text-foreground">Active Decisions</h2>
@@ -437,31 +478,36 @@ const Dashboard = () => {
           No active decisions yet. Use the "New Decision" button to create one.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in animate-delay-5">
+        <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" delay={0.4}>
           {decisions.map((decision) => (
-            <div
+            <StaggerItem
               key={decision.id}
-              onClick={() => handleDecisionClick(decision.id)}
-              className="cursor-pointer transition-transform hover:scale-[1.02] transform-gpu"
+              className="cursor-pointer"
             >
-              <DecisionCard
-                title={decision.title}
-                description={decision.description}
-                dueDate={decision.dueDate}
-                participants={decision.participants}
-                comments={decision.comments}
-                progress={decision.progress}
-                status={decision.status}
-                consensus={decision.consensus}
-                onDelete={getCanDelete(decision as any) ? () => confirmDelete(decision) : undefined}
-                createdBy={decision.created_by_profile ? {
-                  name: decision.created_by_profile.full_name,
-                  avatarUrl: decision.created_by_profile.avatar_url
-                } : undefined}
-              />
-            </div>
+              <div
+                onClick={() => handleDecisionClick(decision.id)}
+                className="h-full transition-transform hover:scale-[1.02] transform-gpu"
+              >
+                <DecisionCard
+                  title={decision.title}
+                  description={decision.description}
+                  dueDate={decision.dueDate}
+                  participants={decision.participants}
+                  comments={decision.comments}
+                  progress={decision.progress}
+                  status={decision.status}
+                  consensus={decision.consensus}
+                  imageUrl={decision.image_url}
+                  onDelete={getCanDelete(decision as any) ? () => confirmDelete(decision) : undefined}
+                  createdBy={decision.created_by_profile ? {
+                    name: decision.created_by_profile.full_name,
+                    avatarUrl: decision.created_by_profile.avatar_url
+                  } : undefined}
+                />
+              </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       )}
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -481,7 +527,9 @@ const Dashboard = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardLayout>
+
+    </PageTransition >
+
   );
 };
 

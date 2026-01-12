@@ -1,10 +1,29 @@
 
 import { useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import Navbar from '@/components/layout/Navbar';
 import Hero from '@/components/landing/Hero';
 import Features from '@/components/landing/Features';
 
 import CTA from '@/components/landing/CTA';
+
+// Page transition variants
+const pageVariants = {
+  initial: {
+    opacity: 0,
+  },
+  in: {
+    opacity: 1,
+  },
+  out: {
+    opacity: 0,
+  },
+};
+
+const pageTransition = {
+  ease: [0.43, 0.13, 0.23, 0.96] as const,
+  duration: 0.3,
+};
 
 const Index = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -13,23 +32,28 @@ const Index = () => {
     // Scroll to top when the page loads
     window.scrollTo(0, 0);
 
-    // Set up intersection observers for animations
+    // Set up intersection observers for bidirectional scroll animations
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
+            // Animate in when entering viewport
             entry.target.classList.add('animate-fade-in', 'opacity-100');
             entry.target.classList.remove('opacity-0', 'translate-y-10');
+          } else {
+            // Reset when leaving viewport (enables re-animation on scroll back)
+            entry.target.classList.remove('animate-fade-in', 'opacity-100');
+            entry.target.classList.add('opacity-0', 'translate-y-10');
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: '-50px 0px' }
     );
 
     // Select all sections to animate
     const sections = document.querySelectorAll('.animate-on-scroll');
     sections.forEach((section) => {
-      section.classList.add('opacity-0', 'translate-y-10', 'transition-all', 'duration-700');
+      section.classList.add('opacity-0', 'translate-y-10', 'transition-all', 'duration-700', 'ease-out');
       observer.observe(section);
     });
 
@@ -41,7 +65,15 @@ const Index = () => {
   }, []);
 
   return (
-    <div ref={containerRef} className="min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden">
+    <motion.div
+      ref={containerRef}
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={pageVariants}
+      transition={pageTransition}
+      className="min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden"
+    >
       <Navbar />
       <main className="flex-1">
         <Hero />
@@ -57,9 +89,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-1">
               <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-consensus-green to-consensus-teal flex items-center justify-center">
-                  <span className="text-white font-bold text-base">C</span>
-                </div>
+                <img src="/logo.png" alt="ConsensusAI Logo" className="w-8 h-8 rounded-lg object-cover" />
                 <span className="font-sf font-bold text-lg text-foreground">ConsensusAI</span>
               </div>
               <p className="text-muted-foreground text-sm">
@@ -99,7 +129,7 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
+    </motion.div>
   );
 };
 

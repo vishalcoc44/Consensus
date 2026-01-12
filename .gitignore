@@ -28,3 +28,6 @@ dist-ssr
 # Supabase
 supabase/current_schema
 supabase/migrations
+
+#features
+features_list.txt

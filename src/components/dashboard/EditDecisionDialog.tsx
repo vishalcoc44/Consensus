@@ -13,7 +13,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { uploadFileToSupabase } from '@/utils/fileUpload';
-import { Image, Loader2, X } from 'lucide-react';
+import { Image, Loader2, X, AlertTriangle } from 'lucide-react';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
 
 interface EditDecisionDialogProps {
 	isOpen: boolean;
@@ -24,6 +31,7 @@ interface EditDecisionDialogProps {
 		description: string;
 		dueDate: string; // ISO string or date string
 		image_url?: string | null;
+		status: 'draft' | 'active' | 'paused' | 'closed' | 'archived';
 	};
 	onUpdate: () => void;
 }
@@ -32,6 +40,7 @@ const EditDecisionDialog = ({ isOpen, onClose, decision, onUpdate }: EditDecisio
 	const [title, setTitle] = useState(decision.title);
 	const [description, setDescription] = useState(decision.description);
 	const [dueDate, setDueDate] = useState('');
+	const [status, setStatus] = useState<'draft' | 'active' | 'paused' | 'closed' | 'archived'>(decision.status);
 	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [imageUrl, setImageUrl] = useState<string | null>(decision.image_url || null);
 	const [loading, setLoading] = useState(false);
@@ -41,6 +50,7 @@ const EditDecisionDialog = ({ isOpen, onClose, decision, onUpdate }: EditDecisio
 		if (isOpen) {
 			setTitle(decision.title);
 			setDescription(decision.description);
+			setStatus(decision.status);
 			// Format date for input type="date"
 			if (decision.dueDate && decision.dueDate !== 'No deadline') {
 				const date = new Date(decision.dueDate);
@@ -111,7 +121,8 @@ const EditDecisionDialog = ({ isOpen, onClose, decision, onUpdate }: EditDecisio
 					title,
 					description,
 					deadline: dueDate ? new Date(dueDate).toISOString() : null,
-					image_url: finalImageUrl
+					image_url: finalImageUrl,
+					status
 				})
 				.eq('id', decision.id);
 
@@ -137,7 +148,7 @@ const EditDecisionDialog = ({ isOpen, onClose, decision, onUpdate }: EditDecisio
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-			<DialogContent className="sm:max-w-[500px] bg-card border-border text-foreground">
+			<DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto bg-card border-border text-foreground">
 				<DialogHeader>
 					<DialogTitle>Edit Decision</DialogTitle>
 				</DialogHeader>
@@ -172,6 +183,22 @@ const EditDecisionDialog = ({ isOpen, onClose, decision, onUpdate }: EditDecisio
 							value={dueDate}
 							onChange={(e) => setDueDate(e.target.value)}
 						/>
+					</div>
+
+					<div className="space-y-2">
+						<Label>Status</Label>
+						<Select value={status} onValueChange={(val: any) => setStatus(val)}>
+							<SelectTrigger>
+								<SelectValue placeholder="Select status" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="draft">Draft - Private, visible only to creators</SelectItem>
+								<SelectItem value="active">Active - Open for voting</SelectItem>
+								<SelectItem value="paused">Paused - Visible but voting disabled</SelectItem>
+								<SelectItem value="closed">Closed - Voting ended, results final</SelectItem>
+								<SelectItem value="archived">Archived - Hidden from main lists</SelectItem>
+							</SelectContent>
+						</Select>
 					</div>
 
 					<div className="space-y-2">

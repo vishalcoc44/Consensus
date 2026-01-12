@@ -2,22 +2,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Check, HelpCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, HelpCircle, Layout, ListChecks, Settings2, FileText } from 'lucide-react';
 import ProposalBasicInfo from './ProposalBasicInfo';
 import ProposalOptions from './ProposalOptions';
 import ProposalCriteria from './ProposalCriteria';
 import ProposalReview from './ProposalReview';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { proposalService } from '@/services/proposalService';
 import { supabase } from '@/integrations/supabase/client';
+import type { DecisionTemplate } from '@/types/phase2';
+import { cn } from '@/lib/utils';
+import { getFrameworkStyle, getFrameworkBadge } from '@/utils/templateStyles';
 
 interface ProposalData {
   title: string;
@@ -41,26 +37,35 @@ const steps = [
   {
     id: 'basic-info',
     title: 'Basic Info',
-    description: 'Define the scope and timeframe for your decision'
+    description: 'Define scope & timeframe',
+    icon: Layout
   },
   {
     id: 'options',
     title: 'Options',
-    description: 'Add the various choices to be considered'
+    description: 'Choices to consider',
+    icon: ListChecks
   },
   {
     id: 'criteria',
     title: 'Criteria',
-    description: 'Set evaluation criteria and weights'
+    description: 'Evaluation metrics',
+    icon: Settings2
   },
   {
     id: 'review',
     title: 'Review',
-    description: 'Confirm all details before submitting'
+    description: 'Final confirmation',
+    icon: FileText
   }
 ];
 
-const ProposalWizard = () => {
+interface ProposalWizardProps {
+  initialTemplate?: DecisionTemplate;
+  initialTeamId?: string;
+}
+
+const ProposalWizard = ({ initialTemplate, initialTeamId }: ProposalWizardProps) => {
   const [activeTab, setActiveTab] = useState('basic-info');
   const [isLoading, setIsLoading] = useState(false);
   const [proposalData, setProposalData] = useState<ProposalData>({
@@ -76,9 +81,46 @@ const ProposalWizard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Get aesthetic styles based on template framework
+  const frameworkStyle = getFrameworkStyle(initialTemplate?.framework || null);
+
   useEffect(() => {
     fetchTeams();
   }, []);
+
+  useEffect(() => {
+    if (!initialTemplate) return;
+
+    const templateOptions = Array.isArray(initialTemplate.options) ? initialTemplate.options : [];
+    const templateCriteria = Array.isArray(initialTemplate.criteria) ? initialTemplate.criteria : [];
+
+    setProposalData(prev => ({
+      ...prev,
+      title: initialTemplate.title || prev.title,
+      description: initialTemplate.description || prev.description,
+      team_id: initialTeamId || prev.team_id,
+      options: templateOptions.length > 0
+        ? templateOptions.map((opt: any, idx: number) => ({
+          id: idx + 1,
+          title: String(opt?.title ?? '').trim(),
+          description: String(opt?.description ?? '').trim(),
+        }))
+        : prev.options,
+      criteria: templateCriteria.length > 0
+        ? templateCriteria.map((crit: any, idx: number) => ({
+          id: idx + 1,
+          name: String(crit?.name ?? crit?.title ?? '').trim(),
+          weight: typeof crit?.weight === 'number' ? crit.weight : 5,
+          description: String(crit?.description ?? '').trim(),
+        }))
+        : prev.criteria,
+    }));
+
+    toast({
+      title: "Template loaded",
+      description: `Using "${initialTemplate.title}" template with ${getFrameworkBadge(initialTemplate.framework)} styling.`,
+    });
+  }, [initialTemplate, initialTeamId]);
 
   const fetchTeams = async () => {
     try {
@@ -115,78 +157,51 @@ const ProposalWizard = () => {
 
   const validateBasicInfo = () => {
     const errors: Record<string, string> = {};
-
-    if (!proposalData.title.trim()) {
-      errors.title = 'Title is required';
-    }
-
-    if (!proposalData.description.trim()) {
-      errors.description = 'Description is required';
-    }
-
-    if (!proposalData.deadline) {
-      errors.deadline = 'Deadline is required';
-    }
-
-    if (!proposalData.team_id) {
-      errors.team_id = 'Team is required';
-    }
-
+    if (!proposalData.title.trim()) errors.title = 'Title is required';
+    if (!proposalData.description.trim()) errors.description = 'Description is required';
+    if (!proposalData.deadline) errors.deadline = 'Deadline is required';
+    if (!proposalData.team_id) errors.team_id = 'Team is required';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const validateOptions = () => {
     const errors: Record<string, string> = {};
-
-    if (proposalData.options.length < 2) {
-      errors.options = 'At least 2 options are required';
-    } else {
+    if (proposalData.options.length < 2) errors.options = 'At least 2 options are required';
+    else {
       const hasEmptyTitle = proposalData.options.some(option => !option.title.trim());
-      if (hasEmptyTitle) {
-        errors.options = 'All options must have a title';
-      }
+      if (hasEmptyTitle) errors.options = 'All options must have a title';
     }
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const validateCriteria = () => {
     const errors: Record<string, string> = {};
-
-    if (proposalData.criteria.length < 1) {
-      errors.criteria = 'At least 1 criterion is required';
-    } else {
+    if (proposalData.criteria.length < 1) errors.criteria = 'At least 1 criterion is required';
+    else {
       const hasEmptyName = proposalData.criteria.some(criterion => !criterion.name.trim());
-      if (hasEmptyName) {
-        errors.criteria = 'All criteria must have a name';
-      }
+      if (hasEmptyName) errors.criteria = 'All criteria must have a name';
     }
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleNextTab = () => {
     let isValid = false;
-
     switch (activeTab) {
       case 'basic-info':
         isValid = validateBasicInfo();
         if (isValid) setActiveTab('options');
         break;
-
       case 'options':
         isValid = validateOptions();
         if (isValid) setActiveTab('criteria');
         break;
-
       case 'criteria':
         isValid = validateCriteria();
         if (isValid) setActiveTab('review');
         break;
-
       default:
         break;
     }
@@ -194,20 +209,10 @@ const ProposalWizard = () => {
 
   const handlePrevTab = () => {
     switch (activeTab) {
-      case 'options':
-        setActiveTab('basic-info');
-        break;
-
-      case 'criteria':
-        setActiveTab('options');
-        break;
-
-      case 'review':
-        setActiveTab('criteria');
-        break;
-
-      default:
-        break;
+      case 'options': setActiveTab('basic-info'); break;
+      case 'criteria': setActiveTab('options'); break;
+      case 'review': setActiveTab('criteria'); break;
+      default: break;
     }
   };
 
@@ -238,7 +243,6 @@ const ProposalWizard = () => {
         duration: 5000,
       });
 
-      // Navigate to dashboard after short delay
       setTimeout(() => {
         navigate('/dashboard');
       }, 1000);
@@ -254,147 +258,140 @@ const ProposalWizard = () => {
     }
   };
 
-  // Calculate progress percentage
+  // Progress percentage
   const progressPercentage = ((currentStepIndex + 1) / steps.length) * 100;
 
   return (
-    <div className="glass-panel p-6 animate-fade-in">
-      {/* Progress bar */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-consensus-grey-600">Progress</span>
-          <span className="text-sm font-medium text-consensus-blue">{Math.round(progressPercentage)}%</span>
-        </div>
-        <div className="w-full bg-consensus-grey-200 rounded-full h-2">
-          <div
-            className="bg-consensus-blue h-2 rounded-full transition-all duration-300 ease-in-out"
-            style={{ width: `${progressPercentage}%` }}
-          />
+    <div className="flex flex-col gap-8">
+      {/* Modern Stepper */}
+      <div className="glass-panel p-6 rounded-2xl border-white/20 dark:border-white/10 shadow-lg backdrop-blur-xl relative overflow-hidden">
+        {/* Aesthetic background glow based on template */}
+        <div className={cn("absolute inset-0 opacity-20 pointer-events-none blur-3xl", frameworkStyle.bg)} />
+
+        <div className="relative z-10">
+          <div className="flex justify-between items-center mb-6">
+            {steps.map((step, index) => {
+              const isActive = step.id === activeTab;
+              const isCompleted = index < currentStepIndex;
+
+              return (
+                <div key={step.id} className={cn(
+                  "flex flex-col items-center gap-2 relative z-10 transition-all duration-300",
+                  isActive ? "opacity-100 scale-105" : isCompleted ? "opacity-80" : "opacity-40"
+                )}>
+                  <div className={cn(
+                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-lg border",
+                    isActive
+                      ? cn(frameworkStyle.activeStep, "border-transparent")
+                      : isCompleted
+                        ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+                        : "bg-muted/30 border-transparent text-muted-foreground"
+                  )}>
+                    {isCompleted ? <Check className="w-6 h-6" /> : <step.icon className="w-5 h-5" />}
+                  </div>
+                  <div className="text-center hidden md:block">
+                    <p className={cn("text-sm font-semibold", isActive && "text-foreground")}>{step.title}</p>
+                    <p className="text-[10px] text-muted-foreground max-w-[80px] leading-tight mt-0.5">{step.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Progress Line Background */}
+            <div className="absolute top-6 left-0 w-full h-0.5 bg-muted/30 -z-10" />
+            {/* Active Progress Line */}
+            <div
+              className={cn("absolute top-6 left-0 h-0.5 transition-all duration-500 ease-out -z-10", frameworkStyle.progress)}
+              style={{ width: `${(currentStepIndex / (steps.length - 1)) * 100}%` }}
+            />
+          </div>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 mb-8">
-          {steps.map(step => (
-            <TooltipProvider key={step.id}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <TabsTrigger
-                    value={step.id}
-                    className="data-[state=active]:text-consensus-blue data-[state=active]:shadow"
-                  >
-                    {step.title}
-                  </TabsTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{step.description}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
-        </TabsList>
+      {/* Main Content Area */}
+      <div className={cn(
+        "glass-panel p-8 rounded-3xl min-h-[500px] border-white/40 dark:border-white/10 shadow-xl backdrop-blur-md transition-all duration-500",
+        frameworkStyle.bg // Apply subtle background tint
+      )}>
+        <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500" key={activeTab}>
+          {activeTab === 'basic-info' && (
+            <ProposalBasicInfo
+              proposalData={proposalData}
+              updateProposalData={updateProposalData}
+              errors={formErrors}
+              teams={teams}
+            />
+          )}
 
-        <TabsContent value="basic-info">
-          <ProposalBasicInfo
-            proposalData={proposalData}
-            updateProposalData={updateProposalData}
-            errors={formErrors}
-            teams={teams}
-          />
-        </TabsContent>
+          {activeTab === 'options' && (
+            <ProposalOptions
+              options={proposalData.options}
+              updateOptions={(options) => updateProposalData({ options })}
+              errors={formErrors}
+            />
+          )}
 
-        <TabsContent value="options">
-          <ProposalOptions
-            options={proposalData.options}
-            updateOptions={(options) => updateProposalData({ options })}
-            errors={formErrors}
-          />
-        </TabsContent>
+          {activeTab === 'criteria' && (
+            <ProposalCriteria
+              criteria={proposalData.criteria}
+              updateCriteria={(criteria) => updateProposalData({ criteria })}
+              errors={formErrors}
+            />
+          )}
 
-        <TabsContent value="criteria">
-          <ProposalCriteria
-            criteria={proposalData.criteria}
-            updateCriteria={(criteria) => updateProposalData({ criteria })}
-            errors={formErrors}
-          />
-        </TabsContent>
+          {activeTab === 'review' && (
+            <ProposalReview proposalData={proposalData} />
+          )}
+        </div>
+      </div>
 
-        <TabsContent value="review">
-          <ProposalReview proposalData={proposalData} />
-        </TabsContent>
-
-        <div className="flex justify-between mt-8">
-          {activeTab !== 'basic-info' ? (
-            <Button
-              variant="outline"
-              onClick={handlePrevTab}
-              className="rounded-lg"
-            >
+      {/* Navigation Footer */}
+      <div className="flex justify-between items-center py-4 px-2">
+        <Button
+          variant="ghost"
+          onClick={handlePrevTab}
+          disabled={activeTab === 'basic-info'}
+          className="text-muted-foreground hover:text-foreground hover:bg-transparent px-0"
+        >
+          {activeTab !== 'basic-info' && (
+            <>
               <ArrowLeft size={16} className="mr-2" />
-              Previous
-            </Button>
-          ) : (
-            <div></div> // Empty div to maintain flex spacing
+              Back to {steps[Math.max(0, currentStepIndex - 1)].title}
+            </>
           )}
+        </Button>
 
-          {activeTab !== 'review' ? (
-            <Button
-              onClick={handleNextTab}
-              className="rounded-lg bg-consensus-blue hover:bg-consensus-blue/90"
-            >
-              Next
-              <ArrowRight size={16} className="ml-2" />
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSubmitProposal}
-              className="rounded-lg bg-emerald-600 hover:bg-emerald-700"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                  Creating...
-                </div>
-              ) : (
-                <>
-                  <Check size={16} className="mr-2" />
-                  Submit Proposal
-                </>
-              )}
-            </Button>
-          )}
-        </div>
-
-        {/* Help text */}
-        <div className="mt-6 p-4 bg-consensus-blue/5 border border-consensus-blue/10 rounded-lg flex items-start">
-          <HelpCircle size={20} className="text-consensus-blue mr-3 mt-0.5 flex-shrink-0" />
-          <div>
-            <h5 className="text-sm font-medium mb-1">Help with {steps[currentStepIndex].title}</h5>
-            <p className="text-sm text-consensus-grey-600">{steps[currentStepIndex].description}</p>
-            {activeTab === 'basic-info' && (
-              <p className="text-sm text-consensus-grey-600 mt-2">
-                Start by naming your decision and adding a clear description. Set a deadline to ensure timely inputs from all participants.
-              </p>
+        {activeTab !== 'review' ? (
+          <Button
+            onClick={handleNextTab}
+            className={cn(
+              "rounded-xl px-8 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5",
+              frameworkStyle.activeStep
             )}
-            {activeTab === 'options' && (
-              <p className="text-sm text-consensus-grey-600 mt-2">
-                Add all possible options you want the team to consider. Each option should be distinct and well-described.
-              </p>
+          >
+            Next: {steps[Math.min(steps.length - 1, currentStepIndex + 1)].title}
+            <ArrowRight size={18} className="ml-2" />
+          </Button>
+        ) : (
+          <Button
+            onClick={handleSubmitProposal}
+            className="rounded-xl px-8 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 bg-emerald-600 hover:bg-emerald-500 text-white"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="flex items-center">
+                <div className="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full mr-2"></div>
+                Creating...
+              </div>
+            ) : (
+              <>
+                <Check size={18} className="mr-2" />
+                Submit Proposal
+              </>
             )}
-            {activeTab === 'criteria' && (
-              <p className="text-sm text-consensus-grey-600 mt-2">
-                Define clear criteria against which all options will be evaluated. Set weights to indicate importance.
-              </p>
-            )}
-            {activeTab === 'review' && (
-              <p className="text-sm text-consensus-grey-600 mt-2">
-                Review all information before finalizing. You can go back to previous steps if you need to make changes.
-              </p>
-            )}
-          </div>
-        </div>
-      </Tabs>
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

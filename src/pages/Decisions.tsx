@@ -33,6 +33,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import PageTransition from '@/components/animations/PageTransition';
+import ShimmerText from '@/components/ui/effects/ShimmerText';
 
 interface Decision {
   id: string | number;
@@ -377,68 +379,72 @@ const Decisions = () => {
   };
 
   return (
-    <DashboardLayout>
-      <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-sf font-bold mb-2">Decision Management</h1>
-        <p className="text-muted-foreground">View and manage all your organization's decisions</p>
-      </div>
-
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 animate-fade-in">
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <div className="relative flex-grow">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search decisions..."
-              className="pl-9 pr-4 py-2 bg-background border-input text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/50"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-2 border-border bg-background hover:bg-muted text-foreground hover:text-foreground">
-                <SlidersHorizontal size={16} />
-                <span>Filters</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-60 p-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Status</label>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All statuses</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Sort by</label>
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Date" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="date">Date</SelectItem>
-                      <SelectItem value="title">Title</SelectItem>
-                      <SelectItem value="progress">Progress</SelectItem>
-                      <SelectItem value="consensus">Consensus</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+    <PageTransition>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-sf font-bold mb-2 flex items-center gap-3">
+            <SlidersHorizontal className="h-8 w-8 text-primary" />
+            <ShimmerText className="inline-block">Decision Management</ShimmerText>
+          </h1>
+          <p className="text-muted-foreground">View and manage all your organization's decisions</p>
         </div>
-        <CreateDecisionButton />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 animate-fade-in">
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <div className="relative flex-grow">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search decisions..."
+                className="pl-9 pr-4 py-2 bg-background border-input text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/50"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2 border-border bg-background hover:bg-muted text-foreground hover:text-foreground">
+                  <SlidersHorizontal size={16} />
+                  <span>Filters</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-60 p-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Status</label>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All statuses</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Sort by</label>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Date" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="date">Date</SelectItem>
+                        <SelectItem value="title">Title</SelectItem>
+                        <SelectItem value="progress">Progress</SelectItem>
+                        <SelectItem value="consensus">Consensus</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <CreateDecisionButton />
+        </div>
       </div>
 
       {error && (
@@ -474,7 +480,7 @@ const Decisions = () => {
                 participants={decision.participants}
                 comments={decision.comments}
                 progress={decision.progress}
-                status={decision.status}
+                status={decision.status === 'completed' ? 'closed' : decision.status as any}
                 consensus={decision.consensus}
                 imageUrl={decision.image_url}
                 createdBy={decision.creator_profile ? {
@@ -518,11 +524,14 @@ const Decisions = () => {
         <EditDecisionDialog
           isOpen={isEditDialogOpen}
           onClose={() => setIsEditDialogOpen(false)}
-          decision={decisionToEdit}
+          decision={{
+            ...decisionToEdit,
+            status: decisionToEdit.status === 'completed' ? 'closed' : decisionToEdit.status as any
+          }}
           onUpdate={fetchDecisions}
         />
       )}
-    </DashboardLayout>
+    </PageTransition>
   );
 };
 

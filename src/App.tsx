@@ -3,14 +3,18 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import { toast } from "@/components/ui/use-toast";
+import { UserProvider } from "@/contexts/UserContext";
+import { TeamProvider } from "@/contexts/TeamContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
+import DashboardLayout from "./components/dashboard/DashboardLayout";
 import NotFound from "./pages/NotFound";
 import Teams from "./pages/Teams";
 import CreateProposal from "./pages/CreateProposal";
@@ -19,6 +23,14 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Decisions from "./pages/Decisions";
 import ActivityLog from "./pages/ActivityLog";
+import Templates from "./pages/Templates";
+import Notifications from "./pages/Notifications";
+import Resources from "./pages/Resources";
+import AIInsights from "./pages/AIInsights";
+import DecisionCalendar from "./pages/DecisionCalendar";
+import Goals from "./pages/Goals";
+import MeetingRooms from "./pages/MeetingRooms";
+import MeetingRoom from "./pages/MeetingRoom";
 
 // Error boundary component
 // Error boundary component
@@ -78,25 +90,27 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => {
-  console.log("App component is rendering");
 
-  // Authentication state
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null means loading
+
+// Layout wrapper component
+const DashboardLayoutWrapper = () => (
+  <DashboardLayout>
+    <Outlet />
+  </DashboardLayout>
+);
+
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active session
     import("@/integrations/supabase/client").then(({ supabase }) => {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setIsAuthenticated(!!session);
         setLoading(false);
       });
 
-      // Listen for auth changes
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         setIsAuthenticated(!!session);
         setLoading(false);
       });
@@ -105,89 +119,85 @@ const App = () => {
     });
   }, []);
 
-  const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-    if (loading || isAuthenticated === null) {
-      return (
-        <div className="flex justify-center items-center h-screen bg-background">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      );
-    }
+  if (loading || isAuthenticated === null) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to access this page",
-        variant: "destructive"
-      });
-      return <Navigate to="/login" replace />;
-    }
+  if (!isAuthenticated) {
+    toast({
+      title: "Authentication required",
+      description: "Please sign in to access this page",
+      variant: "destructive"
+    });
+    return <Navigate to="/login" replace />;
+  }
 
-    return children;
-  };
+  return children;
+};
 
+const AnimatedRoutes = () => {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Protected Dashboard Routes */}
+        <Route element={
+          <ProtectedRoute>
+            <DashboardLayoutWrapper />
+          </ProtectedRoute>
+        }>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/teams" element={<Teams />} />
+          <Route path="/dashboard/decisions" element={<Decisions />} />
+          <Route path="/dashboard/create-proposal" element={<CreateProposal />} />
+          <Route path="/dashboard/proposals/:proposalId" element={<ProposalDetails />} />
+          <Route path="/dashboard/templates" element={<Templates />} />
+          <Route path="/dashboard/notifications" element={<Notifications />} />
+          <Route path="/dashboard/resources" element={<Resources />} />
+          <Route path="/dashboard/ai-insights" element={<AIInsights />} />
+          <Route path="/dashboard/calendar" element={<DecisionCalendar />} />
+          <Route path="/dashboard/goals" element={<Goals />} />
+          <Route path="/dashboard/meetings" element={<MeetingRooms />} />
+          <Route path="/meeting/:meetingId" element={<MeetingRoom />} />
+          <Route path="/dashboard/analytics" element={<Analytics />} />
+          <Route path="/dashboard/analytics/:proposalId" element={<Analytics />} />
+          <Route path="/dashboard/activity" element={<ActivityLog />} />
+          <Route path="/dashboard/settings" element={<Settings />} />
+        </Route>
+
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
+// Protected Route Component specifically moved out to avoid recreation on every render
+const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/teams" element={
-                <ProtectedRoute>
-                  <Teams />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/decisions" element={
-                <ProtectedRoute>
-                  <Decisions />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/proposals/create" element={
-                <ProtectedRoute>
-                  <CreateProposal />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/proposals/:proposalId" element={
-                <ProtectedRoute>
-                  <ProposalDetails />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/analytics" element={
-                <ProtectedRoute>
-                  <Analytics />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/analytics/:proposalId" element={
-                <ProtectedRoute>
-                  <Analytics />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/activity" element={
-                <ProtectedRoute>
-                  <ActivityLog />
-                </ProtectedRoute>
-              } />
-              <Route path="/dashboard/settings" element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <UserProvider>
+            <TeamProvider>
+              <BrowserRouter>
+                <AnimatedRoutes />
+              </BrowserRouter>
+            </TeamProvider>
+          </UserProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>

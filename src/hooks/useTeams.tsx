@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from "@/integrations/supabase/client";
 
-interface TeamMember {
+export interface TeamMember {
   id: string;
   user_id: string;
   team_id: string;
@@ -15,7 +15,7 @@ interface TeamMember {
   } | null;
 }
 
-interface Team {
+export interface Team {
   id: string;
   name: string;
   description: string | null;

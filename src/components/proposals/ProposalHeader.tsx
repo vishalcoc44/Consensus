@@ -1,6 +1,7 @@
 
 import { Calendar, User, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import ShimmerText from '@/components/ui/effects/ShimmerText';
 
 interface Proposal {
   id: string;
@@ -72,7 +73,9 @@ const ProposalHeader = ({ proposal }: ProposalHeaderProps) => {
         {/* Right Side: Content */}
         <div className="flex-1 space-y-4">
           <div className="flex justify-between items-start gap-4">
-            <h1 className="text-2xl font-bold text-gray-900 leading-tight">{proposal.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+              <ShimmerText className="inline-block">{proposal.title}</ShimmerText>
+            </h1>
             <Badge className={`${getStatusColor(proposal.status)} px-3 py-1`}>
               {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
             </Badge>

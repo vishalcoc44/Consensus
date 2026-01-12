@@ -15,7 +15,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import { useTeam } from '@/contexts/TeamContext';
 import { supabase } from '@/integrations/supabase/client';
+import { uploadFileToSupabase } from '@/utils/fileUpload';
 import {
   Select,
   SelectContent,
@@ -38,7 +40,6 @@ const DECISION_FACTORS = [
   "Innovation"
 ];
 
-
 const CreateDecisionButton = () => {
   /* -------------------------------------------------------------------------
    * STATE
@@ -48,12 +49,17 @@ const CreateDecisionButton = () => {
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [selectedTeam, setSelectedTeam] = useState<string>('');
+  const [isBlind, setIsBlind] = useState(false);
   const [selectedFactors, setSelectedFactors] = useState<string[]>([]);
   // Use a string[] for options. Each entry is the "title".
   const [options, setOptions] = useState<string[]>([]);
   const [newOption, setNewOption] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
+  // useTeam context replaces local teams fetching
+  const { teams, currentTeam } = useTeam();
+
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -61,49 +67,19 @@ const CreateDecisionButton = () => {
   /* -------------------------------------------------------------------------
    * EFFECTS
    * ------------------------------------------------------------------------- */
-  const fetchTeams = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { data, error } = await supabase
-        .from('team_members')
-        .select('team:teams(id, name)')
-        .eq('user_id', session.user.id);
-
-      if (error) throw error;
-
-      if (data) {
-        // @ts-ignore - Supabase types are tricky with nested joins sometimes
-        const rawTeams = data.map(item => item.team).filter(Boolean) as any[];
-
-        // Deduplicate teams by ID (in case user has multiple roles in same team)
-        const uniqueTeamsMap = new Map();
-        rawTeams.forEach(team => {
-          if (team && team.id && !uniqueTeamsMap.has(team.id)) {
-            uniqueTeamsMap.set(team.id, team);
-          }
-        });
-
-        const formattedTeams = Array.from(uniqueTeamsMap.values());
-
-        setTeams(formattedTeams);
-        // Pre-select first team if available and none selected
-        if (formattedTeams.length > 0 && !selectedTeam) {
-          setSelectedTeam(formattedTeams[0].id);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching teams:', error);
-    }
-  };
+  // Local fetchTeams removed in favor of TeamContext
 
   /* -------------------------------------------------------------------------
    * HANDLERS
    * ------------------------------------------------------------------------- */
   const openModal = () => {
     setIsOpen(true);
-    fetchTeams();
+    // Pre-select current team if available
+    if (currentTeam) {
+      setSelectedTeam(currentTeam.id);
+    } else if (teams.length > 0 && !selectedTeam) {
+      setSelectedTeam(teams[0].id);
+    }
   };
   const closeModal = () => {
     setIsOpen(false);
@@ -112,9 +88,11 @@ const CreateDecisionButton = () => {
       setTitle('');
       setDescription('');
       setDueDate('');
+      setIsBlind(false);
       setSelectedFactors([]);
       setOptions([]);
       setNewOption('');
+      setSelectedFile(null);
     }, 300);
   };
 
@@ -134,6 +112,12 @@ const CreateDecisionButton = () => {
 
   const removeOption = (index: number) => {
     setOptions(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -182,6 +166,28 @@ const CreateDecisionButton = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user');
 
+      let imageUrl = null;
+
+      if (selectedFile) {
+        setUploading(true);
+        try {
+          imageUrl = await uploadFileToSupabase(selectedFile, 'decision-images', user.id);
+
+          if (!imageUrl) {
+            throw new Error("Upload returned null");
+          }
+        } catch (uploadErr) {
+          console.error('Image upload failed:', uploadErr);
+          toast({
+            title: "Image upload failed",
+            description: "Could not upload image, but proceeding with decision creation.",
+            variant: "destructive"
+          });
+        } finally {
+          setUploading(false);
+        }
+      }
+
       const { data: proposal, error } = await supabase
         .from('proposals')
         .insert({
@@ -190,7 +196,9 @@ const CreateDecisionButton = () => {
           deadline: new Date(dueDate).toISOString(),
           status: 'active',
           team_id: selectedTeam,
-          created_by: user.id
+          created_by: user.id,
+          is_blind: isBlind,
+          image_url: imageUrl
         })
         .select()
         .single();
@@ -237,6 +245,7 @@ const CreateDecisionButton = () => {
       setTitle('');
       setDescription('');
       setDueDate('');
+      setIsBlind(false);
       setSelectedFactors([]);
       setOptions([]);
       setNewOption('');
@@ -336,6 +345,19 @@ const CreateDecisionButton = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <div className="flex items-center space-x-2 pb-2">
+                    <Checkbox id="blind-voting" checked={isBlind} onCheckedChange={(checked: any) => setIsBlind(checked)} />
+                    <label
+                      htmlFor="blind-voting"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 whitespace-nowrap"
+                    >
+                      Enable Blind Voting
+                    </label>
+                    <span className="text-xs text-muted-foreground ml-1">
+                      (Results hidden until user votes)
+                    </span>
+                  </div>
+
                   <Label htmlFor="dueDate" className="text-sm font-medium text-foreground">
                     Due Date <span className="text-primary">*</span>
                   </Label>
@@ -436,6 +458,20 @@ const CreateDecisionButton = () => {
                     ))}
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="attachment" className="text-sm font-medium text-foreground">
+                    Cover Image (Optional)
+                  </Label>
+                  <Input
+                    id="attachment"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleFileChange}
+                    className="rounded-xl py-2 bg-background border-input text-foreground file:bg-transparent file:text-foreground file:font-medium hover:file:bg-muted"
+                  />
+                  {uploading && <p className="text-xs text-muted-foreground">Uploading...</p>}
+                </div>
+
               </div>
             </div>
 
@@ -451,7 +487,7 @@ const CreateDecisionButton = () => {
               <Button
                 type="submit"
                 className="rounded-xl px-8 py-2 bg-gradient-to-r from-primary to-emerald-500 hover:opacity-90 text-primary-foreground font-medium shadow-lg shadow-primary/20 border border-white/10 transition-all"
-                disabled={loading}
+                disabled={loading || uploading}
               >
                 {loading ? (
                   <div className="flex items-center">

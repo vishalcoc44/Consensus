@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import ShimmerText from '@/components/ui/effects/ShimmerText';
+import TypewriterText from '@/components/ui/effects/TypewriterText';
 
 const Hero = () => {
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -122,20 +124,20 @@ const Hero = () => {
 					<div
 						className="inline-block px-4 py-1.5 bg-muted/80 backdrop-blur-sm rounded-full shadow-sm mb-6 animate-fade-in border border-border transform transition-transform hover:scale-105"
 					>
-						<span className="text-sm font-medium text-muted-foreground">Revolutionizing Decision-Making</span>
+						<ShimmerText shimmerColor="rgba(74, 222, 128, 0.5)">
+							<span className="text-sm font-medium text-muted-foreground/80">Revolutionizing Decision-Making</span>
+						</ShimmerText>
 					</div>
 
 					<h1 className="font-sf text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight animate-fade-in text-foreground">
 						<span>Make Better Decisions with </span>
-						<span
-							className="hero-text-gradient"
-							style={{
-								backgroundSize: `${100 + Math.sin(Date.now() / 2000) * 10}% ${100 + Math.sin(Date.now() / 2000) * 10}%`,
-								animation: "pulse 3s infinite"
-							}}
-						>
-							Collective Intelligence
-						</span>
+						<br className="md:hidden" />
+						<TypewriterText
+							texts={["Collective Intelligence", "Human Insight", "Team Synergy", "AI-Powered Analysis"]}
+							speed={120}
+							delay={2000}
+							className="hero-text-gradient bg-clip-text text-transparent pb-2"
+						/>
 					</h1>
 
 					<p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto animate-fade-in animate-delay-1">
@@ -189,29 +191,12 @@ const Hero = () => {
 						<img
 							src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2940&q=80"
 							alt="Team using ConsensusAI to make decisions"
-							className="w-full h-auto object-cover shadow-lg transform hover:scale-[1.01] transition-transform duration-500 brightness-[0.9] contrast-[1.05]"
+							className="w-full h-auto object-cover shadow-lg transition-transform duration-500 brightness-[0.9] contrast-[1.05]"
 						/>
 					</div>
 				</div>
 
-				{/* Scroll Indicator with animated pulse */}
-				<div
-					className="absolute bottom-6 left-1/2 transform -translate-x-1/2 animate-bounce hidden md:block"
-					style={{
-						opacity: hasScrolled ? 0 : 1,
-						transition: 'opacity 0.5s ease-out'
-					}}
-				>
-					<div className="w-8 h-12 border-2 border-primary/40 rounded-full flex justify-center">
-						<div
-							className="w-1.5 h-3 bg-primary/70 rounded-full mt-2"
-							style={{
-								animation: 'float 1.5s ease-in-out infinite',
-								opacity: 0.7 + Math.sin(Date.now() / 500) * 0.3
-							}}
-						></div>
-					</div>
-				</div>
+
 			</div>
 		</section>
 	);

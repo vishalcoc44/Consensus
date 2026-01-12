@@ -110,7 +110,8 @@ export const proposalService = {
         criteria:proposal_criteria(*),
         contributions(
             *,
-            ratings:contribution_ratings(*)
+            ratings:contribution_ratings(*),
+            user:profiles(full_name, avatar_url)
         ),
         analysis:proposal_analysis(*)
       `)

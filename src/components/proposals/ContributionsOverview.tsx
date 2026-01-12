@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { MessageCircle, FileText, BarChart, ThumbsUp, ThumbsDown, Bot, FileUp } from 'lucide-react';
+import { MessageCircle, FileText, BarChart, ThumbsUp, ThumbsDown, Bot, FileUp, History } from 'lucide-react';
+import ContributionHistoryDialog from './ContributionHistoryDialog';
 import { Button } from '@/components/ui/button';
 import VisualizationDashboard from '@/components/analytics/VisualizationDashboard';
 import { useMutation } from '@tanstack/react-query';
@@ -25,6 +26,7 @@ interface DetailedProposal {
     id: string;
     comment: string;
     created_at: string;
+    updated_at?: string;
     selected_option_id: string | null;
     user: { full_name: string | null; avatar_url: string | null } | null;
     ratings: Array<{ criterion_id: string; rating: number }>;
@@ -67,6 +69,8 @@ const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
   const { data: realtimeAnalytics } = useRealtimeAnalytics(proposal.id);
   const [activeTab, setActiveTab] = useState('summary');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [selectedContributionId, setSelectedContributionId] = useState<string | null>(null);
 
   // Check if we have analysis data
   const existingAnalysis = proposal.analysis && proposal.analysis.length > 0
@@ -406,6 +410,55 @@ const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
               </CardContent>
             </Card>
           )}
+
+          {displayAnalysis && (displayAnalysis.mediator || displayAnalysis.consensus) && (
+            <Card className="mt-6 border-amber-200 bg-amber-50/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center text-amber-900">
+                  <Bot size={18} className="mr-2 text-amber-600" />
+                  AI Mediator & Deep Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid md:grid-cols-2 gap-6">
+                {displayAnalysis.mediator?.devilsAdvocate && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-amber-800 flex items-center">
+                      <span className="text-xl mr-2">😈</span> Devil's Advocate
+                    </h4>
+                    <p className="text-sm text-amber-900/80 italic border-l-2 border-amber-300 pl-3 py-1">
+                      "{displayAnalysis.mediator.devilsAdvocate}"
+                    </p>
+                  </div>
+                )}
+
+                {displayAnalysis.mediator?.biasCheck && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-amber-800 flex items-center">
+                      <span className="text-xl mr-2">⚖️</span> Bias Detection
+                    </h4>
+                    <p className="text-sm text-amber-900/80 border-l-2 border-amber-300 pl-3 py-1">
+                      {displayAnalysis.mediator.biasCheck}
+                    </p>
+                  </div>
+                )}
+
+                {displayAnalysis.consensus?.suggestedCompromises?.length > 0 && (
+                  <div className="md:col-span-2 mt-2 pt-4 border-t border-amber-200">
+                    <h4 className="font-semibold text-amber-800 mb-3">Suggested Compromises</h4>
+                    <div className="grid gap-3">
+                      {displayAnalysis.consensus.suggestedCompromises.map((comp: any, idx: number) => (
+                        <div key={idx} className="bg-white/60 p-3 rounded-lg border border-amber-100">
+                          <div className="font-medium text-amber-900">{comp.title}</div>
+                          <div className="text-xs text-amber-700 mt-1">{comp.description}</div>
+                          <div className="text-xs text-amber-600/70 mt-1 italic">Targets: {comp.targetIssue}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="contributions">
@@ -470,6 +523,20 @@ const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
                         </div>
                       </div>
                     </AccordionContent>
+                    <div className="px-4 pb-3 flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-6 text-muted-foreground"
+                        onClick={() => {
+                          setSelectedContributionId(contribution.id);
+                          setHistoryOpen(true);
+                        }}
+                      >
+                        <History size={12} className="mr-1" />
+                        View History
+                      </Button>
+                    </div>
                   </AccordionItem>
                 ))}
               </Accordion>
@@ -489,6 +556,14 @@ const ContributionsOverview = ({ proposal }: ContributionsOverviewProps) => {
           />
         </TabsContent>
       </Tabs>
+
+      {selectedContributionId && (
+        <ContributionHistoryDialog
+          isOpen={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          contributionId={selectedContributionId}
+        />
+      )}
     </div>
   );
 };

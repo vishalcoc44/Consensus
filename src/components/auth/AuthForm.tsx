@@ -8,6 +8,7 @@ import NameInput from './components/NameInput';
 import ErrorDisplay from './components/ErrorDisplay';
 import { loginUser, registerUser } from '@/components/auth/services/authService';
 import { Button } from "@/components/ui/button";
+import ShimmerText from '@/components/ui/effects/ShimmerText';
 
 interface AuthFormProps {
   type: 'login' | 'register';
@@ -82,7 +83,11 @@ const AuthForm = ({ type }: AuthFormProps) => {
   return (
     <div className="flex flex-col gap-6 ">
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">{type === 'login' ? 'Login to your account' : 'Create an account'}</h1>
+        <h1 className="text-2xl font-bold">
+          <ShimmerText className="inline-block">
+            {type === 'login' ? 'Login to your account' : 'Create an account'}
+          </ShimmerText>
+        </h1>
         <p className="text-balance text-sm text-muted-foreground">
           {type === 'login' ? 'Enter your email below to login to your account' : 'Enter your details below to create your account'}
         </p>
