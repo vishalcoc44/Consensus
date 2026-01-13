@@ -31,6 +31,7 @@ import type { DecisionEvent, NewDecisionEvent } from '@/types/phase3';
 import { format, isSameDay, startOfMonth, endOfMonth, isFuture, isToday, addMonths, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 import ShimmerText from '@/components/ui/effects/ShimmerText';
+import { TeamSelector } from '@/components/teams/TeamSelector';
 
 const DecisionCalendar = () => {
 	const [events, setEvents] = useState<DecisionEvent[]>([]);
@@ -39,7 +40,7 @@ const DecisionCalendar = () => {
 	const [currentMonth, setCurrentMonth] = useState(new Date());
 	const [showEventModal, setShowEventModal] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
-	const { currentTeam } = useTeam();
+	const { currentTeam, isInitializing } = useTeam();
 	const { toast } = useToast();
 
 	const [newEvent, setNewEvent] = useState<{
@@ -196,6 +197,15 @@ const DecisionCalendar = () => {
 		}).length,
 	}), [events, currentMonth]);
 
+	// If initializing, show loading spinner
+	if (isInitializing) {
+		return (
+			<div className="flex items-center justify-center min-h-[60vh]">
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+			</div>
+		);
+	}
+
 	// If not loading and no team selected, show empty state
 	if (!loading && !currentTeam) {
 		return (
@@ -204,7 +214,8 @@ const DecisionCalendar = () => {
 					<Calendar className="h-12 w-12 text-muted-foreground" />
 				</div>
 				<h3 className="text-xl font-semibold mb-2">No team selected</h3>
-				<p className="text-muted-foreground">Please select a team to view the decision calendar</p>
+				<p className="text-muted-foreground mb-4">Please select a team to view the decision calendar</p>
+				<TeamSelector variant="full" />
 			</div>
 		);
 	}
@@ -222,13 +233,16 @@ const DecisionCalendar = () => {
 						Orchestrate your team's timeline and key milestones
 					</p>
 				</div>
-				<Button
-					onClick={() => setShowEventModal(true)}
-					className="rounded-full px-6 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg shadow-violet-500/25 transition-all duration-300 hover:scale-105"
-				>
-					<Plus className="h-5 w-5 mr-2" />
-					New Event
-				</Button>
+				<div className="flex items-center gap-3">
+					<TeamSelector variant="full" />
+					<Button
+						onClick={() => setShowEventModal(true)}
+						className="rounded-full px-6 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg shadow-violet-500/25 transition-all duration-300 hover:scale-105"
+					>
+						<Plus className="h-5 w-5 mr-2" />
+						New Event
+					</Button>
+				</div>
 			</div>
 
 			{/* Stats Grid */}

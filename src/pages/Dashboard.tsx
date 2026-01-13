@@ -23,6 +23,7 @@ import ShimmerText from '@/components/ui/effects/ShimmerText';
 import PageTransition from '@/components/animations/PageTransition';
 import MotionCard from '@/components/animations/MotionCard';
 import StaggerContainer, { StaggerItem } from '@/components/animations/StaggerContainer';
+import { TeamSelector } from '@/components/teams/TeamSelector';
 
 interface DashboardStats {
   activeDecisions: number;
@@ -63,10 +64,14 @@ const Dashboard = () => {
   const [teamRoles, setTeamRoles] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { currentTeam } = useTeam();
+  const { currentTeam, isInitializing } = useTeam();
 
   useEffect(() => {
     document.title = 'Dashboard - ConsensusAI';
+    if (isInitializing) {
+      // Still initializing, wait
+      return;
+    }
     if (currentTeam) {
       fetchDashboardData();
     } else {
@@ -80,7 +85,7 @@ const Dashboard = () => {
       });
       setLoading(false);
     }
-  }, [currentTeam]); // Re-fetch when team changes
+  }, [currentTeam, isInitializing]); // Re-fetch when team changes
 
   // Helper functions defined before usage in fetchDashboardData
   const getActiveDecisionsCount = async (): Promise<number> => {
@@ -375,10 +380,13 @@ const Dashboard = () => {
   return (
     <PageTransition>
       <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-sf font-bold mb-2 text-foreground flex items-center gap-3">
-          <LayoutDashboard className="h-8 w-8 text-primary" />
-          <ShimmerText className="inline-block" shimmerColor="rgba(0, 0, 0, 0.2)">Welcome back</ShimmerText>
-        </h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-3xl font-sf font-bold text-foreground flex items-center gap-3">
+            <LayoutDashboard className="h-8 w-8 text-primary" />
+            <ShimmerText className="inline-block" shimmerColor="rgba(0, 0, 0, 0.2)">Welcome back</ShimmerText>
+          </h1>
+          <TeamSelector variant="full" />
+        </div>
         <p className="text-muted-foreground">Here's an overview of {currentTeam?.name ? `${currentTeam.name}'s` : "your team's"} decision-making activities</p>
       </div>
 

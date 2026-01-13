@@ -70,6 +70,7 @@ import type { MeetingRoom } from '@/types/phase3';
 import { formatDistanceToNow, format, isAfter, isBefore, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import ShimmerText from '@/components/ui/effects/ShimmerText';
+import { TeamSelector } from '@/components/teams/TeamSelector';
 
 interface Proposal {
   id: string;
@@ -87,7 +88,7 @@ const MeetingRooms = () => {
   const [selectedRoom, setSelectedRoom] = useState<MeetingRoom | null>(null);
   const [creating, setCreating] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const { currentTeam } = useTeam();
+  const { currentTeam, isInitializing } = useTeam();
   const { user } = useUser();
   const { toast } = useToast();
 
@@ -373,6 +374,14 @@ const MeetingRooms = () => {
     return scheduledDate.toDateString() === today.toDateString();
   });
 
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   if (!currentTeam) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -380,7 +389,8 @@ const MeetingRooms = () => {
           <Video className="h-12 w-12 text-muted-foreground" />
         </div>
         <h3 className="text-xl font-semibold mb-2">No team selected</h3>
-        <p className="text-muted-foreground">Please select a team to view meeting rooms</p>
+        <p className="text-muted-foreground mb-4">Please select a team to view meeting rooms</p>
+        <TeamSelector variant="full" />
       </div>
     );
   }
@@ -400,16 +410,19 @@ const MeetingRooms = () => {
             Virtual spaces for real-time collaboration
           </p>
         </div>
-        <Button
-          onClick={() => {
-            resetForm();
-            setShowCreateModal(true);
-          }}
-          className="rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 shadow-lg shadow-sky-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/30 hover:-translate-y-0.5"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Room
-        </Button>
+        <div className="flex items-center gap-3">
+          <TeamSelector variant="full" />
+          <Button
+            onClick={() => {
+              resetForm();
+              setShowCreateModal(true);
+            }}
+            className="rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 shadow-lg shadow-sky-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/30 hover:-translate-y-0.5"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Room
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

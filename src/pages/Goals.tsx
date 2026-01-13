@@ -27,6 +27,7 @@ import {
 import type { Objective, KeyResult } from '@/types/phase3';
 import { cn } from '@/lib/utils';
 import ShimmerText from '@/components/ui/effects/ShimmerText';
+import { TeamSelector } from '@/components/teams/TeamSelector';
 
 type ObjectiveWithKeyResults = Objective & {
 	key_results: KeyResult[];
@@ -37,7 +38,7 @@ const Goals = () => {
 	const [loading, setLoading] = useState(true);
 	const [showCreateModal, setShowCreateModal] = useState(false);
 	const [newObjective, setNewObjective] = useState({ title: '', description: '' });
-	const { currentTeam } = useTeam();
+	const { currentTeam, isInitializing } = useTeam();
 	const { toast } = useToast();
 
 	useEffect(() => {
@@ -142,6 +143,15 @@ const Goals = () => {
 		}
 	};
 
+	// If initializing, show loading spinner
+	if (isInitializing) {
+		return (
+			<div className="flex items-center justify-center min-h-[60vh]">
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+			</div>
+		);
+	}
+
 	// If not loading and no team selected, show empty state
 	if (!loading && !currentTeam) {
 		return (
@@ -150,7 +160,8 @@ const Goals = () => {
 					<Target className="h-12 w-12 text-muted-foreground" />
 				</div>
 				<h3 className="text-xl font-semibold mb-2">No team selected</h3>
-				<p className="text-muted-foreground">Please select a team to view goals</p>
+				<p className="text-muted-foreground mb-4">Please select a team to view goals</p>
+				<TeamSelector variant="full" />
 			</div>
 		);
 	}
@@ -168,13 +179,16 @@ const Goals = () => {
 						Align your team with clear, measurable objectives
 					</p>
 				</div>
-				<Button
-					onClick={() => setShowCreateModal(true)}
-					className="rounded-full px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-500/25 transition-all duration-300 hover:scale-105"
-				>
-					<Plus className="h-5 w-5 mr-2" />
-					New Goal
-				</Button>
+				<div className="flex items-center gap-3">
+					<TeamSelector variant="full" />
+					<Button
+						onClick={() => setShowCreateModal(true)}
+						className="rounded-full px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-500/25 transition-all duration-300 hover:scale-105"
+					>
+						<Plus className="h-5 w-5 mr-2" />
+						New Goal
+					</Button>
+				</div>
 			</div>
 
 			{/* Stats Grid */}

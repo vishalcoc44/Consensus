@@ -14,13 +14,14 @@ import type { AIInsight } from '@/types/phase3';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import ShimmerText from '@/components/ui/effects/ShimmerText';
+import { TeamSelector } from '@/components/teams/TeamSelector';
 
 const AIInsights = () => {
 	const [insights, setInsights] = useState<AIInsight[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [generating, setGenerating] = useState(false);
 	const [selectedCategory, setSelectedCategory] = useState('all');
-	const { currentTeam } = useTeam();
+	const { currentTeam, isInitializing } = useTeam();
 	const { toast } = useToast();
 
 	useEffect(() => {
@@ -150,6 +151,14 @@ const AIInsights = () => {
 		{ value: 'sentiment', label: 'Sentiment', icon: Brain },
 	];
 
+	if (isInitializing) {
+		return (
+			<div className="flex items-center justify-center min-h-[60vh]">
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+			</div>
+		);
+	}
+
 	if (!currentTeam) {
 		return (
 			<div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -157,7 +166,8 @@ const AIInsights = () => {
 					<Brain className="h-12 w-12 text-violet-500" />
 				</div>
 				<h3 className="text-xl font-semibold mb-2">No Team Selected</h3>
-				<p className="text-muted-foreground">Please select a team to view AI insights</p>
+				<p className="text-muted-foreground mb-4">Please select a team to view AI insights</p>
+				<TeamSelector variant="full" />
 			</div>
 		);
 	}
@@ -178,23 +188,26 @@ const AIInsights = () => {
 						Intelligent analysis powered by machine learning
 					</p>
 				</div>
-				<Button
-					onClick={handleGenerateInsight}
-					disabled={generating}
-					className="rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-lg shadow-violet-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-0.5"
-				>
-					{generating ? (
-						<>
-							<RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-							Analyzing...
-						</>
-					) : (
-						<>
-							<Zap className="h-4 w-4 mr-2" />
-							Generate Insight
-						</>
-					)}
-				</Button>
+				<div className="flex items-center gap-3">
+					<TeamSelector variant="full" />
+					<Button
+						onClick={handleGenerateInsight}
+						disabled={generating}
+						className="rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-lg shadow-violet-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-0.5"
+					>
+						{generating ? (
+							<>
+								<RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+								Analyzing...
+							</>
+						) : (
+							<>
+								<Zap className="h-4 w-4 mr-2" />
+								Generate Insight
+							</>
+						)}
+					</Button>
+				</div>
 			</div>
 
 			{/* Stats Cards */}

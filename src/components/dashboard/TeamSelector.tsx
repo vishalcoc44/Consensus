@@ -67,7 +67,7 @@ const TeamSelector = ({ selectedTeamId, onTeamChange, className }: TeamSelectorP
   // Generate a deterministic color based on team name
   const getAvatarColor = (name: string) => {
     const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 
+      'bg-blue-500', 'bg-green-500', 'bg-purple-500',
       'bg-amber-500', 'bg-rose-500', 'bg-teal-500',
       'bg-indigo-500', 'bg-pink-500', 'bg-orange-500'
     ];
@@ -157,9 +157,9 @@ const TeamSelector = ({ selectedTeamId, onTeamChange, className }: TeamSelectorP
                     </Avatar>
                     <div className="flex flex-col">
                       <span>{team.name}</span>
-                      {team.members && (
+                      {team.member_count !== undefined && (
                         <span className="text-xs text-muted-foreground">
-                          {team.members.length} member{team.members.length !== 1 ? 's' : ''}
+                          {team.member_count} member{team.member_count !== 1 ? 's' : ''}
                         </span>
                       )}
                     </div>

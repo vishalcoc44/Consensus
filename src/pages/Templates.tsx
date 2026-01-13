@@ -40,9 +40,10 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import ShimmerText from '@/components/ui/effects/ShimmerText';
+import { TeamSelector } from '@/components/teams/TeamSelector';
 
 const Templates = () => {
-	const { currentTeam } = useTeam();
+	const { currentTeam, isInitializing } = useTeam();
 	const navigate = useNavigate();
 	const { toast } = useToast();
 	const [templates, setTemplates] = useState<DecisionTemplate[]>([]);
@@ -301,13 +302,16 @@ const Templates = () => {
 						Jumpstart your decisions with proven frameworks
 					</p>
 				</div>
-				<Button
-					onClick={() => setIsCreateOpen(true)}
-					className="rounded-full px-6 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg shadow-violet-500/25 transition-all duration-300 hover:scale-105"
-				>
-					<Plus className="h-5 w-5 mr-2" />
-					Create Template
-				</Button>
+				<div className="flex items-center gap-3">
+					<TeamSelector variant="full" />
+					<Button
+						onClick={() => setIsCreateOpen(true)}
+						className="rounded-full px-6 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg shadow-violet-500/25 transition-all duration-300 hover:scale-105"
+					>
+						<Plus className="h-5 w-5 mr-2" />
+						Create Template
+					</Button>
+				</div>
 			</div>
 
 			{/* Stats Cards */}

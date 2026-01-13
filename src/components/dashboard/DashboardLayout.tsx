@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Search,
   HelpCircle,
@@ -16,6 +17,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   return (

@@ -37,6 +37,7 @@ import { useTeam } from '@/contexts/TeamContext';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import ShimmerText from '@/components/ui/effects/ShimmerText';
+import { TeamSelector } from '@/components/teams/TeamSelector';
 
 // Activity types that match our database enum
 type ActivityType =
@@ -100,7 +101,7 @@ const ActivityLog = () => {
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 25;
 
-  const { currentTeam } = useTeam();
+  const { currentTeam, isInitializing } = useTeam();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -437,16 +438,19 @@ const ActivityLog = () => {
             Track all activities across your organization's decisions
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="rounded-xl"
-        >
-          <RefreshCw className={cn("h-4 w-4 mr-2", refreshing && "animate-spin")} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-3">
+          <TeamSelector variant="full" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="rounded-xl"
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", refreshing && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
 

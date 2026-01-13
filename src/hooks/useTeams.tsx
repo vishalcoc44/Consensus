@@ -21,7 +21,8 @@ export interface Team {
   description: string | null;
   created_at: string;
   created_by: string | null;
-  members: TeamMember[];
+  members?: TeamMember[];
+  member_count: number;
   pendingInvites?: any[];
   role?: string;
   avatar_url?: string | null;
@@ -42,6 +43,33 @@ export function useTeams() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [myInvites, setMyInvites] = useState<any[]>([]);
+
+  // Function to fetch members for a specific team
+  const fetchTeamMembers = useCallback(async (teamId: string) => {
+    try {
+      const { data: members, error } = await supabase
+        .from('team_members')
+        .select(`
+          id,
+          user_id,
+          team_id,
+          role,
+          joined_at,
+          profile:profiles(
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('team_id', teamId);
+
+      if (error) throw error;
+      return members as unknown as TeamMember[];
+    } catch (err) {
+      console.error(`Error fetching members for team ${teamId}:`, err);
+      return [];
+    }
+  }, []);
 
   const fetchTeams = useCallback(async () => {
     try {
@@ -84,6 +112,7 @@ export function useTeams() {
         .from('team_members')
         .select(`
           team_id,
+          role,
           teams:team_id (
             id,
             name,
@@ -107,23 +136,12 @@ export function useTeams() {
       const teamIds = memberTeams.map(mt => mt.team_id);
 
       // Re-implementing:
-      // 1. Get Team Data & Members
+      // 1. Get Team Data & Member Counts
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
         .select(`
           *,
-          members:team_members(
-            id,
-            user_id,
-            team_id,
-            role,
-            joined_at,
-            profile:profiles(
-              id,
-              full_name,
-              avatar_url
-            )
-          ),
+          member_count:team_members(count),
           proposals(count)
         `)
         .in('id', teamIds);
@@ -141,28 +159,34 @@ export function useTeams() {
 
       // 3. Merge data
       const formattedTeams: Team[] = (teamsData || []).map(team => {
-        const userMember = (team.members || []).find((m: any) => m.user_id === user.id);
+        const userMemberEntry = (memberTeams || []).find(m => m.team_id === team.id);
+        const dbRole = userMemberEntry?.role;
+
         // Force 'owner' role for the team creator, regardless of the team_members table
-        const userRole = (team.created_by === user.id) ? 'owner' : (userMember?.role || 'member');
+        const userRole = (team.created_by === user.id) ? 'owner' : (dbRole || 'member');
 
         // Extract count from proposals relation
         const proposalCount = team.proposals && team.proposals[0] ? team.proposals[0].count : 0;
+        const memberCount = team.member_count && team.member_count[0] ? team.member_count[0].count : 0;
 
         return {
           ...team,
           role: userRole,
           total_decisions: proposalCount,
-          members: (team.members || []).map((m: any) => ({
-            id: m.id,
-            user_id: m.user_id,
-            team_id: m.team_id,
-            role: m.role,
-            joined_at: m.joined_at,
-            profile: m.profile
-          })),
+          members: undefined, // Lazy load these
+          member_count: memberCount,
           pendingInvites: (invitesData || []).filter(invite => invite.team_id === team.id)
         };
       });
+
+      // 3.5 Fix roles - we need to know the user's role in each team
+      // The previous 'memberTeams' query was:
+      // select team_id, teams(...)
+      // We should change it to select role as well.
+
+      // But since we already ran that query, let's just do a quick fix here or separate improvement.
+      // Wait, let's look at line 83-94. It selects `team_id, teams:team_id(...)`. It does NOT select `role`.
+      // We should probably update that query first to get the role.
 
       setTeams(formattedTeams);
     } catch (err) {
@@ -402,7 +426,27 @@ export function useTeams() {
 
   useEffect(() => {
     fetchTeams();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        fetchTeams();
+      } else if (event === 'SIGNED_OUT') {
+        setTeams([]);
+        setMyInvites([]);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [fetchTeams]);
+
+  // Cache members for a team to avoid re-fetching
+  const cacheTeamMembers = useCallback((teamId: string, members: TeamMember[]) => {
+    setTeams(prevTeams => prevTeams.map(t =>
+      t.id === teamId ? { ...t, members } : t
+    ));
+  }, []);
 
   return {
     teams,
@@ -410,6 +454,8 @@ export function useTeams() {
     loading,
     error,
     refreshTeams: fetchTeams,
+    fetchTeamMembers,
+    cacheTeamMembers,
     createTeam,
     addTeamMember,
     removeTeamMember,

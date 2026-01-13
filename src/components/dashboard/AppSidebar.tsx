@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { signOut } from "@/components/auth/services/authService";
 import { useUser } from "@/contexts/UserContext";
+import { TeamSelector } from "@/components/teams/TeamSelector";
 
 interface NavItem {
 	icon: React.ElementType;
@@ -67,24 +68,42 @@ export function AppSidebar() {
 	const location = useLocation();
 	const currentPath = location.pathname;
 
+	// Store scroll position before navigation
 	const handleNavigate = (href: string) => {
-		// Save scroll position before navigating
 		if (navRef.current) {
-			sessionStorage.setItem('sidebar-scroll-position', navRef.current.scrollTop.toString());
+			sessionStorage.setItem('sidebar-scroll', navRef.current.scrollTop.toString());
 		}
 		navigate(href);
 	};
 
+	// Restore scroll position after navigation
+	useEffect(() => {
+		const savedScroll = sessionStorage.getItem('sidebar-scroll');
+		if (savedScroll && navRef.current) {
+			navRef.current.scrollTop = parseInt(savedScroll, 10);
+		}
+	}, [location.pathname]);
+
 	useEffect(() => {
 		const fetchPendingInvites = async () => {
-			const { data: { session } } = await supabase.auth.getSession();
-			if (session?.user?.email) {
-				const { count } = await supabase
-					.from('team_invites')
-					.select('*', { count: 'exact', head: true })
-					.eq('email', session.user.email)
-					.eq('status', 'pending');
-				setPendingInvitesCount(count || 0);
+			try {
+				const { data: { session } } = await supabase.auth.getSession();
+				if (session?.user?.email) {
+					const { count, error } = await supabase
+						.from('team_invites')
+						.select('*', { count: 'exact', head: true })
+						.eq('email', session.user.email)
+						.eq('status', 'pending');
+
+					if (error) {
+						console.error("Error fetching pending invites count:", error);
+						// Don't throw, just ignore
+					} else {
+						setPendingInvitesCount(count || 0);
+					}
+				}
+			} catch (err) {
+				console.error("Error in fetchPendingInvites:", err);
 			}
 		};
 		fetchPendingInvites();
@@ -97,17 +116,7 @@ export function AppSidebar() {
 	}, []);
 
 	// Restore scroll position on mount
-	useEffect(() => {
-		const savedScrollPosition = sessionStorage.getItem('sidebar-scroll-position');
-		if (savedScrollPosition && navRef.current) {
-			// Small timeout to ensure DOM is ready
-			setTimeout(() => {
-				if (navRef.current) {
-					navRef.current.scrollTop = parseInt(savedScrollPosition, 10);
-				}
-			}, 0);
-		}
-	}, []);
+
 
 	const handleSignOut = async (e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -121,12 +130,21 @@ export function AppSidebar() {
 		if (!user) return;
 
 		const fetchNotificationCount = async () => {
-			const { count } = await supabase
-				.from('notifications')
-				.select('*', { count: 'exact', head: true })
-				.eq('user_id', user.id)
-				.eq('is_read', false);
-			setNotificationCount(count || 0);
+			try {
+				const { count, error } = await supabase
+					.from('notifications')
+					.select('*', { count: 'exact', head: true })
+					.eq('user_id', user.id)
+					.eq('is_read', false);
+
+				if (error) {
+					console.error("Error fetching notification count:", error);
+				} else {
+					setNotificationCount(count || 0);
+				}
+			} catch (err) {
+				console.error("Error in fetchNotificationCount:", err);
+			}
 		};
 
 		fetchNotificationCount();
@@ -162,7 +180,7 @@ export function AppSidebar() {
 			return (
 				<div className="my-4 first:mt-0">
 					{!isDisplayCollapsed && item.category && (
-						<h3 className="px-3 text-[10px] font-bold text-muted-foreground/70 uppercase tracking-wider mb-2 animate-fade-in whitespace-nowrap overflow-hidden">
+						<h3 className="px-3 text-[10px] font-bold text-muted-foreground/70 uppercase tracking-wider mb-2 whitespace-nowrap overflow-hidden">
 							{item.category}
 						</h3>
 					)}
@@ -237,19 +255,22 @@ export function AppSidebar() {
 				</div>
 			</div>
 
+			{/* Team Selector */}
+			<div className={cn(
+				"px-3 py-2 border-b border-border/50",
+				isDisplayCollapsed ? "px-2" : "px-3"
+			)}>
+				<TeamSelector variant={isDisplayCollapsed ? "compact" : "full"} className="w-full" />
+			</div>
+
 			{/* Main Navigation */}
 			<nav
 				ref={navRef}
-				onScroll={(e) => {
-					// Save scroll position on scroll (throttled/debounced implicitly by event loop, but saving constantly is low cost enough here)
-					const target = e.target as HTMLElement;
-					sessionStorage.setItem('sidebar-scroll-position', target.scrollTop.toString());
-				}}
 				className="flex-1 overflow-y-auto px-2 py-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
 			>
 				<div>
 					{!isDisplayCollapsed && (
-						<h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 animate-fade-in whitespace-nowrap overflow-hidden">
+						<h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 whitespace-nowrap overflow-hidden">
 							Menu
 						</h3>
 					)}

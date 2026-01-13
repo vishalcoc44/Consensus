@@ -92,11 +92,18 @@ const queryClient = new QueryClient({
 
 
 
-// Layout wrapper component
+// Layout wrapper component - just the layout, no providers
 const DashboardLayoutWrapper = () => (
   <DashboardLayout>
     <Outlet />
   </DashboardLayout>
+);
+
+// Wrapper that includes TeamProvider - placed at the route level to be stable
+const ProtectedDashboardArea = () => (
+  <TeamProvider>
+    <DashboardLayoutWrapper />
+  </TeamProvider>
 );
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -143,43 +150,42 @@ const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Protected Dashboard Routes */}
-        <Route element={
-          <ProtectedRoute>
-            <DashboardLayoutWrapper />
-          </ProtectedRoute>
-        }>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/teams" element={<Teams />} />
-          <Route path="/dashboard/decisions" element={<Decisions />} />
-          <Route path="/dashboard/create-proposal" element={<CreateProposal />} />
-          <Route path="/dashboard/proposals/:proposalId" element={<ProposalDetails />} />
-          <Route path="/dashboard/templates" element={<Templates />} />
-          <Route path="/dashboard/notifications" element={<Notifications />} />
-          <Route path="/dashboard/resources" element={<Resources />} />
-          <Route path="/dashboard/ai-insights" element={<AIInsights />} />
-          <Route path="/dashboard/calendar" element={<DecisionCalendar />} />
-          <Route path="/dashboard/goals" element={<Goals />} />
-          <Route path="/dashboard/meetings" element={<MeetingRooms />} />
-          <Route path="/meeting/:meetingId" element={<MeetingRoom />} />
-          <Route path="/dashboard/analytics" element={<Analytics />} />
-          <Route path="/dashboard/analytics/:proposalId" element={<Analytics />} />
-          <Route path="/dashboard/activity" element={<ActivityLog />} />
-          <Route path="/dashboard/settings" element={<Settings />} />
-        </Route>
+      {/* Protected Dashboard Routes */}
+      <Route element={
+        <ProtectedRoute>
+          <ProtectedDashboardArea />
+        </ProtectedRoute>
+      }>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/teams" element={<Teams />} />
+        <Route path="/dashboard/decisions" element={<Decisions />} />
+        <Route path="/dashboard/create-proposal" element={<CreateProposal />} />
+        <Route path="/dashboard/proposals/:proposalId" element={<ProposalDetails />} />
+        <Route path="/dashboard/templates" element={<Templates />} />
+        <Route path="/dashboard/notifications" element={<Notifications />} />
+        <Route path="/dashboard/resources" element={<Resources />} />
+        <Route path="/dashboard/ai-insights" element={<AIInsights />} />
+        <Route path="/dashboard/calendar" element={<DecisionCalendar />} />
+        <Route path="/dashboard/goals" element={<Goals />} />
+        <Route path="/dashboard/meetings" element={<MeetingRooms />} />
+        <Route path="/meeting/:meetingId" element={<MeetingRoom />} />
+        <Route path="/dashboard/analytics" element={<Analytics />} />
+        <Route path="/dashboard/analytics/:proposalId" element={<Analytics />} />
+        <Route path="/dashboard/activity" element={<ActivityLog />} />
+        <Route path="/dashboard/settings" element={<Settings />} />
+      </Route>
 
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AnimatePresence>
+      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+
   );
 };
 
@@ -192,11 +198,9 @@ const App = () => {
           <Toaster />
           <Sonner />
           <UserProvider>
-            <TeamProvider>
-              <BrowserRouter>
-                <AnimatedRoutes />
-              </BrowserRouter>
-            </TeamProvider>
+            <BrowserRouter>
+              <AnimatedRoutes />
+            </BrowserRouter>
           </UserProvider>
         </TooltipProvider>
       </QueryClientProvider>

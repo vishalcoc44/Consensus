@@ -34,9 +34,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import ShimmerText from '@/components/ui/effects/ShimmerText';
+import { TeamSelector } from '@/components/teams/TeamSelector';
 
 const Resources = () => {
-	const { currentTeam } = useTeam();
+	const { currentTeam, isInitializing } = useTeam();
 	const { user } = useUser();
 	const { toast } = useToast();
 	const [resources, setResources] = useState<Resource[]>([]);
@@ -253,6 +254,14 @@ const Resources = () => {
 		{ value: 'link', label: 'Links', icon: LinkIcon },
 	];
 
+	if (isInitializing) {
+		return (
+			<div className="flex items-center justify-center min-h-[60vh]">
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+			</div>
+		);
+	}
+
 	if (!currentTeam) {
 		return (
 			<div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -260,7 +269,8 @@ const Resources = () => {
 					<FolderOpen className="h-12 w-12 text-muted-foreground" />
 				</div>
 				<h3 className="text-xl font-semibold mb-2">No team selected</h3>
-				<p className="text-muted-foreground">Please select a team to view resources</p>
+				<p className="text-muted-foreground mb-4">Please select a team to view resources</p>
+				<TeamSelector variant="full" />
 			</div>
 		);
 	}
@@ -277,110 +287,113 @@ const Resources = () => {
 						Centralized file and link management for your team
 					</p>
 				</div>
-				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-					<DialogTrigger asChild>
-						<Button className="rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 shadow-lg shadow-sky-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/30 hover:-translate-y-0.5 whitespace-nowrap">
-							<Upload className="h-4 w-4 mr-2" />
-							Upload Resource
-						</Button>
-					</DialogTrigger>
-					<DialogContent className="sm:max-w-[500px]">
-						<DialogHeader>
-							<DialogTitle>Upload New Resource</DialogTitle>
-							<DialogDescription>
-								Add a file or link to your team's resource library
-							</DialogDescription>
-						</DialogHeader>
+				<div className="flex items-center gap-3">
+					<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+						<DialogTrigger asChild>
+							<Button className="rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 shadow-lg shadow-sky-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-sky-500/30 hover:-translate-y-0.5 whitespace-nowrap">
+								<Upload className="h-4 w-4 mr-2" />
+								Upload Resource
+							</Button>
+						</DialogTrigger>
+						<DialogContent className="sm:max-w-[500px]">
+							<DialogHeader>
+								<DialogTitle>Upload New Resource</DialogTitle>
+								<DialogDescription>
+									Add a file or link to your team's resource library
+								</DialogDescription>
+							</DialogHeader>
 
-						<div className="space-y-4 py-4">
-							<div className="flex gap-2">
-								<Button
-									variant={uploadType === 'file' ? 'default' : 'outline'}
-									onClick={() => setUploadType('file')}
-									className="flex-1 rounded-xl"
-								>
-									<Upload className="h-4 w-4 mr-2" />
-									Upload File
-								</Button>
-								<Button
-									variant={uploadType === 'link' ? 'default' : 'outline'}
-									onClick={() => setUploadType('link')}
-									className="flex-1 rounded-xl"
-								>
-									<LinkIcon className="h-4 w-4 mr-2" />
-									Add Link
-								</Button>
-							</div>
+							<div className="space-y-4 py-4">
+								<div className="flex gap-2">
+									<Button
+										variant={uploadType === 'file' ? 'default' : 'outline'}
+										onClick={() => setUploadType('file')}
+										className="flex-1 rounded-xl"
+									>
+										<Upload className="h-4 w-4 mr-2" />
+										Upload File
+									</Button>
+									<Button
+										variant={uploadType === 'link' ? 'default' : 'outline'}
+										onClick={() => setUploadType('link')}
+										className="flex-1 rounded-xl"
+									>
+										<LinkIcon className="h-4 w-4 mr-2" />
+										Add Link
+									</Button>
+								</div>
 
-							<div className="space-y-2">
-								<Label htmlFor="title">Title *</Label>
-								<Input
-									id="title"
-									value={title}
-									onChange={(e) => setTitle(e.target.value)}
-									placeholder="Resource title"
-									className="rounded-xl"
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<Label htmlFor="description">Description</Label>
-								<Textarea
-									id="description"
-									value={description}
-									onChange={(e) => setDescription(e.target.value)}
-									placeholder="Brief description"
-									className="rounded-xl resize-none"
-									rows={3}
-								/>
-							</div>
-
-							{uploadType === 'file' ? (
 								<div className="space-y-2">
-									<Label htmlFor="file">File *</Label>
+									<Label htmlFor="title">Title *</Label>
 									<Input
-										id="file"
-										type="file"
-										onChange={(e) => setFile(e.target.files?.[0] || null)}
+										id="title"
+										value={title}
+										onChange={(e) => setTitle(e.target.value)}
+										placeholder="Resource title"
 										className="rounded-xl"
 									/>
 								</div>
-							) : (
+
 								<div className="space-y-2">
-									<Label htmlFor="url">URL *</Label>
+									<Label htmlFor="description">Description</Label>
+									<Textarea
+										id="description"
+										value={description}
+										onChange={(e) => setDescription(e.target.value)}
+										placeholder="Brief description"
+										className="rounded-xl resize-none"
+										rows={3}
+									/>
+								</div>
+
+								{uploadType === 'file' ? (
+									<div className="space-y-2">
+										<Label htmlFor="file">File *</Label>
+										<Input
+											id="file"
+											type="file"
+											onChange={(e) => setFile(e.target.files?.[0] || null)}
+											className="rounded-xl"
+										/>
+									</div>
+								) : (
+									<div className="space-y-2">
+										<Label htmlFor="url">URL *</Label>
+										<Input
+											id="url"
+											type="url"
+											value={url}
+											onChange={(e) => setUrl(e.target.value)}
+											placeholder="https://..."
+											className="rounded-xl"
+										/>
+									</div>
+								)}
+
+								<div className="space-y-2">
+									<Label htmlFor="tags">Tags (comma-separated)</Label>
 									<Input
-										id="url"
-										type="url"
-										value={url}
-										onChange={(e) => setUrl(e.target.value)}
-										placeholder="https://..."
+										id="tags"
+										value={tags}
+										onChange={(e) => setTags(e.target.value)}
+										placeholder="design, research, docs"
 										className="rounded-xl"
 									/>
 								</div>
-							)}
-
-							<div className="space-y-2">
-								<Label htmlFor="tags">Tags (comma-separated)</Label>
-								<Input
-									id="tags"
-									value={tags}
-									onChange={(e) => setTags(e.target.value)}
-									placeholder="design, research, docs"
-									className="rounded-xl"
-								/>
 							</div>
-						</div>
 
-						<DialogFooter>
-							<Button variant="outline" onClick={() => setIsDialogOpen(false)} className="rounded-xl">
-								Cancel
-							</Button>
-							<Button onClick={handleUpload} disabled={uploading} className="rounded-xl">
-								{uploading ? 'Uploading...' : 'Upload'}
-							</Button>
-						</DialogFooter>
-					</DialogContent>
-				</Dialog>
+							<DialogFooter>
+								<Button variant="outline" onClick={() => setIsDialogOpen(false)} className="rounded-xl">
+									Cancel
+								</Button>
+								<Button onClick={handleUpload} disabled={uploading} className="rounded-xl">
+									{uploading ? 'Uploading...' : 'Upload'}
+								</Button>
+							</DialogFooter>
+						</DialogContent>
+					</Dialog>
+					<TeamSelector variant="full" />
+				</div>
 			</div>
 
 
