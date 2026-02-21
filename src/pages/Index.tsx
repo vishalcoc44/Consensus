@@ -1,6 +1,7 @@
 
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { Github, Briefcase, Mail } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Hero from '@/components/landing/Hero';
 import Features from '@/components/landing/Features';
@@ -116,6 +117,41 @@ const Index = () => {
                   <li><a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">Help Center</a></li>
 
                 </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-muted-foreground mb-6 uppercase tracking-wider text-xs">Connectivity</h4>
+                <div className="space-y-5">
+                  <a href="https://github.com/vishalcoc44" target="_blank" rel="noopener noreferrer" className="flex items-center space-x-3 group">
+                    <div className="w-10 h-10 bg-card shadow-sm border border-border rounded-xl flex items-center justify-center group-hover:border-primary/20 transition-colors">
+                      <Github className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Github</p>
+                      <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">github.com/vishalcoc44</p>
+                    </div>
+                  </a>
+
+                  <a href="https://vishalsatish.tech" target="_blank" rel="noopener noreferrer" className="flex items-center space-x-3 group">
+                    <div className="w-10 h-10 bg-card shadow-sm border border-border rounded-xl flex items-center justify-center group-hover:border-primary/20 transition-colors">
+                      <Briefcase className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Portfolio</p>
+                      <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">vishalsatish.tech</p>
+                    </div>
+                  </a>
+
+                  <a href="mailto:vishalsatish44@gmail.com" className="flex items-center space-x-3 group">
+                    <div className="w-10 h-10 bg-card shadow-sm border border-border rounded-xl flex items-center justify-center group-hover:border-primary/20 transition-colors">
+                      <Mail className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Mail</p>
+                      <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">vishalsatish44@gmail.com</p>
+                    </div>
+                  </a>
+                </div>
               </div>
             </div>
           </div>

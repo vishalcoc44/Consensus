@@ -51,7 +51,7 @@ const AIInsights = () => {
 		setGenerating(true);
 		try {
 			// Demo insight generation
-			const demoInsight = await generateInsight(currentTeam.id, null, 'general');
+			const demoInsight = await generateInsight(currentTeam.id, null, 'pattern_analysis');
 			if (demoInsight) {
 				setInsights([demoInsight, ...insights]);
 				toast({ title: 'New insight generated' });
@@ -350,7 +350,11 @@ const AIInsights = () => {
 										"p-4 rounded-lg mb-4",
 										config.bgLight
 									)}>
-										<p className="text-sm leading-relaxed">{insight.content}</p>
+										<p className="text-sm leading-relaxed">
+											{typeof insight.content === 'string'
+												? insight.content
+												: insight.content?.summary || insight.description || 'No content available'}
+										</p>
 									</div>
 
 									{/* Confidence Bar */}

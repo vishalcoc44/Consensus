@@ -1,32 +1,74 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
+import { PreviewMarquee } from '@/components/shared/PreviewMarquee';
+import { LightboxModal } from '@/components/shared/LightboxModal';
+import { usePreviewImages } from '@/hooks/usePreviewImages';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [marqueeVisible, setMarqueeVisible] = useState(true);
+  const [manuallyDismissed, setManuallyDismissed] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const images = usePreviewImages();
   const location = useLocation();
-
+  // Scroll tracking — isScrolled for navbar style
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-
-    window.addEventListener('scroll', handleScroll);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close marquee when #features section enters the viewport
+  useEffect(() => {
+    const featuresEl = document.getElementById('features');
+    if (!featuresEl) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setMarqueeVisible(false);
+          setManuallyDismissed(true);
+        }
+      },
+      // Trigger as soon as 1px of the section is visible
+      { threshold: 0, rootMargin: '0px' }
+    );
+
+    observer.observe(featuresEl);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  const handlePreviewToggle = useCallback(() => {
+    const willBeVisible = !marqueeVisible;
+    setMarqueeVisible(willBeVisible);
+    setManuallyDismissed(!willBeVisible);
+  }, [marqueeVisible]);
+
+  const handleImageClick = useCallback((index: number) => {
+    setActiveIndex(index);
+    setLightboxOpen(true);
+  }, []);
+
+  const handlePrev = useCallback(() => {
+    setActiveIndex((i) => (i - 1 + images.length) % images.length);
+  }, [images.length]);
+
+  const handleNext = useCallback(() => {
+    setActiveIndex((i) => (i + 1) % images.length);
+  }, [images.length]);
 
   return (
+    <>
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
         ? 'bg-background/80 backdrop-blur-md shadow-md py-4 border-b border-border'
@@ -58,6 +100,16 @@ const Navbar = () => {
           >
             About
           </Link>
+
+          {/* Preview Marquee */}
+          {images.length > 0 && (
+            <PreviewMarquee
+              images={images}
+              isVisible={marqueeVisible}
+              onToggle={handlePreviewToggle}
+              onImageClick={handleImageClick}
+            />
+          )}
         </nav>
 
         {/* Desktop Auth Buttons */}
@@ -77,7 +129,7 @@ const Navbar = () => {
         {/* Mobile Menu Button */}
         <button
           className="md:hidden text-foreground hover:text-primary transition-colors"
-          onClick={toggleMobileMenu}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -101,6 +153,19 @@ const Navbar = () => {
             >
               About
             </Link>
+
+            {images.length > 0 && (
+              <button
+                onClick={() => {
+                  handlePreviewToggle();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="text-left px-4 py-2 rounded-md text-primary font-semibold hover:bg-primary/10 transition-colors"
+              >
+                {marqueeVisible ? 'Hide Preview' : 'Preview'}
+              </button>
+            )}
+
             <div className="pt-4 flex flex-col space-y-3">
               <Link to="/login" className="w-full">
                 <Button variant="outline" className="w-full rounded-full border-input text-foreground hover:bg-primary/10 hover:border-primary/50">
@@ -117,6 +182,17 @@ const Navbar = () => {
         </div>
       )}
     </header>
+
+      {/* Lightbox Modal */}
+      <LightboxModal
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        images={images}
+        activeIndex={activeIndex}
+        onPrev={handlePrev}
+        onNext={handleNext}
+      />
+    </>
   );
 };
 

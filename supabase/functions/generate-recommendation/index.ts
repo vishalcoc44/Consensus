@@ -45,7 +45,7 @@ serve(async (req) => {
       throw new Error("GEMINI_API_KEY is not set");
     }
     const genAI = new GoogleGenerativeAI(geminiApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemma-3-27b" });
 
     // 3. Fetch all context data
     const [
